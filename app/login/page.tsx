@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -31,7 +31,7 @@ function toSlug(value: string) {
 const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
 const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams()
   const [modo, setModo] = useState<'login' | 'cadastro'>(
     searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login'
@@ -333,5 +333,13 @@ export default function LoginPage() {
       </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   )
 }
