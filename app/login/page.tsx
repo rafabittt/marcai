@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { maskName, maskPhone } from '@/lib/masks'
 import LandingHeader from '../components/LandingHeader'
 
 const TIPOS = [
@@ -74,7 +75,7 @@ function LoginContent() {
       setError('Email ou senha incorretos')
       setLoading(false)
     } else {
-      window.location.href = '/dashboard'
+      window.location.href = '/agenda'
     }
   }
 
@@ -128,7 +129,7 @@ function LoginContent() {
       return
     }
 
-    window.location.href = '/dashboard'
+    window.location.href = '/agenda'
   }
 
   function trocarModo(novoModo: 'login' | 'cadastro') {
@@ -209,7 +210,7 @@ function LoginContent() {
               <input
                 type="text"
                 value={nomeCompleto}
-                onChange={e => setNomeCompleto(e.target.value)}
+                onChange={e => setNomeCompleto(maskName(e.target.value))}
                 className={inputClass}
                 placeholder="João Silva"
                 required
@@ -279,7 +280,7 @@ function LoginContent() {
                   <input
                     type="tel"
                     value={negTelefone}
-                    onChange={e => setNegTelefone(e.target.value)}
+                    onChange={e => setNegTelefone(maskPhone(e.target.value))}
                     required
                     placeholder="(11) 99999-9999"
                     className={inputClass}

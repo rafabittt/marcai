@@ -58,10 +58,12 @@ function Badge({ status }: { status: string }) {
 }
 
 export default function DashboardPage() {
-  const [agendamentosHoje, setAgendamentosHoje] = useState(0)
+  const [agendamentosHoje, setAgendamentosHoje] = useState<Agendamento[]>([])
   const [proximosAgendamentos, setProximosAgendamentos] = useState<Agendamento[]>([])
   const [loading, setLoading] = useState(true)
   const [selecionado, setSelecionado] = useState<Agendamento | null>(null)
+  const [mostrarCanceladosHoje, setMostrarCanceladosHoje] = useState(false)
+  const [mostrarCanceladosProximos, setMostrarCanceladosProximos] = useState(false)
 
   // Reagendar
   const [reagendando, setReagendando] = useState(false)
@@ -80,13 +82,14 @@ export default function DashboardPage() {
       const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString()
       const fimHoje   = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1).toISOString()
 
-      const { count } = await supabase
+      const { data: dataHoje } = await supabase
         .from('agendamentos')
-        .select('*', { count: 'exact', head: true })
+        .select('id, cliente_nome, cliente_telefone, servico, data_hora, status')
         .gte('data_hora', inicioHoje)
         .lt('data_hora', fimHoje)
+        .order('data_hora', { ascending: true })
 
-      setAgendamentosHoje(count ?? 0)
+      setAgendamentosHoje(dataHoje ?? [])
 
       const { data } = await supabase
         .from('agendamentos')
@@ -115,9 +118,8 @@ export default function DashboardPage() {
   }
 
   function atualizarLista(id: string, campos: Partial<Agendamento>) {
-    setProximosAgendamentos(prev =>
-      prev.map(a => a.id === id ? { ...a, ...campos } : a)
-    )
+    setAgendamentosHoje(prev => prev.map(a => a.id === id ? { ...a, ...campos } : a))
+    setProximosAgendamentos(prev => prev.map(a => a.id === id ? { ...a, ...campos } : a))
   }
 
   async function cancelar() {
@@ -158,69 +160,35 @@ export default function DashboardPage() {
           <p className="text-gray-500 mt-1 text-sm">Seus agendamentos de hoje e os próximos.</p>
         </div>
 
-        {/* Card hoje */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex items-center gap-6">
-          <div className="flex flex-col items-center justify-center w-20 h-20 rounded-2xl bg-[#dcfce7]">
-            <span className="text-4xl font-bold text-[#128C7E] leading-none">{agendamentosHoje}</span>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest font-medium mb-1 text-gray-500">Hoje</p>
-            <p className="text-xl font-semibold" style={{ color: '#0a0a0a' }}>
-              {agendamentosHoje === 1 ? '1 agendamento' : `${agendamentosHoje} agendamentos`}
-            </p>
-            <p className="text-sm text-gray-500 mt-0.5">
+        {/* Hoje */}
+        <div>
+          <div className="flex items-baseline justify-between mb-5">
+            <h2 className="text-xs uppercase tracking-widest font-medium text-gray-500">Hoje</h2>
+            <span className="text-xs text-gray-500 capitalize">
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+            </span>
           </div>
+
+          <ListaComCancelados
+            agendamentos={agendamentosHoje}
+            vazio="Nenhum agendamento para hoje."
+            mostrarCancelados={mostrarCanceladosHoje}
+            onToggleCancelados={() => setMostrarCanceladosHoje(p => !p)}
+            onAbrirModal={abrirModal}
+          />
         </div>
 
         {/* Lista */}
         <div>
           <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Próximos agendamentos</h2>
 
-          {proximosAgendamentos.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-              <p className="text-gray-500 text-sm">Nenhum agendamento futuro.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {proximosAgendamentos.map((ag) => {
-                const cancelado = ag.status === 'cancelado'
-                return (
-                  <button
-                    key={ag.id}
-                    onClick={() => abrirModal(ag)}
-                    className={`w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex items-center gap-5 transition-all duration-150 hover:shadow-md hover:border-gray-200 ${cancelado ? 'opacity-60' : ''}`}
-                  >
-                    {/* Avatar */}
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cancelado ? 'bg-gray-100' : 'bg-[#dcfce7]'}`}>
-                      <span className={`text-sm font-bold ${cancelado ? 'text-gray-500' : 'text-[#128C7E]'}`}>
-                        {inicialAvatar(ag.cliente_nome)}
-                      </span>
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold text-sm truncate ${cancelado ? 'line-through text-gray-500' : ''}`} style={cancelado ? {} : { color: '#0a0a0a' }}>
-                        {ag.cliente_nome}
-                      </p>
-                      <p className={`text-sm truncate ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
-                        {ag.servico}
-                      </p>
-                    </div>
-
-                    {/* Direita: badge + horário */}
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <Badge status={ag.status} />
-                      <span className={`text-xs font-medium ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
-                        {formatarDataHora(ag.data_hora)}
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          <ListaComCancelados
+            agendamentos={proximosAgendamentos}
+            vazio="Nenhum agendamento futuro."
+            mostrarCancelados={mostrarCanceladosProximos}
+            onToggleCancelados={() => setMostrarCanceladosProximos(p => !p)}
+            onAbrirModal={abrirModal}
+          />
         </div>
 
       </main>
@@ -316,6 +284,100 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function AgendamentoCard({ ag, onAbrir }: { ag: Agendamento; onAbrir: (ag: Agendamento) => void }) {
+  const cancelado = ag.status === 'cancelado'
+  return (
+    <button
+      onClick={() => onAbrir(ag)}
+      className={`w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex items-center gap-5 transition-all duration-150 hover:shadow-md hover:border-gray-200 ${cancelado ? 'opacity-60' : ''}`}
+    >
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cancelado ? 'bg-gray-100' : 'bg-[#dcfce7]'}`}>
+        <span className={`text-sm font-bold ${cancelado ? 'text-gray-500' : 'text-[#128C7E]'}`}>
+          {inicialAvatar(ag.cliente_nome)}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`font-semibold text-sm truncate ${cancelado ? 'line-through text-gray-500' : ''}`} style={cancelado ? {} : { color: '#0a0a0a' }}>
+          {ag.cliente_nome}
+        </p>
+        <p className={`text-sm truncate ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
+          {ag.servico}
+        </p>
+      </div>
+      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+        <Badge status={ag.status} />
+        <span className={`text-xs font-medium ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
+          {formatarDataHora(ag.data_hora)}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+function ListaComCancelados({
+  agendamentos,
+  vazio,
+  mostrarCancelados,
+  onToggleCancelados,
+  onAbrirModal,
+}: {
+  agendamentos: Agendamento[]
+  vazio: string
+  mostrarCancelados: boolean
+  onToggleCancelados: () => void
+  onAbrirModal: (ag: Agendamento) => void
+}) {
+  const ativos     = agendamentos.filter(a => a.status !== 'cancelado')
+  const cancelados = agendamentos.filter(a => a.status === 'cancelado')
+
+  if (agendamentos.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+        <p className="text-gray-500 text-sm">{vazio}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {ativos.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+          <p className="text-gray-500 text-sm">Nenhum agendamento ativo.</p>
+        </div>
+      )}
+      {ativos.map(ag => (
+        <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrirModal} />
+      ))}
+
+      {cancelados.length > 0 && (
+        <>
+          <button
+            onClick={onToggleCancelados}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors pt-1 pl-1"
+          >
+            <span
+              className="inline-block transition-transform duration-200"
+              style={{ transform: mostrarCancelados ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            >
+              ▾
+            </span>
+            {mostrarCancelados
+              ? 'Ocultar cancelados'
+              : `Ver ${cancelados.length} cancelado${cancelados.length > 1 ? 's' : ''}`}
+          </button>
+          {mostrarCancelados && (
+            <div className="space-y-3">
+              {cancelados.map(ag => (
+                <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrirModal} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

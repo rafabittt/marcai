@@ -74,20 +74,30 @@ export default function Navbar() {
   return (
     <nav className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between">
       <div className="flex items-center gap-8">
-        <Link href="/dashboard">
+        <Link href="/agenda">
           <img src="/logo.png" alt="Marcaí" style={{ height: '28px' }} />
         </Link>
 
         <div className="flex items-center gap-6">
           <Link
-            href="/dashboard"
+            href="/agenda"
             className={`text-sm font-medium transition-colors ${
-              pathname === '/dashboard'
+              pathname === '/agenda'
                 ? 'text-[#25D366]'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Dashboard
+            Agenda
+          </Link>
+          <Link
+            href="/configuracoes"
+            className={`text-sm font-medium transition-colors ${
+              pathname === '/configuracoes'
+                ? 'text-[#25D366]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Configurações
           </Link>
         </div>
       </div>
@@ -113,7 +123,7 @@ export default function Navbar() {
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
               <div className="px-4 py-2.5 border-b border-gray-100">
-                <p className="text-xs text-gray-500 truncate">{email}</p>
+                <p className="text-xs font-semibold text-gray-700 truncate">{nomeNegocio ?? email}</p>
               </div>
 
               <Link

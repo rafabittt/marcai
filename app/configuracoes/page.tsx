@@ -1,0 +1,571 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase'
+import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
+
+// ── Constantes ────────────────────────────────────────────────────────────────
+
+const TIPOS = [
+  'Clínica', 'Barbearia', 'Salão de beleza', 'Estúdio de tatuagem',
+  'Nutricionista', 'Psicólogo', 'Personal trainer', 'Loja', 'Outro',
+]
+
+const HORARIO_OPTIONS = Array.from({ length: 25 }, (_, i) => {
+  const minutos = 8 * 60 + i * 30
+  if (minutos > 20 * 60) return null
+  const h = String(Math.floor(minutos / 60)).padStart(2, '0')
+  const m = minutos % 60 === 0 ? '00' : '30'
+  return `${h}:${m}`
+}).filter(Boolean) as string[]
+
+const DIAS = [
+  { key: 'segunda', abr: 'Seg', fechadoPadrao: false },
+  { key: 'terca',   abr: 'Ter', fechadoPadrao: false },
+  { key: 'quarta',  abr: 'Qua', fechadoPadrao: false },
+  { key: 'quinta',  abr: 'Qui', fechadoPadrao: false },
+  { key: 'sexta',   abr: 'Sex', fechadoPadrao: false },
+  { key: 'sabado',  abr: 'Sáb', fechadoPadrao: true  },
+  { key: 'domingo', abr: 'Dom', fechadoPadrao: true   },
+]
+
+// ── Tipos ─────────────────────────────────────────────────────────────────────
+
+type HorarioDia  = { abertura: string; fechamento: string; fechado: boolean }
+type HorariosMap = Record<string, HorarioDia>
+
+type Endereco = {
+  cep: string
+  rua: string
+  numero: string
+  bairro: string
+  cidade: string
+}
+
+type Negocio = {
+  id: string
+  nome: string
+  tipo: string
+  telefone: string
+  slug: string
+  horarios: HorariosMap | null
+  endereco: Endereco | null
+}
+
+type Servico      = { id: number; nome: string; duracao: string }
+type Profissional = { id: number; nome: string; cargo: string }
+
+// ── Defaults ──────────────────────────────────────────────────────────────────
+
+const HORARIOS_PADRAO: HorariosMap = Object.fromEntries(
+  DIAS.map(({ key, fechadoPadrao }) => [
+    key,
+    { abertura: '08:00', fechamento: '18:00', fechado: fechadoPadrao },
+  ])
+)
+
+const ENDERECO_PADRAO: Endereco = { cep: '', rua: '', numero: '', bairro: '', cidade: '' }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function toSlug(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function HorarioOptions() {
+  return <>{HORARIO_OPTIONS.map(h => <option key={h} value={h}>{h}</option>)}</>
+}
+
+const inputClass = 'w-full border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent'
+const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+
+// ── Componente principal ──────────────────────────────────────────────────────
+
+export default function ConfiguracoesPage() {
+  const [loading, setLoading] = useState(true)
+  const [negocio, setNegocio] = useState<Negocio | null>(null)
+
+  // Dados básicos
+  const [negNome,     setNegNome]     = useState('')
+  const [negTipo,     setNegTipo]     = useState(TIPOS[0])
+  const [negTelefone, setNegTelefone] = useState('')
+  const [negSlug,     setNegSlug]     = useState('')
+  const [slugEditado, setSlugEditado] = useState(false)
+
+  // Endereço
+  const [endereco, setEndereco] = useState<Endereco>(ENDERECO_PADRAO)
+
+  // Horários
+  const [horarios, setHorarios] = useState<HorariosMap>(HORARIOS_PADRAO)
+
+  // Serviços
+  const [servicos,    setServicos]    = useState<Servico[]>([])
+  const [novoServico, setNovoServico] = useState({ nome: '', duracao: '30 min' })
+
+  // Equipe
+  const [profissionais,    setProfissionais]    = useState<Profissional[]>([])
+  const [novoProfissional, setNovoProfissional] = useState({ nome: '', cargo: '' })
+
+  // Submit
+  const [saving,  setSaving]  = useState(false)
+  const [sucesso, setSucesso] = useState(false)
+  const [erro,    setErro]    = useState('')
+
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/login'; return }
+
+      const { data: neg } = await supabase
+        .from('negocios')
+        .select('id, nome, tipo, telefone, slug, horarios, endereco')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!neg) { setLoading(false); return }
+
+      setNegocio(neg)
+      setNegNome(neg.nome)
+      setNegTipo(neg.tipo ?? TIPOS[0])
+      setNegTelefone(neg.telefone ?? '')
+      setNegSlug(neg.slug)
+      setHorarios(neg.horarios ?? HORARIOS_PADRAO)
+      setEndereco(neg.endereco ?? ENDERECO_PADRAO)
+
+      // Busca serviços e profissionais em paralelo
+      const [{ data: srvData }, { data: profData }] = await Promise.all([
+        supabase.from('servicos').select('id, nome, duracao').eq('negocio_id', neg.id),
+        supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id),
+      ])
+
+      setServicos(srvData ?? [])
+      setProfissionais(profData ?? [])
+      setLoading(false)
+    }
+    init()
+  }, [])
+
+  function handleNegNomeChange(value: string) {
+    setNegNome(value)
+    if (!slugEditado) setNegSlug(toSlug(value))
+  }
+
+  function handleNegSlugChange(value: string) {
+    setSlugEditado(true)
+    setNegSlug(toSlug(value))
+  }
+
+  function handleHorario(key: string, campo: keyof HorarioDia, valor: string | boolean) {
+    setHorarios(prev => ({ ...prev, [key]: { ...prev[key], [campo]: valor } }))
+  }
+
+  function handleEndereco(campo: keyof Endereco, valor: string) {
+    setEndereco(prev => ({ ...prev, [campo]: valor }))
+  }
+
+  async function handleSalvar(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!negSlug) { setErro('O link público não pode ficar vazio.'); return }
+
+    setSaving(true)
+    setSucesso(false)
+    setErro('')
+
+    // Verifica unicidade do slug apenas se mudou
+    if (negSlug !== negocio?.slug) {
+      const { data: existing } = await supabase
+        .from('negocios').select('id').eq('slug', negSlug).maybeSingle()
+      if (existing) {
+        setErro('Esse link já está em uso. Escolha outro.')
+        setSaving(false)
+        return
+      }
+    }
+
+    const negocioId = negocio!.id
+
+    // A: update negocios (dados básicos + horários + endereço)
+    const negUpdate = supabase
+      .from('negocios')
+      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco })
+      .eq('id', negocioId)
+
+    // B: sincronizar serviços (delete + bulk insert)
+    const srvSync = (async () => {
+      await supabase.from('servicos').delete().eq('negocio_id', negocioId)
+      if (servicos.length === 0) return
+      await supabase.from('servicos').insert(
+        servicos.map(({ nome, duracao }) => ({ negocio_id: negocioId, nome, duracao }))
+      )
+    })()
+
+    // C: sincronizar profissionais (delete + bulk insert)
+    const profSync = (async () => {
+      await supabase.from('profissionais').delete().eq('negocio_id', negocioId)
+      if (profissionais.length === 0) return
+      await supabase.from('profissionais').insert(
+        profissionais.map(({ nome, cargo }) => ({ negocio_id: negocioId, nome, cargo }))
+      )
+    })()
+
+    const [negResult, , ] = await Promise.all([negUpdate, srvSync, profSync])
+
+    if (negResult.error) {
+      setErro('Erro ao salvar. Tente novamente.')
+    } else {
+      setSucesso(true)
+      setNegocio(prev => prev
+        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco }
+        : prev
+      )
+    }
+    setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f9f9f9' }}>
+        <p className="text-gray-500 text-sm">Carregando...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen py-14 px-6" style={{ background: '#f9f9f9' }}>
+      <div className="max-w-2xl mx-auto space-y-8">
+
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Configurações</h1>
+          <p className="text-gray-500 mt-1 text-sm">Gerencie as informações e preferências do seu negócio.</p>
+        </div>
+
+        {!negocio ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+            <p className="text-gray-500 text-sm">Nenhum negócio encontrado. Faça o cadastro primeiro.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSalvar} className="space-y-8">
+
+            {/* 1. DADOS BÁSICOS */}
+            <Section title="Dados básicos">
+              <div className="space-y-5">
+                <div>
+                  <label className={labelClass}>Nome do negócio</label>
+                  <input
+                    type="text"
+                    value={negNome}
+                    onChange={e => handleNegNomeChange(e.target.value)}
+                    required
+                    placeholder="Barbearia do João"
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Tipo do negócio</label>
+                  <select
+                    value={negTipo}
+                    onChange={e => setNegTipo(e.target.value)}
+                    className={inputClass}
+                  >
+                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Telefone / WhatsApp</label>
+                  <input
+                    type="tel"
+                    value={negTelefone}
+                    onChange={e => setNegTelefone(maskPhone(e.target.value))}
+                    required
+                    placeholder="(11) 99999-9999"
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Link público</label>
+                  <input
+                    type="text"
+                    value={negSlug}
+                    onChange={e => handleNegSlugChange(e.target.value)}
+                    required
+                    placeholder="barbearia-do-joao"
+                    className={inputClass}
+                  />
+                  {negSlug && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Seu link:{' '}
+                      <span className="font-medium text-[#25D366]">marcai.com.br/agendar/{negSlug}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Section>
+
+            {/* 2. ENDEREÇO */}
+            <Section title="Endereço">
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="w-36">
+                    <label className={labelClass}>CEP</label>
+                    <input
+                      type="text"
+                      value={endereco.cep}
+                      onChange={e => handleEndereco('cep', maskCEP(e.target.value))}
+                      placeholder="00000-000"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className={labelClass}>Cidade</label>
+                    <input
+                      type="text"
+                      value={endereco.cidade}
+                      onChange={e => handleEndereco('cidade', e.target.value)}
+                      placeholder="São Paulo"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className={labelClass}>Rua</label>
+                    <input
+                      type="text"
+                      value={endereco.rua}
+                      onChange={e => handleEndereco('rua', e.target.value)}
+                      placeholder="Av. Paulista"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="w-28">
+                    <label className={labelClass}>Número</label>
+                    <input
+                      type="text"
+                      value={endereco.numero}
+                      onChange={e => handleEndereco('numero', maskNumber(e.target.value))}
+                      placeholder="1000"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Bairro</label>
+                  <input
+                    type="text"
+                    value={endereco.bairro}
+                    onChange={e => handleEndereco('bairro', e.target.value)}
+                    placeholder="Bela Vista"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </Section>
+
+            {/* 3. EQUIPE */}
+            <Section title="Equipe">
+              <div className="space-y-3 mb-5">
+                {profissionais.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">Nenhum profissional cadastrado ainda.</p>
+                )}
+                {profissionais.map(p => (
+                  <div key={p.id} className="flex items-center gap-4 bg-gray-50 rounded-2xl px-5 py-3.5">
+                    <div className="w-9 h-9 rounded-full bg-[#dcfce7] flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-[#128C7E]">
+                        {p.nome.trim().charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{p.nome}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">{p.cargo}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProfissionais(prev => prev.filter(x => x.id !== p.id))}
+                      className="text-xs text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-100 pt-4 space-y-3">
+                <p className={labelClass}>Adicionar profissional</p>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={novoProfissional.nome}
+                    onChange={e => setNovoProfissional(prev => ({ ...prev, nome: e.target.value }))}
+                    placeholder="Nome do profissional"
+                    className={inputClass}
+                  />
+                  <input
+                    type="text"
+                    value={novoProfissional.cargo}
+                    onChange={e => setNovoProfissional(prev => ({ ...prev, cargo: e.target.value }))}
+                    placeholder="Ex: Barbeiro"
+                    className={inputClass}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!novoProfissional.nome.trim()) return
+                    setProfissionais(prev => [...prev, { id: Date.now(), ...novoProfissional }])
+                    setNovoProfissional({ nome: '', cargo: '' })
+                  }}
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-[#25D366] border-2 border-[#25D366] transition-all duration-200 hover:bg-[#dcfce7] hover:scale-[1.02]"
+                >
+                  + Adicionar profissional
+                </button>
+              </div>
+            </Section>
+
+            {/* 4. SERVIÇOS */}
+            <Section title="Serviços">
+              <div className="space-y-3 mb-5">
+                {servicos.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">Nenhum serviço cadastrado ainda.</p>
+                )}
+                {servicos.map(s => (
+                  <div key={s.id} className="flex items-center justify-between bg-gray-50 rounded-2xl px-5 py-3.5">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{s.nome}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{s.duracao}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setServicos(prev => prev.filter(x => x.id !== s.id))}
+                      className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-100 pt-4 space-y-3">
+                <p className={labelClass}>Adicionar serviço</p>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={novoServico.nome}
+                      onChange={e => setNovoServico(prev => ({ ...prev, nome: e.target.value }))}
+                      placeholder="Ex: Corte de cabelo"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="w-36">
+                    <select
+                      value={novoServico.duracao}
+                      onChange={e => setNovoServico(prev => ({ ...prev, duracao: e.target.value }))}
+                      className={inputClass}
+                    >
+                      {['30 min', '45 min', '1h', '1h 30min', '2h'].map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!novoServico.nome.trim()) return
+                    setServicos(prev => [...prev, { id: Date.now(), ...novoServico }])
+                    setNovoServico({ nome: '', duracao: '30 min' })
+                  }}
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-[#25D366] border-2 border-[#25D366] transition-all duration-200 hover:bg-[#dcfce7] hover:scale-[1.02]"
+                >
+                  + Adicionar serviço
+                </button>
+              </div>
+            </Section>
+
+            {/* 5. HORÁRIOS */}
+            <Section title="Horários de funcionamento">
+              <div className="space-y-2">
+                {DIAS.map(({ key, abr }) => {
+                  const dia = horarios?.[key] ?? HORARIOS_PADRAO[key]
+                  return (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-500 w-8 flex-shrink-0">{abr}</span>
+                      <select
+                        value={dia.fechado ? '' : dia.abertura}
+                        disabled={dia.fechado}
+                        onChange={e => handleHorario(key, 'abertura', e.target.value)}
+                        className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <HorarioOptions />
+                      </select>
+                      <span className="text-xs text-gray-400 flex-shrink-0">até</span>
+                      <select
+                        value={dia.fechado ? '' : dia.fechamento}
+                        disabled={dia.fechado}
+                        onChange={e => handleHorario(key, 'fechamento', e.target.value)}
+                        className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <HorarioOptions />
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleHorario(key, 'fechado', !dia.fechado)}
+                        className={`text-xs font-medium w-14 text-right flex-shrink-0 transition-colors ${dia.fechado ? 'text-gray-400 hover:text-gray-600' : 'text-[#128C7E] hover:text-[#25D366]'}`}
+                      >
+                        {dia.fechado ? 'Fechado' : 'Aberto'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </Section>
+
+            {/* BOTÃO GLOBAL + FEEDBACK */}
+            <div className="space-y-3">
+              {sucesso && (
+                <div className="bg-[#dcfce7] text-[#128C7E] text-sm px-4 py-3 rounded-xl">
+                  Alterações salvas com sucesso.
+                </div>
+              )}
+              {erro && (
+                <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl">
+                  {erro}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+              >
+                {saving ? 'Salvando...' : 'Salvar todas as alterações'}
+              </button>
+            </div>
+
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Layout helper ─────────────────────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <h2 className="text-xs uppercase tracking-widest font-semibold text-gray-500 mb-6">{title}</h2>
+      {children}
+    </div>
+  )
+}
