@@ -1,65 +1,218 @@
-import Image from "next/image";
+import Link from 'next/link'
+import FeaturesSection from './components/FeaturesSection'
+import PricingSection from './components/PricingSection'
+import LandingHeader from './components/LandingHeader'
+import { Link2, Smartphone, MessageCircle } from 'lucide-react'
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-white font-sans">
+
+      <LandingHeader />
+
+      {/* ── HERO ── */}
+      <section className="bg-white pt-16 pb-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+            {/* Texto */}
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 bg-[#dcfce7] text-[#128C7E]">
+                ✦ Agendamentos com WhatsApp
+              </div>
+
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6" style={{ color: '#0a0a0a' }}>
+                Agendamentos<br />
+                simples.<br />
+                <span className="text-[#25D366]">Clientes felizes.</span>
+              </h1>
+
+              <p className="text-lg text-gray-500 max-w-md mb-10 leading-relaxed">
+                Crie seu link de agendamento em minutos. Seus clientes agendam pelo celular, você recebe confirmação no WhatsApp.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                <Link
+                  href="/login?modo=cadastro"
+                  className="text-sm font-semibold px-7 py-4 rounded-xl text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] text-center"
+                >
+                  Criar minha conta grátis
+                </Link>
+                <a
+                  href="#como-funciona"
+                  className="text-sm font-semibold px-7 py-4 rounded-xl border border-gray-200 text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:scale-[1.02] text-center"
+                >
+                  Ver como funciona
+                </a>
+              </div>
+
+              <div className="flex flex-wrap gap-5 text-sm text-gray-600">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#25D366]">✓</span> Grátis para começar
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#25D366]">✓</span> Sem cartão de crédito
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#25D366]">✓</span> WhatsApp incluso
+                </span>
+              </div>
+            </div>
+
+            {/* Mock visual do produto */}
+            <div className="flex justify-center lg:justify-end">
+              <div className="relative">
+                {/* Sombra decorativa */}
+                <div className="absolute inset-0 translate-x-4 translate-y-4 bg-[#dcfce7] rounded-3xl" />
+
+                {/* Card principal — formulário de agendamento */}
+                <div className="relative bg-white rounded-3xl shadow-xl border border-gray-100 w-80 overflow-hidden">
+
+                  {/* Cabeçalho do card */}
+                  <div className="px-6 pt-6 pb-4 border-b border-gray-50">
+                    <p className="text-xs font-bold text-[#25D366] mb-1">Marcaí</p>
+                    <p className="text-base font-bold text-gray-900">Barbearia do Zeca</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Preencha para agendar</p>
+                  </div>
+
+                  {/* Campos do formulário */}
+                  <div className="px-6 py-5 space-y-3">
+                    {[
+                      { label: 'SEU NOME', value: 'João Silva', done: true },
+                      { label: 'SERVIÇO', value: 'Corte + Barba', done: true },
+                      { label: 'DATA', value: 'Amanhã, 10:00', done: true },
+                    ].map(f => (
+                      <div key={f.label}>
+                        <p className="text-[10px] font-semibold tracking-widest text-gray-500 mb-1">{f.label}</p>
+                        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2.5">
+                          <span className="text-sm text-gray-700">{f.value}</span>
+                          {f.done && <span className="text-[#25D366] text-xs">✓</span>}
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="pt-1">
+                      <div className="w-full py-3 rounded-xl text-sm font-semibold text-white text-center bg-[#25D366]">
+                        Confirmar agendamento
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notificação WhatsApp flutuante */}
+                  <div className="mx-4 mb-5 bg-[#dcfce7] rounded-2xl p-3 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center flex-shrink-0">
+                      <MessageCircle size={20} color="white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-700">WhatsApp</p>
+                      <p className="text-xs text-gray-500 leading-relaxed">Agendamento confirmado para amanhã às 10h! 🗓️</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <div id="recursos">
+        <FeaturesSection />
+      </div>
+
+      {/* ── COMO FUNCIONA ── */}
+      <section id="como-funciona" className="py-32 px-6 bg-white">
+        <div className="max-w-4xl mx-auto">
+
+          <div className="mb-20">
+            <p className="text-xs uppercase tracking-widest font-semibold mb-4 text-[#25D366]">
+              Como funciona
+            </p>
+            <h2 className="text-4xl md:text-5xl font-bold leading-tight" style={{ color: '#0a0a0a' }}>
+              Do cadastro ao<br />primeiro agendamento<br />em minutos.
+            </h2>
+          </div>
+
+          <div className="space-y-0">
+            {[
+              {
+                num: '01',
+                Icon: Link2,
+                title: 'Você cria seu link de agendamento',
+                desc: 'Cadastre seu negócio, defina o tipo de serviço e receba um link personalizado pronto para compartilhar.',
+              },
+              {
+                num: '02',
+                Icon: Smartphone,
+                title: 'Cliente acessa e agenda em segundos',
+                desc: 'O cliente abre o link pelo celular, preenche nome, serviço e horário — sem app, sem cadastro, sem complicação.',
+              },
+              {
+                num: '03',
+                Icon: MessageCircle,
+                title: 'Você recebe confirmação no WhatsApp',
+                desc: 'Na hora do agendamento, você e o cliente recebem uma mensagem automática de confirmação. Simples assim.',
+              },
+            ].map((step, i) => (
+              <div
+                key={step.num}
+                className={`grid gap-10 items-start py-12 ${i < 2 ? 'border-b border-gray-100' : ''}`}
+                style={{ gridTemplateColumns: 'auto 1fr' }}
+              >
+                <span
+                  className="text-8xl font-bold leading-none select-none"
+                  style={{ color: '#25D366', opacity: 0.2 }}
+                >
+                  {step.num}
+                </span>
+                <div className="flex-1 pt-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <step.Icon size={22} color="#25D366" />
+                    <h3 className="text-xl font-bold" style={{ color: '#0a0a0a' }}>{step.title}</h3>
+                  </div>
+                  <p className="text-gray-500 leading-relaxed">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <PricingSection />
+
+      {/* ── CTA FINAL ── */}
+      <section className="py-32 px-6 bg-white">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-6" style={{ color: '#0a0a0a' }}>
+            Pronto para simplificar seus agendamentos?
+          </h2>
+          <p className="text-gray-500 text-lg mb-10">
+            Comece grátis hoje. Nenhum cartão de crédito necessário.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/login?modo=cadastro"
+            className="inline-block text-sm font-semibold px-10 py-4 rounded-xl text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02]"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Criar minha conta grátis
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-gray-100 py-10 px-6" style={{ backgroundColor: '#f9f9f9' }}>
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <img src="/logo.png" alt="Marcaí" style={{ height: '24px' }} />
+          <p className="text-sm text-gray-500 text-center">
+            © 2026 Marcaí. Todos os direitos reservados.
+          </p>
+          <div className="flex items-center gap-5">
+            <Link href="/termos" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Termos de uso</Link>
+            <Link href="/privacidade" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Privacidade</Link>
+          </div>
+        </div>
+      </footer>
+
     </div>
-  );
+  )
 }
