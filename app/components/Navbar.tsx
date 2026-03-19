@@ -29,9 +29,10 @@ export default function Navbar() {
   const isHome = pathname === '/'
   const isAgendar = pathname.startsWith('/agendar')
   const isPublicPage = pathname === '/termos' || pathname === '/privacidade'
+  const isAuthFlow = pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
 
   useEffect(() => {
-    if (isLogin) {
+    if (isLogin || isAuthFlow) {
       setLoaded(true)
       return
     }
@@ -59,8 +60,8 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Nunca mostra na home, login ou páginas de agendamento público
-  if (isHome || isLogin || isAgendar || isPublicPage) return null
+  // Nunca mostra na home, login, recuperação de senha ou páginas de agendamento público
+  if (isHome || isLogin || isAgendar || isPublicPage || isAuthFlow) return null
 
   // Enquanto carrega (evita flash)
   if (!loaded) return null

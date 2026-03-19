@@ -190,6 +190,14 @@ function LoginContent() {
                 </button>
               </div>
             </div>
+            <div className="flex justify-end">
+              <a
+                href="/forgot-password"
+                className="text-xs text-[#25D366] hover:underline"
+              >
+                Esqueci minha senha
+              </a>
+            </div>
             <div className="pt-1">
               <button
                 type="submit"
