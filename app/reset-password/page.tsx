@@ -9,6 +9,7 @@ const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm t
 const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
 
 export default function ResetPasswordPage() {
+  const [initializing, setInitializing] = useState(true)
   const [ready, setReady] = useState(false)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -19,15 +20,24 @@ export default function ResetPasswordPage() {
   const supabase = createClient()
 
   useEffect(() => {
-    // Supabase dispara PASSWORD_RECOVERY quando o usuário chega pelo link do e-mail
+    // Aguarda o evento PASSWORD_RECOVERY que o Supabase dispara ao processar o link do e-mail
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setReady(true)
+        setInitializing(false)
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
+    // Timeout de segurança: se o evento não chegar em 4s, exibe o erro de link inválido
+    const timer = setTimeout(() => {
+      setInitializing(false)
+    }, 4000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timer)
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -73,6 +83,10 @@ export default function ResetPasswordPage() {
           {success ? (
             <div className="bg-green-50 text-green-700 text-sm px-4 py-3 rounded-xl">
               Senha atualizada com sucesso! Redirecionando...
+            </div>
+          ) : initializing ? (
+            <div className="text-sm text-gray-500 text-center py-4">
+              Verificando link...
             </div>
           ) : !ready ? (
             <div className="text-sm text-gray-500 text-center py-4">

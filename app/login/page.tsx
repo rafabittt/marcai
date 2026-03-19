@@ -86,50 +86,55 @@ function LoginContent() {
     setLoading(true)
     setError('')
 
-    // 1. Criar conta no Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password, options: { data: { full_name: nomeCompleto } } })
-    if (authError) {
-      setError('Erro ao criar conta: ' + authError.message)
+    try {
+      // 1. Criar conta no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password, options: { data: { full_name: nomeCompleto } } })
+      if (authError) {
+        setError('Erro ao criar conta: ' + authError.message)
+        setLoading(false)
+        return
+      }
+
+      const user = authData.user
+      if (!user) {
+        setError('Erro inesperado ao criar conta. Tente novamente.')
+        setLoading(false)
+        return
+      }
+
+      // 2. Verificar unicidade do slug
+      const { data: existing } = await supabase
+        .from('negocios')
+        .select('id')
+        .eq('slug', negSlug)
+        .maybeSingle()
+
+      if (existing) {
+        setError('Esse link já está em uso. Escolha outro.')
+        setLoading(false)
+        return
+      }
+
+      // 3. Inserir negócio
+      const { error: negError } = await supabase.from('negocios').insert({
+        user_id: user.id,
+        nome: negNome,
+        tipo: negTipo,
+        telefone: negTelefone,
+        slug: negSlug,
+      })
+
+      if (negError) {
+        setError('Conta criada, mas erro ao salvar negócio: ' + negError.message)
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/configuracoes'
+    } catch (err) {
+      setError('Ocorreu um erro inesperado. Tente novamente.')
       setLoading(false)
-      return
     }
-
-    const user = authData.user
-    if (!user) {
-      setError('Erro inesperado. Tente novamente.')
-      setLoading(false)
-      return
-    }
-
-    // 2. Verificar unicidade do slug
-    const { data: existing } = await supabase
-      .from('negocios')
-      .select('id')
-      .eq('slug', negSlug)
-      .maybeSingle()
-
-    if (existing) {
-      setError('Esse link já está em uso. Escolha outro.')
-      setLoading(false)
-      return
-    }
-
-    // 3. Inserir negócio
-    const { error: negError } = await supabase.from('negocios').insert({
-      user_id: user.id,
-      nome: negNome,
-      tipo: negTipo,
-      telefone: negTelefone,
-      slug: negSlug,
-    })
-
-    if (negError) {
-      setError('Conta criada, mas erro ao salvar negócio. Tente novamente.')
-      setLoading(false)
-      return
-    }
-
-    window.location.href = '/agenda'
   }
 
   function trocarModo(novoModo: 'login' | 'cadastro') {

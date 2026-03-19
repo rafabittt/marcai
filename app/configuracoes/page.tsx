@@ -40,6 +40,7 @@ type Endereco = {
   numero: string
   bairro: string
   cidade: string
+  estado: string
 }
 
 type Negocio = {
@@ -64,7 +65,7 @@ const HORARIOS_PADRAO: HorariosMap = Object.fromEntries(
   ])
 )
 
-const ENDERECO_PADRAO: Endereco = { cep: '', rua: '', numero: '', bairro: '', cidade: '' }
+const ENDERECO_PADRAO: Endereco = { cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -111,6 +112,9 @@ export default function ConfiguracoesPage() {
   // Equipe
   const [profissionais,    setProfissionais]    = useState<Profissional[]>([])
   const [novoProfissional, setNovoProfissional] = useState({ nome: '', cargo: '' })
+
+  // CEP
+  const [cepLoading, setCepLoading] = useState(false)
 
   // Submit
   const [saving,  setSaving]  = useState(false)
@@ -169,6 +173,31 @@ export default function ConfiguracoesPage() {
 
   function handleEndereco(campo: keyof Endereco, valor: string) {
     setEndereco(prev => ({ ...prev, [campo]: valor }))
+  }
+
+  async function handleCEPChange(valor: string) {
+    const masked = maskCEP(valor)
+    setEndereco(prev => ({ ...prev, cep: masked }))
+
+    const digits = masked.replace(/\D/g, '')
+    if (digits.length === 8) {
+      setCepLoading(true)
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
+        const data = await res.json()
+        if (!data.erro) {
+          setEndereco(prev => ({
+            ...prev,
+            cep: masked,
+            rua: data.logradouro || prev.rua,
+            bairro: data.bairro || prev.bairro,
+            cidade: data.localidade || prev.cidade,
+            estado: data.uf || prev.estado,
+          }))
+        }
+      } catch {}
+      setCepLoading(false)
+    }
   }
 
   async function handleSalvar(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -318,22 +347,40 @@ export default function ConfiguracoesPage() {
                 <div className="flex gap-4">
                   <div className="w-36">
                     <label className={labelClass}>CEP</label>
-                    <input
-                      type="text"
-                      value={endereco.cep}
-                      onChange={e => handleEndereco('cep', maskCEP(e.target.value))}
-                      placeholder="00000-000"
-                      className={inputClass}
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={endereco.cep || ''}
+                        onChange={e => handleCEPChange(e.target.value)}
+                        placeholder="00000-000"
+                        maxLength={9}
+                        className={inputClass}
+                      />
+                      {cepLoading && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                          ...
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex-1">
                     <label className={labelClass}>Cidade</label>
                     <input
                       type="text"
-                      value={endereco.cidade}
-                      onChange={e => handleEndereco('cidade', e.target.value)}
-                      placeholder="São Paulo"
-                      className={inputClass}
+                      value={endereco.cidade || ''}
+                      readOnly
+                      placeholder="Preenchido pelo CEP"
+                      className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
+                    />
+                  </div>
+                  <div className="w-20">
+                    <label className={labelClass}>Estado</label>
+                    <input
+                      type="text"
+                      value={endereco.estado || ''}
+                      readOnly
+                      placeholder="UF"
+                      className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
                     />
                   </div>
                 </div>
@@ -342,17 +389,17 @@ export default function ConfiguracoesPage() {
                     <label className={labelClass}>Rua</label>
                     <input
                       type="text"
-                      value={endereco.rua}
-                      onChange={e => handleEndereco('rua', e.target.value)}
-                      placeholder="Av. Paulista"
-                      className={inputClass}
+                      value={endereco.rua || ''}
+                      readOnly
+                      placeholder="Preenchida pelo CEP"
+                      className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
                     />
                   </div>
                   <div className="w-28">
                     <label className={labelClass}>Número</label>
                     <input
                       type="text"
-                      value={endereco.numero}
+                      value={endereco.numero || ''}
                       onChange={e => handleEndereco('numero', maskNumber(e.target.value))}
                       placeholder="1000"
                       className={inputClass}
@@ -363,10 +410,10 @@ export default function ConfiguracoesPage() {
                   <label className={labelClass}>Bairro</label>
                   <input
                     type="text"
-                    value={endereco.bairro}
-                    onChange={e => handleEndereco('bairro', e.target.value)}
-                    placeholder="Bela Vista"
-                    className={inputClass}
+                    value={endereco.bairro || ''}
+                    readOnly
+                    placeholder="Preenchido pelo CEP"
+                    className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
                   />
                 </div>
               </div>
