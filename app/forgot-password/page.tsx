@@ -1,16 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase'
 import LandingHeader from '../components/LandingHeader'
 
 const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
 const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
+  const searchParams = useSearchParams()
+  const linkExpirado = searchParams.get('erro') === 'link_expirado'
+
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(linkExpirado ? 'O link expirou ou já foi usado. Solicite um novo abaixo.' : '')
   const [sent, setSent] = useState(false)
 
   const supabase = createClient()
@@ -21,7 +26,7 @@ export default function ForgotPasswordPage() {
     setError('')
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
     })
 
     if (error) {
@@ -93,5 +98,13 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense>
+      <ForgotPasswordContent />
+    </Suspense>
   )
 }
