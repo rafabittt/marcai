@@ -20,23 +20,12 @@ export default function ResetPasswordPage() {
   const supabase = createClient()
 
   useEffect(() => {
-    // Aguarda o evento PASSWORD_RECOVERY que o Supabase dispara ao processar o link do e-mail
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setReady(true)
-        setInitializing(false)
-      }
-    })
-
-    // Timeout de segurança: se o evento não chegar em 4s, exibe o erro de link inválido
-    const timer = setTimeout(() => {
+    // Com fluxo PKCE, a sessão já foi estabelecida pelo callback server-side.
+    // O evento PASSWORD_RECOVERY não dispara — basta checar se há sessão ativa.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true)
       setInitializing(false)
-    }, 4000)
-
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timer)
-    }
+    })
   }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
