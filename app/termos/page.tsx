@@ -115,7 +115,7 @@ export default function TermosPage() {
             <p className="text-gray-600 leading-relaxed">
               Em caso de dúvidas sobre estes Termos de Uso ou para solicitar o cancelamento da sua conta, entre em contato pelo e-mail:
             </p>
-            <p className="mt-3 font-semibold text-gray-800">contato@marcai.com.br</p>
+            <p className="mt-3 font-semibold text-gray-800">contato@marcai.net.br</p>
             <p className="text-gray-500 text-sm mt-1">Respondemos em até 2 dias úteis.</p>
           </section>
 

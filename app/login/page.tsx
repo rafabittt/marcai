@@ -301,7 +301,7 @@ function LoginContent() {
                     <p className="mt-2 text-xs text-gray-500">
                       Seu link:{' '}
                       <span className="font-medium text-[#25D366]">
-                        marcai.com.br/agendar/{negSlug}
+                        marcai.net.br/agendar/{negSlug}
                       </span>
                     </p>
                   )}

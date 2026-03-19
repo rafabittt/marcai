@@ -133,7 +133,7 @@ export default function PrivacidadePage() {
             </p>
             <div className="mt-4 bg-gray-50 rounded-xl p-5">
               <p className="font-semibold text-gray-800">Marcaí — Encarregado de Proteção de Dados</p>
-              <p className="text-gray-600 mt-1">E-mail: <span className="font-medium text-gray-800">privacidade@marcai.com.br</span></p>
+              <p className="text-gray-600 mt-1">E-mail: <span className="font-medium text-gray-800">privacidade@marcai.net.br</span></p>
               <p className="text-gray-500 text-sm mt-1">Respondemos em até 15 dias corridos, conforme a LGPD.</p>
             </div>
           </section>

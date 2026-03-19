@@ -1,7 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts'
 
 type Agendamento = {
   id: string
@@ -43,13 +46,15 @@ function toInputTime(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
-function Badge({ status }: { status: string }) {
+function Badge({ status, passado = false }: { status: string; passado?: boolean }) {
+  const resolvedStatus = passado && status === 'confirmado' ? 'concluido' : status
   const map: Record<string, { label: string; classes: string }> = {
     confirmado: { label: 'Confirmado', classes: 'bg-[#dcfce7] text-[#128C7E]' },
     cancelado:  { label: 'Cancelado',  classes: 'bg-red-50 text-red-500' },
     pendente:   { label: 'Pendente',   classes: 'bg-yellow-50 text-yellow-600' },
+    concluido:  { label: 'Realizado',  classes: 'bg-gray-100 text-gray-500' },
   }
-  const s = map[status] ?? { label: status, classes: 'bg-gray-100 text-gray-500' }
+  const s = map[resolvedStatus] ?? { label: resolvedStatus, classes: 'bg-gray-100 text-gray-500' }
   return (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${s.classes}`}>
       {s.label}
@@ -60,10 +65,12 @@ function Badge({ status }: { status: string }) {
 export default function DashboardPage() {
   const [agendamentosHoje, setAgendamentosHoje] = useState<Agendamento[]>([])
   const [proximosAgendamentos, setProximosAgendamentos] = useState<Agendamento[]>([])
+  const [agendamentosPassados, setAgendamentosPassados] = useState<Agendamento[]>([])
   const [loading, setLoading] = useState(true)
   const [selecionado, setSelecionado] = useState<Agendamento | null>(null)
   const [mostrarCanceladosHoje, setMostrarCanceladosHoje] = useState(false)
   const [mostrarCanceladosProximos, setMostrarCanceladosProximos] = useState(false)
+  const [mostrarCanceladosPassados, setMostrarCanceladosPassados] = useState(false)
 
   // Reagendar
   const [reagendando, setReagendando] = useState(false)
@@ -99,10 +106,49 @@ export default function DashboardPage() {
         .limit(20)
 
       setProximosAgendamentos(data ?? [])
+
+      const { data: dataPassados } = await supabase
+        .from('agendamentos')
+        .select('id, cliente_nome, cliente_telefone, servico, data_hora, status')
+        .lt('data_hora', inicioHoje)
+        .order('data_hora', { ascending: false })
+        .limit(30)
+
+      setAgendamentosPassados(dataPassados ?? [])
       setLoading(false)
     }
     init()
   }, [])
+
+  // ── Métricas ────────────────────────────────────────────────────────────────
+  const todosUnicos = useMemo(() => {
+    const map = new Map<string, Agendamento>()
+    ;[...agendamentosPassados, ...agendamentosHoje, ...proximosAgendamentos]
+      .forEach(a => map.set(a.id, a))
+    return [...map.values()]
+  }, [agendamentosPassados, agendamentosHoje, proximosAgendamentos])
+
+  const totalCount     = todosUnicos.length
+  const concluidosCount = agendamentosPassados.filter(a => a.status !== 'cancelado').length
+  const canceladosCount = todosUnicos.filter(a => a.status === 'cancelado').length
+
+  // ── Dados do gráfico (volume diário — últimos 7 dias com dados) ─────────────
+  const chartData = useMemo(() => {
+    const byDay: Record<string, { Realizados: number; Cancelados: number }> = {}
+    agendamentosPassados.forEach(ag => {
+      const day = ag.data_hora.slice(0, 10)
+      if (!byDay[day]) byDay[day] = { Realizados: 0, Cancelados: 0 }
+      if (ag.status === 'cancelado') byDay[day].Cancelados++
+      else byDay[day].Realizados++
+    })
+    return Object.entries(byDay)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-7)
+      .map(([date, counts]) => ({
+        dia: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+        ...counts,
+      }))
+  }, [agendamentosPassados])
 
   function abrirModal(ag: Agendamento) {
     setSelecionado(ag)
@@ -120,6 +166,7 @@ export default function DashboardPage() {
   function atualizarLista(id: string, campos: Partial<Agendamento>) {
     setAgendamentosHoje(prev => prev.map(a => a.id === id ? { ...a, ...campos } : a))
     setProximosAgendamentos(prev => prev.map(a => a.id === id ? { ...a, ...campos } : a))
+    setAgendamentosPassados(prev => prev.map(a => a.id === id ? { ...a, ...campos } : a))
   }
 
   async function cancelar() {
@@ -150,6 +197,8 @@ export default function DashboardPage() {
     )
   }
 
+  const isPassado = selecionado ? agendamentosPassados.some(a => a.id === selecionado.id) : false
+
   return (
     <div className="min-h-screen" style={{ background: '#f9f9f9' }}>
       <main className="max-w-2xl mx-auto px-6 py-14 space-y-10">
@@ -158,6 +207,83 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#0a0a0a' }}>Visão geral</h1>
           <p className="text-gray-500 mt-1 text-sm">Seus agendamentos de hoje e os próximos.</p>
+        </div>
+
+        {/* ── Desempenho ─────────────────────────────────────────────────────── */}
+        <div>
+          <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Desempenho</h2>
+
+          {/* Cards de métricas */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <MetricCard
+              label="Total"
+              value={totalCount}
+              color="text-gray-900"
+              bg="bg-white"
+              icon="📋"
+            />
+            <MetricCard
+              label="Concluídos"
+              value={concluidosCount}
+              color="text-[#128C7E]"
+              bg="bg-white"
+              icon="✅"
+            />
+            <MetricCard
+              label="Cancelados"
+              value={canceladosCount}
+              color="text-red-500"
+              bg="bg-white"
+              icon="✕"
+            />
+          </div>
+
+          {/* Gráfico de barras */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 pt-6 pb-4">
+            <p className="text-xs uppercase tracking-widest font-medium text-gray-500 mb-4">
+              Volume diário — últimos dias
+            </p>
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-40">
+                <p className="text-sm text-gray-400">Sem dados históricos ainda.</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={chartData} barSize={18} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="dia"
+                    tick={{ fontSize: 11, fill: '#9ca3af' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: '#9ca3af' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={24}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: '1px solid #f0f0f0',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      fontSize: '12px',
+                    }}
+                    cursor={{ fill: '#f9f9f9' }}
+                  />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '12px' }}
+                  />
+                  <Bar dataKey="Realizados" fill="#25D366" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Cancelados" fill="#fca5a5" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
 
         {/* Hoje */}
@@ -178,7 +304,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Lista */}
+        {/* Próximos */}
         <div>
           <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Próximos agendamentos</h2>
 
@@ -188,6 +314,20 @@ export default function DashboardPage() {
             mostrarCancelados={mostrarCanceladosProximos}
             onToggleCancelados={() => setMostrarCanceladosProximos(p => !p)}
             onAbrirModal={abrirModal}
+          />
+        </div>
+
+        {/* Histórico */}
+        <div>
+          <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Histórico</h2>
+
+          <ListaComCancelados
+            agendamentos={agendamentosPassados}
+            vazio="Nenhum agendamento realizado."
+            mostrarCancelados={mostrarCanceladosPassados}
+            onToggleCancelados={() => setMostrarCanceladosPassados(p => !p)}
+            onAbrirModal={abrirModal}
+            passado
           />
         </div>
 
@@ -214,7 +354,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="font-bold" style={{ color: '#0a0a0a' }}>{selecionado.cliente_nome}</p>
-                  <Badge status={selecionado.status} />
+                  <Badge status={selecionado.status} passado={isPassado} />
                 </div>
               </div>
               <button onClick={fecharModal} className="text-gray-500 hover:text-gray-700 transition-colors text-xl leading-none">
@@ -289,7 +429,33 @@ export default function DashboardPage() {
   )
 }
 
-function AgendamentoCard({ ag, onAbrir }: { ag: Agendamento; onAbrir: (ag: Agendamento) => void }) {
+// ── Componentes auxiliares ──────────────────────────────────────────────────
+
+function MetricCard({
+  label, value, color, bg, icon,
+}: {
+  label: string
+  value: number
+  color: string
+  bg: string
+  icon: string
+}) {
+  return (
+    <div className={`${bg} rounded-2xl border border-gray-100 shadow-sm px-5 py-5 flex flex-col gap-2`}>
+      <span className="text-lg leading-none">{icon}</span>
+      <span className={`text-3xl font-bold tracking-tight ${color}`}>{value}</span>
+      <span className="text-xs text-gray-500 font-medium">{label}</span>
+    </div>
+  )
+}
+
+function AgendamentoCard({
+  ag, onAbrir, passado = false,
+}: {
+  ag: Agendamento
+  onAbrir: (ag: Agendamento) => void
+  passado?: boolean
+}) {
   const cancelado = ag.status === 'cancelado'
   return (
     <button
@@ -310,7 +476,7 @@ function AgendamentoCard({ ag, onAbrir }: { ag: Agendamento; onAbrir: (ag: Agend
         </p>
       </div>
       <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <Badge status={ag.status} />
+        <Badge status={ag.status} passado={passado} />
         <span className={`text-xs font-medium ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
           {formatarDataHora(ag.data_hora)}
         </span>
@@ -325,12 +491,14 @@ function ListaComCancelados({
   mostrarCancelados,
   onToggleCancelados,
   onAbrirModal,
+  passado = false,
 }: {
   agendamentos: Agendamento[]
   vazio: string
   mostrarCancelados: boolean
   onToggleCancelados: () => void
   onAbrirModal: (ag: Agendamento) => void
+  passado?: boolean
 }) {
   const ativos     = agendamentos.filter(a => a.status !== 'cancelado')
   const cancelados = agendamentos.filter(a => a.status === 'cancelado')
@@ -347,11 +515,11 @@ function ListaComCancelados({
     <div className="space-y-3">
       {ativos.length === 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-          <p className="text-gray-500 text-sm">Nenhum agendamento ativo.</p>
+          <p className="text-gray-500 text-sm">{passado ? 'Nenhum agendamento realizado.' : 'Nenhum agendamento ativo.'}</p>
         </div>
       )}
       {ativos.map(ag => (
-        <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrirModal} />
+        <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrirModal} passado={passado} />
       ))}
 
       {cancelados.length > 0 && (
@@ -373,7 +541,7 @@ function ListaComCancelados({
           {mostrarCancelados && (
             <div className="space-y-3">
               {cancelados.map(ag => (
-                <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrirModal} />
+                <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrirModal} passado={passado} />
               ))}
             </div>
           )}
