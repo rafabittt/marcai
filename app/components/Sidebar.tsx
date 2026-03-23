@@ -24,7 +24,7 @@ const NAV = [
   { href: '/configuracoes',   label: 'Configurações',  icon: Settings,         cta: false },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const [nomeNegocio, setNomeNegocio] = useState<string | null>(null)
@@ -72,6 +72,7 @@ export default function Sidebar() {
               <Link
                 key={href}
                 href={href}
+                onClick={onNavigate}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
                 style={{ backgroundColor: '#25D366' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#128C7E')}
@@ -87,6 +88,7 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 active
                   ? 'bg-[#dcfce7] text-[#128C7E]'
