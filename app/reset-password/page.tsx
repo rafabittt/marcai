@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     } else {
       setSuccess(true)
       setTimeout(() => {
-        window.location.href = '/agenda'
+        window.location.href = '/dashboard'
       }, 2000)
     }
   }

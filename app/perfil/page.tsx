@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCPF, maskName, maskPhone } from '@/lib/masks'
+import SidebarLayout from '@/app/components/SidebarLayout'
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true)
@@ -70,7 +71,8 @@ export default function PerfilPage() {
   const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
 
   return (
-    <div className="min-h-screen py-14 px-6" style={{ background: '#f9f9f9' }}>
+    <SidebarLayout>
+    <div className="py-14 px-6">
       <div className="max-w-lg mx-auto">
 
         <div className="mb-8">
@@ -149,5 +151,6 @@ export default function PerfilPage() {
 
       </div>
     </div>
+    </SidebarLayout>
   )
 }

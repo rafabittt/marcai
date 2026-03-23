@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskName, maskPhone } from '@/lib/masks'
+import CalendarioInline from '@/app/components/CalendarioInline'
 
 const HORARIOS = Array.from({ length: 25 }, (_, i) => {
   const minutos = 8 * 60 + i * 30
@@ -43,6 +44,7 @@ type Negocio = {
   telefone: string
   endereco: Endereco | null
   horarios: HorariosMap | null
+  plano: string | null
 }
 
 type Servico      = { id: number; nome: string; duracao: string }
@@ -106,7 +108,7 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     async function init() {
       const { data: neg, error } = await supabase
         .from('negocios')
-        .select('id, nome, slug, telefone, endereco, horarios')
+        .select('id, nome, slug, telefone, endereco, horarios, plano')
         .eq('slug', slug)
         .single()
 
@@ -144,6 +146,26 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
 
     setSubmitting(true)
     setErro('')
+
+    // Verificar limite do plano gratuito (max 10 agendamentos/mês)
+    const plano = negocio.plano ?? 'gratuito'
+    if (plano === 'gratuito') {
+      const agora = new Date()
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString()
+      const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59).toISOString()
+      const { count } = await supabase
+        .from('agendamentos')
+        .select('id', { count: 'exact', head: true })
+        .eq('negocio_id', negocio.id)
+        .gte('data_hora', inicioMes)
+        .lte('data_hora', fimMes)
+
+      if ((count ?? 0) >= 10) {
+        setErro('Este negócio atingiu o limite do plano gratuito. Entre em contato para mais informações.')
+        setSubmitting(false)
+        return
+      }
+    }
 
     const servicoSelecionado      = servicos.find(s => String(s.id) === servicoId)
     const profissionalSelecionado = profissionais.find(p => String(p.id) === profissionalId)
@@ -340,17 +362,10 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
 
           <div>
             <label className={labelClass}>Data</label>
-            <select
+            <CalendarioInline
               value={data}
-              onChange={e => { setData(e.target.value); setHorario('') }}
-              required
-              className={selectClass}
-            >
-              <option value="">Selecione uma data</option>
-              {gerarProximosDias().map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+              onChange={v => { setData(v); setHorario('') }}
+            />
           </div>
 
           <div>

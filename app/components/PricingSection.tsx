@@ -6,7 +6,7 @@ import Link from 'next/link'
 const plans = [
   {
     name: 'Básico',
-    price: 'R$79',
+    price: 'R$49',
     items: ['1 profissional', 'Link de agendamento', 'Confirmação WhatsApp', 'Lembrete automático'],
     highlight: false,
     cta: 'Começar agora',
@@ -19,7 +19,7 @@ const plans = [
   },
   {
     name: 'Pro',
-    price: 'R$149',
+    price: 'R$99',
     items: ['Até 3 profissionais', 'Tudo do Básico', 'Relatório mensal', 'Suporte prioritário'],
     highlight: true,
     cta: 'Começar agora',
@@ -31,7 +31,7 @@ const plans = [
     itemClass: 'flex items-center gap-2.5 text-gray-500',
   },
   {
-    name: 'Clínica',
+    name: 'Prime',
     price: 'R$299',
     items: ['Profissionais ilimitados', 'Tudo do Pro', 'Onboarding dedicado'],
     highlight: false,

@@ -42,9 +42,14 @@ function LoginContent() {
 
   // Auth
   const [email, setEmail] = useState('')
+  const [confirmEmail, setConfirmEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [nomeCompleto, setNomeCompleto] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [confirmEmailError, setConfirmEmailError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
 
   // Negócio (só usado no cadastro)
   const [negNome, setNegNome] = useState('')
@@ -75,12 +80,27 @@ function LoginContent() {
       setError('Email ou senha incorretos')
       setLoading(false)
     } else {
-      window.location.href = '/agenda'
+      window.location.href = '/dashboard'
     }
   }
 
   async function handleCadastro(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
+
+    let valid = true
+    setConfirmEmailError('')
+    setConfirmPasswordError('')
+
+    if (email !== confirmEmail) {
+      setConfirmEmailError('Os emails não coincidem.')
+      valid = false
+    }
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('As senhas não coincidem.')
+      valid = false
+    }
+    if (!valid) return
+
     if (!negSlug) { setError('O link público não pode ficar vazio.'); return }
 
     setLoading(true)
@@ -234,11 +254,25 @@ function LoginContent() {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => { setEmail(e.target.value); setConfirmEmailError('') }}
                 className={inputClass}
                 placeholder="seu@email.com"
                 required
               />
+            </div>
+            <div>
+              <label className={labelClass}>Confirme seu email</label>
+              <input
+                type="email"
+                value={confirmEmail}
+                onChange={e => { setConfirmEmail(e.target.value); setConfirmEmailError('') }}
+                className={`${inputClass} ${confirmEmailError ? 'border-red-400 focus:ring-red-400' : ''}`}
+                placeholder="seu@email.com"
+                required
+              />
+              {confirmEmailError && (
+                <p className="mt-1.5 text-xs text-red-500">{confirmEmailError}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Senha</label>
@@ -246,7 +280,7 @@ function LoginContent() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); setConfirmPasswordError('') }}
                   className={inputClass}
                   placeholder="Mínimo 6 caracteres"
                   required
@@ -260,6 +294,30 @@ function LoginContent() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+            </div>
+            <div>
+              <label className={labelClass}>Confirme sua senha</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordError('') }}
+                  className={`${inputClass} ${confirmPasswordError ? 'border-red-400 focus:ring-red-400' : ''}`}
+                  placeholder="Repita a senha"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {confirmPasswordError && (
+                <p className="mt-1.5 text-xs text-red-500">{confirmPasswordError}</p>
+              )}
             </div>
 
             <div className="border-t border-gray-100 pt-4">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
+import SidebarLayout from '@/app/components/SidebarLayout'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ const DIAS = [
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
-type HorarioDia  = { abertura: string; fechamento: string; fechado: boolean }
+type HorarioDia  = { abertura: string; fechamento: string; fechado: boolean; aberto24h?: boolean }
 type HorariosMap = Record<string, HorarioDia>
 
 type Endereco = {
@@ -53,8 +54,7 @@ type Negocio = {
   endereco: Endereco | null
 }
 
-type Servico      = { id: number; nome: string; duracao: string }
-type Profissional = { id: number; nome: string; cargo: string }
+type Servico = { id: number; nome: string; duracao: string }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
@@ -109,10 +109,6 @@ export default function ConfiguracoesPage() {
   const [servicos,    setServicos]    = useState<Servico[]>([])
   const [novoServico, setNovoServico] = useState({ nome: '', duracao: '30 min' })
 
-  // Equipe
-  const [profissionais,    setProfissionais]    = useState<Profissional[]>([])
-  const [novoProfissional, setNovoProfissional] = useState({ nome: '', cargo: '' })
-
   // CEP
   const [cepLoading, setCepLoading] = useState(false)
 
@@ -144,14 +140,10 @@ export default function ConfiguracoesPage() {
       setHorarios(neg.horarios ?? HORARIOS_PADRAO)
       setEndereco(neg.endereco ?? ENDERECO_PADRAO)
 
-      // Busca serviços e profissionais em paralelo
-      const [{ data: srvData }, { data: profData }] = await Promise.all([
-        supabase.from('servicos').select('id, nome, duracao').eq('negocio_id', neg.id),
-        supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id),
-      ])
+      const { data: srvData } = await supabase
+        .from('servicos').select('id, nome, duracao').eq('negocio_id', neg.id)
 
       setServicos(srvData ?? [])
-      setProfissionais(profData ?? [])
       setLoading(false)
     }
     init()
@@ -169,6 +161,19 @@ export default function ConfiguracoesPage() {
 
   function handleHorario(key: string, campo: keyof HorarioDia, valor: string | boolean) {
     setHorarios(prev => ({ ...prev, [key]: { ...prev[key], [campo]: valor } }))
+  }
+
+  function handleAberto24h(key: string, ativo: boolean) {
+    setHorarios(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        aberto24h: ativo,
+        abertura:  ativo ? '00:00' : '08:00',
+        fechamento: ativo ? '23:59' : '18:00',
+        fechado:   false,
+      },
+    }))
   }
 
   function handleEndereco(campo: keyof Endereco, valor: string) {
@@ -236,16 +241,7 @@ export default function ConfiguracoesPage() {
       )
     })()
 
-    // C: sincronizar profissionais (delete + bulk insert)
-    const profSync = (async () => {
-      await supabase.from('profissionais').delete().eq('negocio_id', negocioId)
-      if (profissionais.length === 0) return
-      await supabase.from('profissionais').insert(
-        profissionais.map(({ nome, cargo }) => ({ negocio_id: negocioId, nome, cargo }))
-      )
-    })()
-
-    const [negResult, , ] = await Promise.all([negUpdate, srvSync, profSync])
+    const [negResult] = await Promise.all([negUpdate, srvSync])
 
     if (negResult.error) {
       setErro('Erro ao salvar. Tente novamente.')
@@ -268,7 +264,8 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <div className="min-h-screen py-14 px-6" style={{ background: '#f9f9f9' }}>
+    <SidebarLayout>
+    <div className="py-14 px-6">
       <div className="max-w-2xl mx-auto space-y-8">
 
         <div>
@@ -419,67 +416,7 @@ export default function ConfiguracoesPage() {
               </div>
             </Section>
 
-            {/* 3. EQUIPE */}
-            <Section title="Equipe">
-              <div className="space-y-3 mb-5">
-                {profissionais.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">Nenhum profissional cadastrado ainda.</p>
-                )}
-                {profissionais.map(p => (
-                  <div key={p.id} className="flex items-center gap-4 bg-gray-50 rounded-2xl px-5 py-3.5">
-                    <div className="w-9 h-9 rounded-full bg-[#dcfce7] flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-[#128C7E]">
-                        {p.nome.trim().charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{p.nome}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">{p.cargo}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setProfissionais(prev => prev.filter(x => x.id !== p.id))}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-gray-100 pt-4 space-y-3">
-                <p className={labelClass}>Adicionar profissional</p>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={novoProfissional.nome}
-                    onChange={e => setNovoProfissional(prev => ({ ...prev, nome: e.target.value }))}
-                    placeholder="Nome do profissional"
-                    className={inputClass}
-                  />
-                  <input
-                    type="text"
-                    value={novoProfissional.cargo}
-                    onChange={e => setNovoProfissional(prev => ({ ...prev, cargo: e.target.value }))}
-                    placeholder="Ex: Barbeiro"
-                    className={inputClass}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!novoProfissional.nome.trim()) return
-                    setProfissionais(prev => [...prev, { id: Date.now(), ...novoProfissional }])
-                    setNovoProfissional({ nome: '', cargo: '' })
-                  }}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-[#25D366] border-2 border-[#25D366] transition-all duration-200 hover:bg-[#dcfce7] hover:scale-[1.02]"
-                >
-                  + Adicionar profissional
-                </button>
-              </div>
-            </Section>
-
-            {/* 4. SERVIÇOS */}
+            {/* 3. SERVIÇOS */}
             <Section title="Serviços">
               <div className="space-y-3 mb-5">
                 {servicos.length === 0 && (
@@ -540,38 +477,54 @@ export default function ConfiguracoesPage() {
               </div>
             </Section>
 
-            {/* 5. HORÁRIOS */}
+            {/* 4. HORÁRIOS */}
             <Section title="Horários de funcionamento">
               <div className="space-y-2">
                 {DIAS.map(({ key, abr }) => {
                   const dia = horarios?.[key] ?? HORARIOS_PADRAO[key]
                   return (
-                    <div key={key} className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-gray-500 w-8 flex-shrink-0">{abr}</span>
-                      <select
-                        value={dia.fechado ? '' : dia.abertura}
-                        disabled={dia.fechado}
-                        onChange={e => handleHorario(key, 'abertura', e.target.value)}
-                        className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                      >
-                        <HorarioOptions />
-                      </select>
-                      <span className="text-xs text-gray-400 flex-shrink-0">até</span>
-                      <select
-                        value={dia.fechado ? '' : dia.fechamento}
-                        disabled={dia.fechado}
-                        onChange={e => handleHorario(key, 'fechamento', e.target.value)}
-                        className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                      >
-                        <HorarioOptions />
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => handleHorario(key, 'fechado', !dia.fechado)}
-                        className={`text-xs font-medium w-14 text-right flex-shrink-0 transition-colors ${dia.fechado ? 'text-gray-400 hover:text-gray-600' : 'text-[#128C7E] hover:text-[#25D366]'}`}
-                      >
-                        {dia.fechado ? 'Fechado' : 'Aberto'}
-                      </button>
+                    <div key={key} className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-500 w-8 flex-shrink-0">{abr}</span>
+                        <select
+                          value={dia.fechado || dia.aberto24h ? '' : dia.abertura}
+                          disabled={dia.fechado || !!dia.aberto24h}
+                          onChange={e => handleHorario(key, 'abertura', e.target.value)}
+                          className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {dia.aberto24h && <option value="">00:00</option>}
+                          <HorarioOptions />
+                        </select>
+                        <span className="text-xs text-gray-400 flex-shrink-0">até</span>
+                        <select
+                          value={dia.fechado || dia.aberto24h ? '' : dia.fechamento}
+                          disabled={dia.fechado || !!dia.aberto24h}
+                          onChange={e => handleHorario(key, 'fechamento', e.target.value)}
+                          className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {dia.aberto24h && <option value="">23:59</option>}
+                          <HorarioOptions />
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleHorario(key, 'fechado', !dia.fechado)}
+                          className={`text-xs font-medium w-14 text-right flex-shrink-0 transition-colors ${dia.fechado ? 'text-gray-400 hover:text-gray-600' : 'text-[#128C7E] hover:text-[#25D366]'}`}
+                        >
+                          {dia.fechado ? 'Fechado' : 'Aberto'}
+                        </button>
+                      </div>
+                      {!dia.fechado && (
+                        <div className="flex items-center gap-2 pl-10">
+                          <button
+                            type="button"
+                            onClick={() => handleAberto24h(key, !dia.aberto24h)}
+                            className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors flex-shrink-0 ${dia.aberto24h ? 'bg-[#25D366]' : 'bg-gray-200'}`}
+                          >
+                            <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform ${dia.aberto24h ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </button>
+                          <span className="text-xs text-gray-500">Aberto 24 horas</span>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -603,6 +556,7 @@ export default function ConfiguracoesPage() {
         )}
       </div>
     </div>
+    </SidebarLayout>
   )
 }
 

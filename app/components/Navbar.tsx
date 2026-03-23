@@ -30,6 +30,12 @@ export default function Navbar() {
   const isAgendar = pathname.startsWith('/agendar')
   const isPublicPage = pathname === '/termos' || pathname === '/privacidade'
   const isAuthFlow = pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
+  const isSidebarPage =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/configuracoes') ||
+    pathname.startsWith('/perfil') ||
+    pathname.startsWith('/profissionais') ||
+    pathname.startsWith('/agendar-interno')
 
   useEffect(() => {
     if (isLogin || isAuthFlow) {
@@ -60,8 +66,8 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Nunca mostra na home, login, recuperação de senha ou páginas de agendamento público
-  if (isHome || isLogin || isAgendar || isPublicPage || isAuthFlow) return null
+  // Nunca mostra na home, login, recuperação de senha, agendamento público ou páginas com Sidebar
+  if (isHome || isLogin || isAgendar || isPublicPage || isAuthFlow || isSidebarPage) return null
 
   // Enquanto carrega (evita flash)
   if (!loaded) return null
@@ -75,15 +81,15 @@ export default function Navbar() {
   return (
     <nav className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between">
       <div className="flex items-center gap-8">
-        <Link href="/agenda">
+        <Link href="/dashboard">
           <img src="/logo.png" alt="Marcaí" style={{ height: '28px' }} />
         </Link>
 
         <div className="flex items-center gap-6">
           <Link
-            href="/agenda"
+            href="/dashboard"
             className={`text-sm font-medium transition-colors ${
-              pathname === '/agenda'
+              pathname === '/dashboard'
                 ? 'text-[#25D366]'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
