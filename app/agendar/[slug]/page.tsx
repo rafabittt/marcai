@@ -128,18 +128,6 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     init()
   }, [slug])
 
-  async function enviarWhatsApp(tel: string, mensagem: string) {
-    try {
-      await fetch('/api/whatsapp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telefone: tel, mensagem }),
-      })
-    } catch (err) {
-      console.error('Falha ao enviar WhatsApp:', err)
-    }
-  }
-
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!negocio) return
@@ -147,62 +135,36 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     setSubmitting(true)
     setErro('')
 
-    // Verificar limite do plano gratuito (max 10 agendamentos/mês)
-    const plano = negocio.plano ?? 'gratuito'
-    if (plano === 'gratuito') {
-      const agora = new Date()
-      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString()
-      const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59).toISOString()
-      const { count } = await supabase
-        .from('agendamentos')
-        .select('id', { count: 'exact', head: true })
-        .eq('negocio_id', negocio.id)
-        .gte('data_hora', inicioMes)
-        .lte('data_hora', fimMes)
+    try {
+      const res = await fetch('/api/agendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug:           negocio.slug,
+          nome,
+          telefone,
+          servicoId,
+          profissionalId,
+          data,
+          horario,
+        }),
+      })
 
-      if ((count ?? 0) >= 10) {
+      if (res.status === 403) {
         setErro('Este negócio atingiu o limite do plano gratuito. Entre em contato para mais informações.')
-        setSubmitting(false)
         return
       }
-    }
 
-    const servicoSelecionado      = servicos.find(s => String(s.id) === servicoId)
-    const profissionalSelecionado = profissionais.find(p => String(p.id) === profissionalId)
+      if (!res.ok) {
+        setErro('Erro ao realizar agendamento. Tente novamente.')
+        return
+      }
 
-    const servicoTexto = servicoSelecionado
-      ? `${servicoSelecionado.nome} (${servicoSelecionado.duracao})`
-      : ''
-
-    const data_hora      = new Date(`${data}T${horario}`).toISOString()
-    const dataFormatada  = new Date(data_hora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-
-    const { error } = await supabase.from('agendamentos').insert({
-      negocio_id:       negocio.id,
-      cliente_nome:     nome,
-      cliente_telefone: telefone,
-      servico:          servicoTexto,
-      profissional:     profissionalSelecionado?.nome ?? null,
-      data_hora,
-      status:           'confirmado',
-    })
-
-    if (error) {
+      setSucesso(true)
+    } catch {
       setErro('Erro ao realizar agendamento. Tente novamente.')
+    } finally {
       setSubmitting(false)
-      return
-    }
-
-    setSucesso(true)
-    setSubmitting(false)
-
-    const profTexto = profissionalSelecionado ? ` com ${profissionalSelecionado.nome}` : ''
-    const msgCliente = `Olá ${nome}! Seu agendamento em ${negocio.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá! 🗓️`
-    enviarWhatsApp(telefone, msgCliente)
-
-    if (negocio.telefone) {
-      const msgDono = `Novo agendamento! ${nome} agendou ${servicoTexto}${profTexto} para ${dataFormatada} às ${horario}. Tel: ${telefone}`
-      enviarWhatsApp(negocio.telefone, msgDono)
     }
   }
 

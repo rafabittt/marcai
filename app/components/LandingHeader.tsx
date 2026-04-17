@@ -15,6 +15,9 @@ export default function LandingHeader() {
             <a href="/#recursos" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
               Recursos
             </a>
+            <a href="/#faq" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              FAQ
+            </a>
             <a href="/#precos" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
               Preços
             </a>

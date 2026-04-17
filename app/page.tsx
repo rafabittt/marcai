@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import FeaturesSection from './components/FeaturesSection'
 import PricingSection from './components/PricingSection'
+import FAQSection from './components/FAQSection'
+import LandingFooter from './components/LandingFooter'
 import LandingHeader from './components/LandingHeader'
 import { Link2, Smartphone, MessageCircle } from 'lucide-react'
 
@@ -36,7 +38,7 @@ export default function LandingPage() {
                   href="/login?modo=cadastro"
                   className="text-sm font-semibold px-7 py-4 rounded-xl text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] text-center"
                 >
-                  Criar minha conta grátis
+                  Criar meu link grátis
                 </Link>
                 <a
                   href="#como-funciona"
@@ -157,19 +159,24 @@ export default function LandingPage() {
             ].map((step, i) => (
               <div
                 key={step.num}
-                className={`grid gap-10 items-start py-12 ${i < 2 ? 'border-b border-gray-100' : ''}`}
+                className={`grid gap-6 md:gap-10 items-start py-10 md:py-12 ${i < 2 ? 'border-b border-gray-100' : ''}`}
                 style={{ gridTemplateColumns: 'auto 1fr' }}
               >
                 <span
-                  className="text-8xl font-bold leading-none select-none"
+                  className="text-5xl md:text-8xl font-bold leading-none select-none"
                   style={{ color: '#25D366', opacity: 0.2 }}
                 >
                   {step.num}
                 </span>
-                <div className="flex-1 pt-3">
+                <div className="flex-1 pt-1 md:pt-3">
                   <div className="flex items-center gap-3 mb-3">
-                    <step.Icon size={22} color="#25D366" />
-                    <h3 className="text-xl font-bold" style={{ color: '#0a0a0a' }}>{step.title}</h3>
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: '#dcfce7' }}
+                    >
+                      <step.Icon size={18} color="#128C7E" />
+                    </div>
+                    <h3 className="text-lg md:text-xl font-bold" style={{ color: '#0a0a0a' }}>{step.title}</h3>
                   </div>
                   <p className="text-gray-500 leading-relaxed">{step.desc}</p>
                 </div>
@@ -178,6 +185,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <FAQSection />
 
       <PricingSection />
 
@@ -199,19 +208,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-gray-100 py-10 px-6" style={{ backgroundColor: '#f9f9f9' }}>
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <img src="/logo.png" alt="Marcaí" style={{ height: '24px' }} />
-          <p className="text-sm text-gray-500 text-center">
-            © 2026 Marcaí. Todos os direitos reservados.
-          </p>
-          <div className="flex items-center gap-5">
-            <Link href="/termos" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Termos de uso</Link>
-            <Link href="/privacidade" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Privacidade</Link>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
 
     </div>
   )

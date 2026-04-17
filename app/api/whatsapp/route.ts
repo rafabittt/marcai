@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 function formatarTelefone(tel: string): string {
   const digits = tel.replace(/\D/g, '')
@@ -7,6 +9,24 @@ function formatarTelefone(tel: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  // Verificar sessão antes de qualquer processamento
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: () => {}, // route handler — não precisa persistir cookies
+      },
+    }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+
   const { telefone, mensagem } = await req.json()
 
   const instanceId = process.env.ZAPI_INSTANCE_ID
@@ -35,7 +55,8 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) {
     const body = await res.text()
-    return NextResponse.json({ error: 'Erro ao enviar mensagem', detail: body }, { status: res.status })
+    console.error('[whatsapp] Z-API error:', body)
+    return NextResponse.json({ error: 'Erro ao enviar mensagem' }, { status: 502 })
   }
 
   const data = await res.json()

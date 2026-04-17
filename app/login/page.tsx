@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -37,6 +37,10 @@ function LoginContent() {
   const [modo, setModo] = useState<'login' | 'cadastro'>(
     searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login'
   )
+
+  useEffect(() => {
+    setModo(searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login')
+  }, [searchParams])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
