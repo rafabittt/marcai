@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       .gte('data_hora', inicioMes)
       .lte('data_hora', fimMes)
 
-    if ((count ?? 0) >= 10) {
+    if ((count ?? 0) >= 5) {
       return NextResponse.json({ error: 'limite_plano' }, { status: 403 })
     }
   }

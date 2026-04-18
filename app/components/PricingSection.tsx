@@ -11,7 +11,7 @@ const plans = [
     items: [
       '1 profissional',
       'Link de agendamento',
-      'Até 10 agendamentos/mês',
+      'Até 5 agendamentos/mês',
       'Confirmação WhatsApp',
     ],
     highlight: false,

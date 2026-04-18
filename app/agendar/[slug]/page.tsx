@@ -151,7 +151,7 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
       })
 
       if (res.status === 403) {
-        setErro('Este negócio atingiu o limite do plano gratuito. Entre em contato para mais informações.')
+        setErro('Este negócio atingiu o limite de agendamentos do mês. Tente novamente em breve ou entre em contato diretamente.')
         return
       }
 
