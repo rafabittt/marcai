@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
 import SidebarLayout from '@/app/components/SidebarLayout'
+import GooLoader from '@/app/components/GooLoader'
 
 const HORARIOS = Array.from({ length: 25 }, (_, i) => {
   const minutos = 8 * 60 + i * 30
@@ -155,7 +156,7 @@ export default function AgendarInternoPage() {
     return (
       <SidebarLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500 text-sm">Carregando...</p>
+          <GooLoader />
         </div>
       </SidebarLayout>
     )

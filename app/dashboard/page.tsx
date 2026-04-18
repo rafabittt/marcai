@@ -9,6 +9,7 @@ import {
   BarChart2, CheckCircle, XCircle, ChevronDown, X,
 } from 'lucide-react'
 import SidebarLayout from '@/app/components/SidebarLayout'
+import GooLoader from '@/app/components/GooLoader'
 
 type Agendamento = {
   id: string
@@ -218,7 +219,7 @@ export default function DashboardPage() {
     return (
       <SidebarLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500 text-sm">Carregando...</p>
+          <GooLoader />
         </div>
       </SidebarLayout>
     )

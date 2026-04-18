@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
 import SidebarLayout from '@/app/components/SidebarLayout'
+import GooLoader from '@/app/components/GooLoader'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -258,7 +259,7 @@ export default function ConfiguracoesPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#f9f9f9' }}>
-        <p className="text-gray-500 text-sm">Carregando...</p>
+        <GooLoader />
       </div>
     )
   }

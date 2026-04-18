@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import SidebarLayout from '@/app/components/SidebarLayout'
+import GooLoader from '@/app/components/GooLoader'
 import { maskName } from '@/lib/masks'
 
 type Profissional = {
@@ -128,7 +129,7 @@ export default function ProfissionaisPage() {
     return (
       <SidebarLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500 text-sm">Carregando...</p>
+          <GooLoader />
         </div>
       </SidebarLayout>
     )
