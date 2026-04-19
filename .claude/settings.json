@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:3000/api/agendar/ocupados?negocio_id=a0af64a1-93da-43d5-8621-cb25411041c0&data=2026-04-19\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/agendar -H 'Content-Type: application/json' -d '{\"slug\":\"teste\",\"nome\":\"Teste User\",\"telefone\":\"\\(11\\) 99999-9999\",\"servicoId\":\"dd0af483-8bb1-48a7-962f-9dfade89a0e8\",\"profissionalId\":\"19dbb22a-79ea-452b-b07a-29fe568795ba\",\"data\":\"2026-04-25\",\"horario\":\"10:00\"}')"
+    ]
+  }
+}

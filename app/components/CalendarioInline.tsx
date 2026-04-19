@@ -7,6 +7,11 @@ const MESES_NOMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
+const CHAVE_LONGA  = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
+const CHAVE_CURTA  = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
+
+type HorarioDia  = { abertura?: string; fechamento?: string; fechado?: boolean; ativo?: boolean }
+type HorariosMap = Record<string, HorarioDia>
 
 function toLocalDateString(date: Date): string {
   const y = date.getFullYear()
@@ -16,12 +21,13 @@ function toLocalDateString(date: Date): string {
 }
 
 interface Props {
-  value: string       // 'YYYY-MM-DD' ou ''
+  value: string
   onChange: (value: string) => void
-  maxDias?: number    // quantos dias à frente permitir (padrão 60)
+  maxDias?: number
+  horarios?: HorariosMap | null
 }
 
-export default function CalendarioInline({ value, onChange, maxDias = 60 }: Props) {
+export default function CalendarioInline({ value, onChange, maxDias = 60, horarios }: Props) {
   const hoje = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -54,6 +60,16 @@ export default function CalendarioInline({ value, onChange, maxDias = 60 }: Prop
     return d < hoje || d > limite
   }
 
+  function isClosed(dia: number): boolean {
+    if (!horarios) return false
+    const dow = new Date(mesAtual.ano, mesAtual.mes, dia).getDay()
+    const confLonga = horarios[CHAVE_LONGA[dow]]
+    if (confLonga) return !!confLonga.fechado
+    const confCurta = horarios[CHAVE_CURTA[dow]]
+    if (confCurta) return confCurta.ativo === false
+    return false
+  }
+
   function handlePrevMes() {
     setMesAtual(({ ano, mes }) => {
       if (mes === 0) return { ano: ano - 1, mes: 11 }
@@ -73,7 +89,7 @@ export default function CalendarioInline({ value, onChange, maxDias = 60 }: Prop
   }, [mesAtual, hoje])
 
   function handleDia(dia: number) {
-    if (isPastOrBeyond(dia)) return
+    if (isPastOrBeyond(dia) || isClosed(dia)) return
     const d = new Date(mesAtual.ano, mesAtual.mes, dia)
     onChange(toLocalDateString(d))
   }
@@ -121,7 +137,7 @@ export default function CalendarioInline({ value, onChange, maxDias = 60 }: Prop
           }
 
           const dateStr = toLocalDateString(new Date(mesAtual.ano, mesAtual.mes, dia))
-          const disabled = isPastOrBeyond(dia)
+          const disabled = isPastOrBeyond(dia) || isClosed(dia)
           const selected = value === dateStr
           const isHoje = toLocalDateString(hoje) === dateStr
 

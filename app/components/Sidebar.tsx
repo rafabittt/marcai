@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
-  CalendarPlus, LayoutDashboard, Users, Settings, LogOut,
+  CalendarPlus, LayoutDashboard, Users, Settings, LogOut, Copy, Check,
 } from 'lucide-react'
 
 function getIniciais(nome: string | null, email: string): string {
@@ -28,7 +28,9 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const [nomeNegocio, setNomeNegocio] = useState<string | null>(null)
+  const [slug, setSlug] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -37,12 +39,20 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       setEmail(user.email ?? null)
       const { data } = await supabase
         .from('negocios')
-        .select('nome')
+        .select('nome, slug')
         .eq('user_id', user.id)
         .maybeSingle()
       setNomeNegocio(data?.nome ?? null)
+      setSlug(data?.slug ?? null)
     })
   }, [])
+
+  function handleCopy() {
+    if (!slug) return
+    navigator.clipboard.writeText(`https://marcai.net.br/agendar/${slug}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -101,6 +111,27 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           )
         })}
       </nav>
+
+      {/* Link público */}
+      {slug && (
+        <div className="px-4 pb-3">
+          <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1.5 px-1">
+            Seu link
+          </p>
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+            <span className="flex-1 text-xs text-gray-500 truncate">
+              marcai.net.br/agendar/<span className="text-[#25D366] font-medium">{slug}</span>
+            </span>
+            <button
+              onClick={handleCopy}
+              title="Copiar link"
+              className="shrink-0 text-gray-400 hover:text-[#25D366] transition-colors"
+            >
+              {copied ? <Check size={14} className="text-[#25D366]" /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Avatar + nome do negócio + Sair */}
       <div className="px-5 py-4 border-t border-gray-100">

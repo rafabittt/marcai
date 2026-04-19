@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
 import SidebarLayout from '@/app/components/SidebarLayout'
@@ -99,6 +99,14 @@ export default function ConfiguracoesPage() {
   const [negTelefone, setNegTelefone] = useState('')
   const [negSlug,     setNegSlug]     = useState('')
   const [slugEditado, setSlugEditado] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyLink = useCallback(() => {
+    if (!negSlug) return
+    navigator.clipboard.writeText(`https://marcai.net.br/agendar/${negSlug}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [negSlug])
 
   // Endereço
   const [endereco, setEndereco] = useState<Endereco>(ENDERECO_PADRAO)
@@ -330,10 +338,23 @@ export default function ConfiguracoesPage() {
                     className={inputClass}
                   />
                   {negSlug && (
-                    <p className="mt-2 text-xs text-gray-500">
-                      Seu link:{' '}
-                      <span className="font-medium text-[#25D366]">marcai.net.br/agendar/{negSlug}</span>
-                    </p>
+                    <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                      <span className="flex-1 text-xs text-gray-500 truncate">
+                        marcai.net.br/agendar/<span className="text-[#25D366] font-medium">{negSlug}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyLink}
+                        title="Copiar link"
+                        className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors"
+                        style={copied
+                          ? { borderColor: '#25D366', color: '#25D366', backgroundColor: '#dcfce7' }
+                          : { borderColor: '#e5e7eb', color: '#6b7280', backgroundColor: 'white' }
+                        }
+                      >
+                        {copied ? '✓ Copiado' : 'Copiar'}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

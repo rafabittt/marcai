@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   // Buscar negócio pelo slug (validar que existe)
   const { data: neg, error: negError } = await supabase
     .from('negocios')
-    .select('id, nome, telefone, plano')
+    .select('id, nome, telefone')
     .eq('slug', slug)
     .single()
 
@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Negócio não encontrado' }, { status: 404 })
   }
 
-  // Verificar limite do plano — server-side (não pode ser bypassado pelo cliente)
-  if ((neg.plano ?? 'gratuito') === 'gratuito') {
+  // Verificar limite do plano freemium (5 agendamentos/mês)
+  if (true) {
     const agora = new Date()
     const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString()
     const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59).toISOString()

@@ -16,6 +16,7 @@ type Agendamento = {
   cliente_nome: string
   cliente_telefone: string
   servico: string
+  profissional: string | null
   data_hora: string
   status: string
 }
@@ -119,7 +120,7 @@ export default function DashboardPage() {
 
       const { data: dataHoje } = await supabase
         .from('agendamentos')
-        .select('id, cliente_nome, cliente_telefone, servico, data_hora, status')
+        .select('id, cliente_nome, cliente_telefone, servico, profissional, data_hora, status')
         .gte('data_hora', inicioHoje)
         .lt('data_hora', fimHoje)
         .order('data_hora', { ascending: true })
@@ -128,7 +129,7 @@ export default function DashboardPage() {
 
       const { data } = await supabase
         .from('agendamentos')
-        .select('id, cliente_nome, cliente_telefone, servico, data_hora, status')
+        .select('id, cliente_nome, cliente_telefone, servico, profissional, data_hora, status')
         .gte('data_hora', new Date().toISOString())
         .order('data_hora', { ascending: true })
         .limit(20)
@@ -137,7 +138,7 @@ export default function DashboardPage() {
 
       const { data: dataPassados } = await supabase
         .from('agendamentos')
-        .select('id, cliente_nome, cliente_telefone, servico, data_hora, status')
+        .select('id, cliente_nome, cliente_telefone, servico, profissional, data_hora, status')
         .lt('data_hora', inicioHoje)
         .order('data_hora', { ascending: false })
         .limit(30)
@@ -156,7 +157,8 @@ export default function DashboardPage() {
   }, [agendamentosPassados, agendamentosHoje, proximosAgendamentos])
 
   const totalCount      = todosUnicos.length
-  const concluidosCount = agendamentosPassados.filter(a => a.status !== 'cancelado').length
+  const agora           = new Date().toISOString()
+  const concluidosCount = todosUnicos.filter(a => a.status !== 'cancelado' && a.data_hora < agora).length
   const canceladosCount = todosUnicos.filter(a => a.status === 'cancelado').length
 
   const chartData = useMemo(() => {
@@ -225,7 +227,9 @@ export default function DashboardPage() {
     )
   }
 
-  const isPassado = selecionado ? agendamentosPassados.some(a => a.id === selecionado.id) : false
+  const isPassado = selecionado
+    ? agendamentosPassados.some(a => a.id === selecionado.id) || new Date(selecionado.data_hora) < new Date()
+    : false
   const pct = (n: number) => totalCount === 0 ? 0 : Math.round((n / totalCount) * 100)
 
   return (
@@ -407,6 +411,7 @@ export default function DashboardPage() {
             <div className="space-y-3 mb-6">
               <Row label="Telefone"      value={selecionado.cliente_telefone} />
               <Row label="Serviço"       value={selecionado.servico} />
+              {selecionado.profissional && <Row label="Profissional" value={selecionado.profissional} />}
               <Row label="Data e horário" value={formatarDataHora(selecionado.data_hora)} />
             </div>
 
@@ -512,6 +517,7 @@ function AgendamentoCard({
   passado?: boolean
 }) {
   const cancelado = ag.status === 'cancelado'
+  const isEffectivelyPast = passado || new Date(ag.data_hora) < new Date()
   return (
     <button
       onClick={() => onAbrir(ag)}
@@ -527,11 +533,11 @@ function AgendamentoCard({
           {ag.cliente_nome}
         </p>
         <p className={`text-sm truncate ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
-          {ag.servico}
+          {ag.servico}{ag.profissional ? ` · ${ag.profissional}` : ''}
         </p>
       </div>
       <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <Badge status={ag.status} passado={passado} />
+        <Badge status={ag.status} passado={isEffectivelyPast} />
         <span className={`text-xs font-medium ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
           {formatarDataHora(ag.data_hora)}
         </span>

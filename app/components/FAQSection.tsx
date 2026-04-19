@@ -30,7 +30,7 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section id="faq" className="py-32 px-6 bg-white">
+    <section id="faq" className="pt-16 pb-32 px-6 bg-white">
       <div className="max-w-3xl mx-auto">
 
         <div className="mb-16">

@@ -15,10 +15,15 @@ const HORARIOS = Array.from({ length: 25 }, (_, i) => {
   return `${h}:${m}`
 }).filter(Boolean) as string[]
 
-const CHAVE_DIA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
+const CHAVE_LONGA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
+const CHAVE_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
 
-type HorarioDia  = { abertura: string; fechamento: string; fechado: boolean }
+type HorarioDia  = { abertura?: string; fechamento?: string; fechado?: boolean; ativo?: boolean }
 type HorariosMap = Record<string, HorarioDia>
+
+function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
+  return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
+}
 type Negocio     = { id: string; nome: string; horarios: HorariosMap | null }
 type Servico     = { id: number; nome: string; duracao: string }
 type Profissional = { id: number; nome: string; cargo: string }
@@ -42,6 +47,7 @@ export default function AgendarInternoPage() {
   const [profissionalId, setProfissionalId] = useState('')
   const [data,           setData]          = useState('')
   const [horario,        setHorario]       = useState('')
+  const [ocupados,       setOcupados]      = useState<string[]>([])
 
   const supabase = createClient()
 
@@ -71,19 +77,51 @@ export default function AgendarInternoPage() {
     init()
   }, [])
 
+  useEffect(() => {
+    if (!data || !negocio?.id) { setOcupados([]); return }
+    supabase
+      .from('agendamentos')
+      .select('data_hora')
+      .eq('negocio_id', negocio.id)
+      .neq('status', 'cancelado')
+      .gte('data_hora', `${data}T00:00:00.000Z`)
+      .lte('data_hora', `${data}T23:59:59.999Z`)
+      .then(({ data: rows }) => {
+        const slots = (rows ?? []).map(r => {
+          const d = new Date(r.data_hora)
+          return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+        })
+        setOcupados(slots)
+      })
+  }, [data, negocio?.id])
+
   const horariosDisponiveis = useMemo<string[] | null>(() => {
     if (!data) return null
     const [ano, mes, dia] = data.split('-').map(Number)
-    const diaSemana = new Date(ano, mes - 1, dia).getDay()
-    const chave = CHAVE_DIA[diaSemana]
+    const dow = new Date(ano, mes - 1, dia).getDay()
     const horarios = negocio?.horarios
     if (!horarios) return HORARIOS
-    const conf = horarios[chave]
+    const conf = getConfDia(horarios, dow)
     if (!conf) return HORARIOS.filter(h => h >= '08:00' && h <= '18:00')
-    if (conf.fechado) return []
-    return HORARIOS.filter(h => h >= conf.abertura && h <= conf.fechamento)
+    if (conf.fechado || conf.ativo === false) return []
+    return HORARIOS.filter(h => h >= conf.abertura! && h <= conf.fechamento!)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, JSON.stringify(negocio?.horarios)])
+
+  const horariosLivres = useMemo(() => {
+    if (!horariosDisponiveis) return null
+    const hoje = new Date()
+    const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`
+    const agoraMin = data === hojeStr ? hoje.getHours() * 60 + hoje.getMinutes() : -1
+    return horariosDisponiveis.filter(h => {
+      if (ocupados.includes(h)) return false
+      if (agoraMin >= 0) {
+        const [hh, mm] = h.split(':').map(Number)
+        if (hh * 60 + mm <= agoraMin) return false
+      }
+      return true
+    })
+  }, [horariosDisponiveis, ocupados, data])
 
   const diaFechado = horariosDisponiveis !== null && horariosDisponiveis.length === 0
 
@@ -290,6 +328,7 @@ export default function AgendarInternoPage() {
                 <CalendarioInline
                   value={data}
                   onChange={v => { setData(v); setHorario('') }}
+                  horarios={negocio?.horarios}
                 />
               </div>
 
@@ -307,7 +346,7 @@ export default function AgendarInternoPage() {
                   {data && !diaFechado && (
                     <>
                       <option value="">Selecione um horário</option>
-                      {(horariosDisponiveis ?? HORARIOS).map(h => (
+                      {(horariosLivres ?? HORARIOS).map(h => (
                         <option key={h} value={h}>{h}</option>
                       ))}
                     </>

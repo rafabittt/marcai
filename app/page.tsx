@@ -20,7 +20,7 @@ export default function LandingPage() {
             {/* Texto */}
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 bg-[#dcfce7] text-[#128C7E]">
-                ✦ Agendamentos com WhatsApp
+                ✦ Confirmação via WhatsApp
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6" style={{ color: '#0a0a0a' }}>
@@ -124,7 +124,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── COMO FUNCIONA ── */}
-      <section id="como-funciona" className="py-32 px-6 bg-white">
+      <section id="como-funciona" className="pt-32 pb-16 px-6 bg-white">
         <div className="max-w-4xl mx-auto">
 
           <div className="mb-20">
