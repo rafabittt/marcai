@@ -1,4 +1,5 @@
 import LandingHeader from '../components/LandingHeader'
+import { Check } from 'lucide-react'
 
 export default function TermosPage() {
   return (
@@ -31,10 +32,10 @@ export default function TermosPage() {
               Para utilizar o Marcaí, você deve criar uma conta com um endereço de e-mail válido e uma senha. Após o cadastro, você poderá configurar seu negócio, definir os serviços oferecidos e compartilhar seu link de agendamento com seus clientes.
             </p>
             <ul className="mt-3 space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Cada conta está vinculada a um único negócio por padrão.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> O link de agendamento é público e pode ser compartilhado por qualquer canal (WhatsApp, Instagram, etc.).</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Você é responsável por manter suas credenciais de acesso em segurança.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> É proibido usar o serviço para fins ilegais, fraudulentos ou que causem dano a terceiros.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Cada conta está vinculada a um único negócio por padrão.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> O link de agendamento é público e pode ser compartilhado por qualquer canal (WhatsApp, Instagram, etc.).</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Você é responsável por manter suas credenciais de acesso em segurança.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> É proibido usar o serviço para fins ilegais, fraudulentos ou que causem dano a terceiros.</li>
             </ul>
           </section>
 
@@ -44,11 +45,11 @@ export default function TermosPage() {
               Ao usar o Marcaí, você se compromete a:
             </p>
             <ul className="mt-3 space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Fornecer informações verdadeiras e atualizadas sobre seu negócio e sobre você.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Não utilizar o serviço para enviar spam ou comunicações não solicitadas a clientes.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Honrar os agendamentos realizados pelos seus clientes através da plataforma.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Manter o número de WhatsApp cadastrado ativo e funcional para receber as notificações.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Não tentar acessar contas de outros usuários nem realizar engenharia reversa na plataforma.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Fornecer informações verdadeiras e atualizadas sobre seu negócio e sobre você.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Não utilizar o serviço para enviar spam ou comunicações não solicitadas a clientes.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Honrar os agendamentos realizados pelos seus clientes através da plataforma.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Manter o número de WhatsApp cadastrado ativo e funcional para receber as notificações.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Não tentar acessar contas de outros usuários nem realizar engenharia reversa na plataforma.</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-3">
               O descumprimento dessas condições pode resultar na suspensão ou cancelamento imediato da sua conta, sem direito a reembolso do período já pago.
@@ -61,10 +62,10 @@ export default function TermosPage() {
               O Marcaí se compromete a:
             </p>
             <ul className="mt-3 space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Manter a plataforma disponível com esforços razoáveis de disponibilidade e estabilidade.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Notificar os usuários com antecedência em caso de manutenções programadas que afetem o serviço.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Tratar os dados dos usuários conforme nossa Política de Privacidade e a LGPD.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Oferecer suporte para dúvidas e problemas relacionados ao funcionamento da plataforma.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Manter a plataforma disponível com esforços razoáveis de disponibilidade e estabilidade.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Notificar os usuários com antecedência em caso de manutenções programadas que afetem o serviço.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Tratar os dados dos usuários conforme nossa Política de Privacidade e a LGPD.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Oferecer suporte para dúvidas e problemas relacionados ao funcionamento da plataforma.</li>
             </ul>
           </section>
 
@@ -84,9 +85,9 @@ export default function TermosPage() {
               Você pode cancelar sua conta a qualquer momento, sem necessidade de justificativa. Para isso, entre em contato pelo e-mail indicado na seção "Contato" abaixo. Após o cancelamento:
             </p>
             <ul className="mt-3 space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Seu link de agendamento será desativado imediatamente.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Seus dados serão excluídos de acordo com nossa Política de Privacidade.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Não realizamos reembolso proporcional de períodos já cobrados, salvo quando exigido por lei.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Seu link de agendamento será desativado imediatamente.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Seus dados serão excluídos de acordo com nossa Política de Privacidade.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Não realizamos reembolso proporcional de períodos já cobrados, salvo quando exigido por lei.</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-3">
               O Marcaí também pode cancelar sua conta em caso de violação destes termos, com ou sem aviso prévio, dependendo da gravidade da infração.

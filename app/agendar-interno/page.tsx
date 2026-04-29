@@ -24,7 +24,7 @@ type HorariosMap = Record<string, HorarioDia>
 function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
   return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
 }
-type Negocio     = { id: string; nome: string; horarios: HorariosMap | null }
+type Negocio     = { id: string; nome: string; horarios: HorariosMap | null; plano: string | null }
 type Servico     = { id: number; nome: string; duracao: string }
 type Profissional = { id: number; nome: string; cargo: string }
 
@@ -58,7 +58,7 @@ export default function AgendarInternoPage() {
 
       const { data: neg } = await supabase
         .from('negocios')
-        .select('id, nome, horarios')
+        .select('id, nome, horarios, plano')
         .eq('user_id', user.id)
         .maybeSingle()
 
@@ -142,6 +142,23 @@ export default function AgendarInternoPage() {
     setSubmitting(true)
     setErro('')
 
+    if ((negocio.plano ?? 'gratuito') === 'gratuito') {
+      const agora = new Date()
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString()
+      const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59).toISOString()
+      const { count } = await supabase
+        .from('agendamentos')
+        .select('id', { count: 'exact', head: true })
+        .eq('negocio_id', negocio.id)
+        .gte('data_hora', inicioMes)
+        .lte('data_hora', fimMes)
+      if ((count ?? 0) >= 5) {
+        setErro('Limite de 5 agendamentos/mês do plano Freemium atingido. Faça upgrade para continuar.')
+        setSubmitting(false)
+        return
+      }
+    }
+
     const servicoSelecionado      = servicos.find(s => String(s.id) === servicoId)
     const profissionalSelecionado = profissionais.find(p => String(p.id) === profissionalId)
 
@@ -173,7 +190,7 @@ export default function AgendarInternoPage() {
     const profTexto = profissionalSelecionado ? ` com ${profissionalSelecionado.nome}` : ''
     enviarWhatsApp(
       telefone,
-      `Olá ${nome}! Seu agendamento em ${negocio.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá! 🗓️`
+      `Olá ${nome}! Seu agendamento em ${negocio.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá!`
     )
 
     setSucesso(true)

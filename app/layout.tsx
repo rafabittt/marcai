@@ -16,9 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Marcaí",
   description: "Gerencie seus agendamentos com facilidade",
-  icons: {
-    icon: "/logo-40.png",
-  },
 };
 
 export default function RootLayout({

@@ -352,7 +352,7 @@ export default function ConfiguracoesPage() {
                           : { borderColor: '#e5e7eb', color: '#6b7280', backgroundColor: 'white' }
                         }
                       >
-                        {copied ? '✓ Copiado' : 'Copiar'}
+                        {copied ? 'Copiado' : 'Copiar'}
                       </button>
                     </div>
                   )}

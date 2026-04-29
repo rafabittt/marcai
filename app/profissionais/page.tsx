@@ -26,6 +26,7 @@ const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium 
 export default function ProfissionaisPage() {
   const [loading, setLoading] = useState(true)
   const [negocioId, setNegocioId] = useState<string | null>(null)
+  const [plano, setPlano] = useState<string>('gratuito')
   const [profissionais, setProfissionais] = useState<Profissional[]>([])
   const [nome, setNome] = useState('')
   const [cargo, setCargo] = useState('')
@@ -43,12 +44,13 @@ export default function ProfissionaisPage() {
 
       const { data: neg } = await supabase
         .from('negocios')
-        .select('id')
+        .select('id, plano')
         .eq('user_id', user.id)
         .maybeSingle()
 
       if (!neg) { setLoading(false); return }
       setNegocioId(neg.id)
+      setPlano(neg.plano ?? 'gratuito')
 
       await carregarProfissionais(neg.id)
       setLoading(false)
@@ -69,11 +71,20 @@ export default function ProfissionaisPage() {
     setProfissionais(data ?? [])
   }
 
+  const limiteProf = plano === 'prime' ? Infinity : plano === 'pro' ? 3 : 1
+
   async function handleAdicionar(e: React.FormEvent) {
     e.preventDefault()
     if (!negocioId || !nome.trim()) return
     setSaving(true)
     setErro('')
+
+    if (profissionais.length >= limiteProf) {
+      const label = plano === 'pro' ? '3 profissionais' : '1 profissional'
+      setErro(`Seu plano ${plano.charAt(0).toUpperCase() + plano.slice(1)} permite até ${label}. Faça upgrade para adicionar mais.`)
+      setSaving(false)
+      return
+    }
 
     const { error } = await supabase.from('profissionais').insert({
       negocio_id: negocioId,
@@ -223,6 +234,12 @@ export default function ProfissionaisPage() {
           </div>
 
           {/* Formulário para adicionar */}
+          {profissionais.length >= limiteProf && plano !== 'prime' && (
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-4 text-sm text-amber-700">
+              Limite de profissionais atingido para o plano {plano.charAt(0).toUpperCase() + plano.slice(1)}.{' '}
+              <a href="/plano" className="underline font-semibold hover:text-amber-900">Fazer upgrade</a>
+            </div>
+          )}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
             <h2 className="text-xs uppercase tracking-widest font-semibold text-gray-500 mb-6">Adicionar profissional</h2>
             <form onSubmit={handleAdicionar} className="space-y-4">

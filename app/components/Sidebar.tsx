@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
-  CalendarPlus, LayoutDashboard, Users, Settings, LogOut, Copy, Check,
+  CalendarPlus, LayoutDashboard, Users, Settings, LogOut, Copy, Check, CreditCard,
 } from 'lucide-react'
 
 function getIniciais(nome: string | null, email: string): string {
@@ -22,15 +22,17 @@ const NAV = [
   { href: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard,  cta: false },
   { href: '/profissionais',   label: 'Profissionais',  icon: Users,            cta: false },
   { href: '/configuracoes',   label: 'Configurações',  icon: Settings,         cta: false },
+  { href: '/plano',           label: 'Plano',          icon: CreditCard,       cta: false },
 ]
 
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const [nomeNegocio, setNomeNegocio] = useState<string | null>(null)
-  const [slug, setSlug] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [slug,        setSlug]        = useState<string | null>(null)
+  const [email,       setEmail]       = useState<string | null>(null)
+  const [plano,       setPlano]       = useState<string | null>(null)
+  const [copied,      setCopied]      = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -39,11 +41,12 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       setEmail(user.email ?? null)
       const { data } = await supabase
         .from('negocios')
-        .select('nome, slug')
+        .select('nome, slug, plano')
         .eq('user_id', user.id)
         .maybeSingle()
       setNomeNegocio(data?.nome ?? null)
       setSlug(data?.slug ?? null)
+      setPlano(data?.plano ?? 'gratuito')
     })
   }, [])
 
@@ -106,7 +109,16 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               }`}
             >
               <Icon size={16} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {href === '/plano' && plano && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                  plano === 'gratuito'
+                    ? 'bg-gray-100 text-gray-500'
+                    : 'bg-[#dcfce7] text-[#128C7E]'
+                }`}>
+                  {plano === 'gratuito' ? 'Grátis' : plano.charAt(0).toUpperCase() + plano.slice(1)}
+                </span>
+              )}
             </Link>
           )
         })}

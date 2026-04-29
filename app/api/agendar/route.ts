@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   // Buscar negócio pelo slug (validar que existe)
   const { data: neg, error: negError } = await supabase
     .from('negocios')
-    .select('id, nome, telefone')
+    .select('id, nome, telefone, plano')
     .eq('slug', slug)
     .single()
 
@@ -74,8 +74,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Negócio não encontrado' }, { status: 404 })
   }
 
-  // Verificar limite do plano freemium (5 agendamentos/mês)
-  if (true) {
+  // Planos pagos não têm limite de agendamentos
+  const plano = (neg.plano ?? 'gratuito') as string
+  if (plano === 'gratuito') {
     const agora = new Date()
     const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString()
     const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59).toISOString()
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
 
   enviarWhatsApp(
     telefone,
-    `Olá ${nome.trim()}! Seu agendamento em ${neg.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá! 🗓️`
+    `Olá ${nome.trim()}! Seu agendamento em ${neg.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá!`
   )
 
   if (neg.telefone) {

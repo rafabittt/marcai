@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { Check } from 'lucide-react'
 
 const plans = [
   {
@@ -41,7 +42,7 @@ const plans = [
     highlight: false,
     badge: null as string | null,
     cta: 'Escolher este plano',
-    ctaHref: '/login?modo=cadastro',
+    ctaHref: '/assinar?plano=basico',
     cardClass: 'bg-white rounded-2xl p-7 border border-gray-100 text-left hover:shadow-md transition-shadow relative',
     priceClass: 'text-4xl font-bold',
     priceStyle: { color: '#0a0a0a' } as React.CSSProperties,
@@ -65,7 +66,7 @@ const plans = [
     highlight: true,
     badge: 'Mais escolhido',
     cta: 'Escolher este plano',
-    ctaHref: '/login?modo=cadastro',
+    ctaHref: '/assinar?plano=pro',
     cardClass: 'rounded-2xl p-7 text-left relative bg-gray-900',
     priceClass: 'text-4xl font-bold text-white',
     priceStyle: {} as React.CSSProperties,
@@ -88,7 +89,7 @@ const plans = [
     highlight: false,
     badge: null as string | null,
     cta: 'Escolher este plano',
-    ctaHref: '/login?modo=cadastro',
+    ctaHref: '/assinar?plano=prime',
     cardClass: 'bg-white rounded-2xl p-7 border border-gray-100 text-left hover:shadow-md transition-shadow relative',
     priceClass: 'text-4xl font-bold',
     priceStyle: { color: '#0a0a0a' } as React.CSSProperties,
@@ -170,7 +171,7 @@ export default function PricingSection() {
               <ul className={plan.listClass}>
                 {plan.items.map(item => (
                   <li key={item} className={plan.itemClass}>
-                    <span className="text-[#25D366] font-bold flex-shrink-0">✓</span> {item}
+                    <Check size={14} className="text-[#25D366] flex-shrink-0" /> {item}
                   </li>
                 ))}
               </ul>

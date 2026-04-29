@@ -72,7 +72,7 @@ export default function LandingFooter() {
             <Link href="/termos" className="hover:text-gray-600 transition-colors">Termos</Link>
             <Link href="/privacidade" className="hover:text-gray-600 transition-colors">Privacidade</Link>
           </div>
-          <span>Feito para pequenos negócios brasileiros 🇧🇷</span>
+          <span>Feito para pequenos negócios brasileiros</span>
         </div>
       </div>
 

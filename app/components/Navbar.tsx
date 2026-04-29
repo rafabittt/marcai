@@ -35,7 +35,9 @@ export default function Navbar() {
     pathname.startsWith('/configuracoes') ||
     pathname.startsWith('/perfil') ||
     pathname.startsWith('/profissionais') ||
-    pathname.startsWith('/agendar-interno')
+    pathname.startsWith('/agendar-interno') ||
+    pathname.startsWith('/plano') ||
+    pathname.startsWith('/assinar')
 
   useEffect(() => {
     if (isLogin || isAuthFlow) {

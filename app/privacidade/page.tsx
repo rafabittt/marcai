@@ -1,4 +1,5 @@
 import LandingHeader from '../components/LandingHeader'
+import { Check } from 'lucide-react'
 
 export default function PrivacidadePage() {
   return (
@@ -29,18 +30,18 @@ export default function PrivacidadePage() {
 
             <h3 className="text-base font-semibold text-gray-800 mb-2">Usuários cadastrados (donos de negócio)</h3>
             <ul className="space-y-2 text-gray-600 mb-5">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">E-mail</strong> — usado para autenticação e comunicações da plataforma.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Nome completo</strong> — exibido no painel e usado para personalização.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Número de telefone / WhatsApp</strong> — usado para enviar notificações de agendamentos.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Dados do negócio</strong> — nome, tipo, slug (link público) e telefone de contato.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Dados de uso</strong> — logs de acesso e interações com a plataforma para fins de segurança e melhorias.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">E-mail</strong> — usado para autenticação e comunicações da plataforma.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Nome completo</strong> — exibido no painel e usado para personalização.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Número de telefone / WhatsApp</strong> — usado para enviar notificações de agendamentos.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados do negócio</strong> — nome, tipo, slug (link público) e telefone de contato.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados de uso</strong> — logs de acesso e interações com a plataforma para fins de segurança e melhorias.</li>
             </ul>
 
             <h3 className="text-base font-semibold text-gray-800 mb-2">Clientes finais (quem agenda)</h3>
             <ul className="space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Nome</strong> — para identificação no agendamento.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Telefone / WhatsApp</strong> — para envio da confirmação automática do agendamento.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Dados do agendamento</strong> — serviço solicitado, data e horário escolhidos.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Nome</strong> — para identificação no agendamento.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Telefone / WhatsApp</strong> — para envio da confirmação automática do agendamento.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados do agendamento</strong> — serviço solicitado, data e horário escolhidos.</li>
             </ul>
             <p className="text-gray-600 mt-3 text-sm">
               Não coletamos CPF, dados bancários, localização, cookies de rastreamento ou qualquer dado sensível definido pelo Art. 5º, II da LGPD.
@@ -53,11 +54,11 @@ export default function PrivacidadePage() {
               Utilizamos os dados coletados exclusivamente para as seguintes finalidades:
             </p>
             <ul className="space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Autenticar usuários e manter sessões seguras na plataforma.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Exibir e gerenciar os agendamentos no painel do usuário.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Enviar mensagens de confirmação de agendamento via WhatsApp para o cliente e para o dono do negócio.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Enviar comunicações sobre o serviço, como avisos de manutenção e atualizações nos termos.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> Melhorar continuamente a plataforma com base em padrões de uso anonimizados.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Autenticar usuários e manter sessões seguras na plataforma.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Exibir e gerenciar os agendamentos no painel do usuário.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Enviar mensagens de confirmação de agendamento via WhatsApp para o cliente e para o dono do negócio.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Enviar comunicações sobre o serviço, como avisos de manutenção e atualizações nos termos.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Melhorar continuamente a plataforma com base em padrões de uso anonimizados.</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-3">
               Não utilizamos seus dados para venda a terceiros, publicidade direcionada ou qualquer outra finalidade não listada acima.
@@ -94,10 +95,10 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Por quanto tempo armazenamos os dados</h2>
             <ul className="space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Dados de conta ativa</strong> — mantidos enquanto a conta estiver ativa.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Dados de agendamentos</strong> — armazenados por até 12 meses após a data do agendamento para fins de histórico.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Após cancelamento da conta</strong> — os dados são excluídos em até 30 dias corridos após a solicitação.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Logs de segurança</strong> — retidos por até 6 meses para fins de auditoria e prevenção a fraudes.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados de conta ativa</strong> — mantidos enquanto a conta estiver ativa.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados de agendamentos</strong> — armazenados por até 12 meses após a data do agendamento para fins de histórico.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Após cancelamento da conta</strong> — os dados são excluídos em até 30 dias corridos após a solicitação.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Logs de segurança</strong> — retidos por até 6 meses para fins de auditoria e prevenção a fraudes.</li>
             </ul>
           </section>
 
@@ -107,12 +108,12 @@ export default function PrivacidadePage() {
               Em conformidade com os Art. 17 a 22 da LGPD, você tem os seguintes direitos sobre seus dados pessoais:
             </p>
             <ul className="space-y-2 text-gray-600">
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Acesso</strong> — solicitar uma cópia de todos os dados que temos sobre você.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Correção</strong> — atualizar dados incorretos ou desatualizados diretamente pelo painel ou por solicitação.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Exclusão</strong> — solicitar a remoção dos seus dados pessoais da nossa base.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Portabilidade</strong> — receber seus dados em formato estruturado para uso em outro serviço.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Revogação de consentimento</strong> — retirar o consentimento para tratamento de dados a qualquer momento.</li>
-              <li className="flex gap-2"><span className="text-[#25D366] font-bold flex-shrink-0">✓</span> <strong className="text-gray-800">Informação</strong> — saber com quais terceiros seus dados foram compartilhados.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Acesso</strong> — solicitar uma cópia de todos os dados que temos sobre você.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Correção</strong> — atualizar dados incorretos ou desatualizados diretamente pelo painel ou por solicitação.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Exclusão</strong> — solicitar a remoção dos seus dados pessoais da nossa base.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Portabilidade</strong> — receber seus dados em formato estruturado para uso em outro serviço.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Revogação de consentimento</strong> — retirar o consentimento para tratamento de dados a qualquer momento.</li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Informação</strong> — saber com quais terceiros seus dados foram compartilhados.</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-3">
               Para exercer qualquer um desses direitos, entre em contato pelo canal indicado na seção abaixo. Atendemos todas as solicitações em até 15 dias corridos, conforme previsto na LGPD.

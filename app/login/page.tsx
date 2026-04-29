@@ -84,7 +84,8 @@ function LoginContent() {
       setError('Email ou senha incorretos')
       setLoading(false)
     } else {
-      window.location.href = '/dashboard'
+      const redirect = searchParams.get('redirect')
+      window.location.href = redirect ?? '/dashboard'
     }
   }
 
@@ -154,7 +155,8 @@ function LoginContent() {
         return
       }
 
-      window.location.href = '/configuracoes'
+      const redirect = searchParams.get('redirect')
+      window.location.href = redirect ?? '/configuracoes'
     } catch (err) {
       setError('Ocorreu um erro inesperado. Tente novamente.')
       setLoading(false)

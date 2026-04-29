@@ -4,7 +4,7 @@ import PricingSection from './components/PricingSection'
 import FAQSection from './components/FAQSection'
 import LandingFooter from './components/LandingFooter'
 import LandingHeader from './components/LandingHeader'
-import { Link2, Smartphone, MessageCircle } from 'lucide-react'
+import { Link2, Smartphone, MessageCircle, Check, MessageSquare } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -20,7 +20,7 @@ export default function LandingPage() {
             {/* Texto */}
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 bg-[#dcfce7] text-[#128C7E]">
-                ✦ Confirmação via WhatsApp
+                <MessageSquare size={12} /> Confirmação via WhatsApp
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6" style={{ color: '#0a0a0a' }}>
@@ -50,13 +50,13 @@ export default function LandingPage() {
 
               <div className="flex flex-wrap gap-5 text-sm text-gray-600">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[#25D366]">✓</span> Grátis para começar
+                  <Check size={14} className="text-[#25D366]" /> Grátis para começar
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[#25D366]">✓</span> Sem cartão de crédito
+                  <Check size={14} className="text-[#25D366]" /> Sem cartão de crédito
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[#25D366]">✓</span> WhatsApp incluso
+                  <Check size={14} className="text-[#25D366]" /> WhatsApp incluso
                 </span>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function LandingPage() {
                         <p className="text-[10px] font-semibold tracking-widest text-gray-500 mb-1">{f.label}</p>
                         <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2.5">
                           <span className="text-sm text-gray-700">{f.value}</span>
-                          {f.done && <span className="text-[#25D366] text-xs">✓</span>}
+                          {f.done && <Check size={12} className="text-[#25D366]" />}
                         </div>
                       </div>
                     ))}
@@ -107,7 +107,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-700">WhatsApp</p>
-                      <p className="text-xs text-gray-500 leading-relaxed">Agendamento confirmado para amanhã às 10h! 🗓️</p>
+                      <p className="text-xs text-gray-500 leading-relaxed">Agendamento confirmado para amanhã às 10h!</p>
                     </div>
                   </div>
                 </div>

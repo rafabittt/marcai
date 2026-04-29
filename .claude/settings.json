@@ -5,7 +5,14 @@
       "Bash(grep -v \"^$\")",
       "Bash(curl -s -X POST http://localhost:3000/api/agendar -H 'Content-Type: application/json' -d '{\"slug\":\"teste\",\"nome\":\"Teste User\",\"telefone\":\"\\(11\\) 99999-9999\",\"servicoId\":\"dd0af483-8bb1-48a7-962f-9dfade89a0e8\",\"profissionalId\":\"19dbb22a-79ea-452b-b07a-29fe568795ba\",\"data\":\"2026-04-25\",\"horario\":\"10:00\"}')",
       "Bash(git -C /Users/rafabitt/meu-saas status)",
-      "Bash(git -C /Users/rafabitt/meu-saas diff --stat)"
+      "Bash(git -C /Users/rafabitt/meu-saas diff --stat)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3)",
+      "Bash(sed -i '' \"s|<span className=\\\\\"text-\\\\[#25D366\\\\] font-bold flex-shrink-0\\\\\">✓</span>|<Check size={14} className=\\\\\"text-[#25D366] flex-shrink-0\\\\\" />|g\" /Users/rafabitt/meu-saas/app/privacidade/page.tsx /Users/rafabitt/meu-saas/app/termos/page.tsx)",
+      "Bash(sed -i '' \"s|import LandingHeader from '../components/LandingHeader'|import LandingHeader from '../components/LandingHeader'\\\\nimport { Check } from 'lucide-react'|\" /Users/rafabitt/meu-saas/app/privacidade/page.tsx /Users/rafabitt/meu-saas/app/termos/page.tsx)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/rafabitt/meu-saas/public/logo-40.png)",
+      "Bash(git -C /Users/rafabitt/meu-saas config --global user.email \"rafaxcix@gmail.com\")",
+      "Bash(git -C /Users/rafabitt/meu-saas config --global user.name \"Rafael\")"
     ]
   }
 }
