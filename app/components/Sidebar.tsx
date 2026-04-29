@@ -70,9 +70,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     >
       {/* Logo */}
       <div className="px-6 pt-6 pb-5">
-        <Link href="/">
-          <img src="/logo.png" alt="Marcaí" style={{ height: 26 }} />
-        </Link>
+        <img src="/logo.png" alt="Marcaí" style={{ height: 26 }} />
       </div>
 
       {/* Navegação */}
@@ -161,7 +159,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
         <button
           onClick={handleLogout}
-          className="mt-3 w-full flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-1 transition-colors"
+          className="mt-3 w-full flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
         >
           <LogOut size={14} />
           Sair
