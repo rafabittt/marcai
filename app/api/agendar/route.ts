@@ -96,23 +96,23 @@ export async function POST(req: NextRequest) {
   let servicoTexto = servicoId ?? ''
   let profissionalNome: string | null = null
 
-  if (servicoId && !isNaN(Number(servicoId))) {
+  if (servicoId) {
     const { data: srv } = await supabase
       .from('servicos')
       .select('nome, duracao')
-      .eq('id', Number(servicoId))
+      .eq('id', servicoId)
       .eq('negocio_id', neg.id)
-      .single()
-    servicoTexto = srv ? `${srv.nome} (${srv.duracao})` : ''
+      .maybeSingle()
+    if (srv) servicoTexto = `${srv.nome} (${srv.duracao})`
   }
 
-  if (profissionalId && !isNaN(Number(profissionalId))) {
+  if (profissionalId) {
     const { data: prof } = await supabase
       .from('profissionais')
       .select('nome')
-      .eq('id', Number(profissionalId))
+      .eq('id', profissionalId)
       .eq('negocio_id', neg.id)
-      .single()
+      .maybeSingle()
     profissionalNome = prof?.nome ?? null
   }
 

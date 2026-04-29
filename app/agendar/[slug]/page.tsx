@@ -49,8 +49,8 @@ type Negocio = {
   horarios: HorariosMap | null
 }
 
-type Servico      = { id: number; nome: string; duracao: string }
-type Profissional = { id: number; nome: string; cargo: string }
+type Servico      = { id: string; nome: string; duracao: string }
+type Profissional = { id: string; nome: string; cargo: string }
 
 function formatarEndereco(e: Endereco | null): string | null {
   if (!e) return null

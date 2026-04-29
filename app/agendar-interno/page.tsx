@@ -25,8 +25,8 @@ function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
   return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
 }
 type Negocio     = { id: string; nome: string; horarios: HorariosMap | null; plano: string | null }
-type Servico     = { id: number; nome: string; duracao: string }
-type Profissional = { id: number; nome: string; cargo: string }
+type Servico     = { id: string; nome: string; duracao: string }
+type Profissional = { id: string; nome: string; cargo: string }
 
 const selectClass = 'w-full border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent'
 const inputClass  = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
