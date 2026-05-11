@@ -132,19 +132,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Erro ao realizar agendamento' }, { status: 500 })
   }
 
-  // Notificações WhatsApp — fire-and-forget, server-side
+  // Notificações WhatsApp — aguardar antes de encerrar a função (Vercel mata fire-and-forget)
   const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   })
   const profTexto = profissionalNome ? ` com ${profissionalNome}` : ''
 
-  enviarWhatsApp(
+  await enviarWhatsApp(
     telefone,
     `Olá ${nome.trim()}! Seu agendamento em ${neg.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá!`
   )
 
   if (neg.telefone) {
-    enviarWhatsApp(
+    await enviarWhatsApp(
       neg.telefone,
       `Novo agendamento! ${nome.trim()} agendou ${servicoTexto}${profTexto} para ${dataFormatada} às ${horario}. Tel: ${telefone}`
     )
