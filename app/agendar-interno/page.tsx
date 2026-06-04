@@ -166,7 +166,7 @@ export default function AgendarInternoPage() {
       ? `${servicoSelecionado.nome} (${servicoSelecionado.duracao})`
       : servicoId
 
-    const data_hora = new Date(`${data}T${horario}`).toISOString()
+    const data_hora = `${data}T${horario}:00.000Z`
     const dataFormatada = new Date(data_hora).toLocaleDateString('pt-BR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
     })

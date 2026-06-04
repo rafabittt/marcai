@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Validar que data+horário não está no passado
-  const dataAgendamento = new Date(`${data}T${horario}`)
+  const dataAgendamento = new Date(`${data}T${horario}:00.000Z`)
   if (isNaN(dataAgendamento.getTime()) || dataAgendamento < new Date()) {
     return NextResponse.json({ error: 'Data ou horário inválido' }, { status: 400 })
   }
@@ -114,6 +114,18 @@ export async function POST(req: NextRequest) {
       .eq('negocio_id', neg.id)
       .maybeSingle()
     profissionalNome = prof?.nome ?? null
+  }
+
+  // Checar se o slot já está ocupado (evita double-booking)
+  const { count: slotOcupado } = await supabase
+    .from('agendamentos')
+    .select('id', { count: 'exact', head: true })
+    .eq('negocio_id', neg.id)
+    .eq('data_hora', dataAgendamento.toISOString())
+    .neq('status', 'cancelado')
+
+  if ((slotOcupado ?? 0) > 0) {
+    return NextResponse.json({ error: 'horario_ocupado' }, { status: 409 })
   }
 
   // Inserir agendamento

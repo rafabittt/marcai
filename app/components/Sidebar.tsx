@@ -5,8 +5,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
-  CalendarPlus, LayoutDashboard, Users, Settings, LogOut, Copy, Check, CreditCard,
+  CalendarPlus, LayoutDashboard, Users, Settings, LogOut, Copy, Check, CreditCard, Lightbulb,
 } from 'lucide-react'
+import FeedbackModal from './FeedbackModal'
 
 function getIniciais(nome: string | null, email: string): string {
   if (nome) {
@@ -33,6 +34,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [email,       setEmail]       = useState<string | null>(null)
   const [plano,       setPlano]       = useState<string | null>(null)
   const [copied,      setCopied]      = useState(false)
+  const [feedback,    setFeedback]    = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -158,13 +160,23 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </Link>
 
         <button
+          onClick={() => setFeedback(true)}
+          className="mt-3 w-full flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Lightbulb size={14} />
+          Enviar sugestão
+        </button>
+
+        <button
           onClick={handleLogout}
-          className="mt-3 w-full flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+          className="mt-1 w-full flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
         >
           <LogOut size={14} />
           Sair
         </button>
       </div>
+
+      {feedback && <FeedbackModal onClose={() => setFeedback(false)} />}
     </aside>
   )
 }

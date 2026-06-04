@@ -172,6 +172,12 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         return
       }
 
+      if (res.status === 409) {
+        setErro('Este horário acabou de ser reservado por outra pessoa. Escolha outro horário.')
+        setHorario('')
+        return
+      }
+
       if (!res.ok) {
         setErro('Erro ao realizar agendamento. Tente novamente.')
         return

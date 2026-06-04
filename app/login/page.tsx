@@ -155,6 +155,13 @@ function LoginContent() {
         return
       }
 
+      // Notifica o dono do Marcaí sobre novo cadastro (fire-and-forget)
+      fetch('/api/notify-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: negNome, tipo: negTipo, email: user.email }),
+      }).catch(() => {})
+
       const redirect = searchParams.get('redirect')
       window.location.href = redirect ?? '/configuracoes'
     } catch (err) {
