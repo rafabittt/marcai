@@ -55,8 +55,6 @@ type Negocio = {
   endereco: Endereco | null
 }
 
-type Servico = { id: number; nome: string; duracao: string }
-
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
 const HORARIOS_PADRAO: HorariosMap = Object.fromEntries(
@@ -114,10 +112,6 @@ export default function ConfiguracoesPage() {
   // Horários
   const [horarios, setHorarios] = useState<HorariosMap>(HORARIOS_PADRAO)
 
-  // Serviços
-  const [servicos,    setServicos]    = useState<Servico[]>([])
-  const [novoServico, setNovoServico] = useState({ nome: '', duracao: '30 min' })
-
   // CEP
   const [cepLoading, setCepLoading] = useState(false)
 
@@ -149,10 +143,6 @@ export default function ConfiguracoesPage() {
       setHorarios(neg.horarios ?? HORARIOS_PADRAO)
       setEndereco(neg.endereco ?? ENDERECO_PADRAO)
 
-      const { data: srvData } = await supabase
-        .from('servicos').select('id, nome, duracao').eq('negocio_id', neg.id)
-
-      setServicos(srvData ?? [])
       setLoading(false)
     }
     init()
@@ -241,16 +231,7 @@ export default function ConfiguracoesPage() {
       .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco })
       .eq('id', negocioId)
 
-    // B: sincronizar serviços (delete + bulk insert)
-    const srvSync = (async () => {
-      await supabase.from('servicos').delete().eq('negocio_id', negocioId)
-      if (servicos.length === 0) return
-      await supabase.from('servicos').insert(
-        servicos.map(({ nome, duracao }) => ({ negocio_id: negocioId, nome, duracao }))
-      )
-    })()
-
-    const [negResult] = await Promise.all([negUpdate, srvSync])
+    const negResult = await negUpdate
 
     if (negResult.error) {
       setErro('Erro ao salvar. Tente novamente.')
@@ -438,68 +419,7 @@ export default function ConfiguracoesPage() {
               </div>
             </Section>
 
-            {/* 3. SERVIÇOS */}
-            <Section title="Serviços">
-              <div className="space-y-3 mb-5">
-                {servicos.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">Nenhum serviço cadastrado ainda.</p>
-                )}
-                {servicos.map(s => (
-                  <div key={s.id} className="flex items-center justify-between bg-gray-50 rounded-2xl px-5 py-3.5">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">{s.nome}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{s.duracao}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setServicos(prev => prev.filter(x => x.id !== s.id))}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-gray-100 pt-4 space-y-3">
-                <p className={labelClass}>Adicionar serviço</p>
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={novoServico.nome}
-                      onChange={e => setNovoServico(prev => ({ ...prev, nome: e.target.value }))}
-                      placeholder="Ex: Corte de cabelo"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div className="w-36">
-                    <select
-                      value={novoServico.duracao}
-                      onChange={e => setNovoServico(prev => ({ ...prev, duracao: e.target.value }))}
-                      className={inputClass}
-                    >
-                      {['30 min', '45 min', '1h', '1h 30min', '2h'].map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!novoServico.nome.trim()) return
-                    setServicos(prev => [...prev, { id: Date.now(), ...novoServico }])
-                    setNovoServico({ nome: '', duracao: '30 min' })
-                  }}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-[#25D366] border-2 border-[#25D366] transition-all duration-200 hover:bg-[#dcfce7] hover:scale-[1.02]"
-                >
-                  + Adicionar serviço
-                </button>
-              </div>
-            </Section>
-
-            {/* 4. HORÁRIOS */}
+            {/* 3. HORÁRIOS */}
             <Section title="Horários de funcionamento">
               <div className="space-y-2">
                 {DIAS.map(({ key, abr }) => {

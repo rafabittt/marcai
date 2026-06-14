@@ -422,7 +422,7 @@ export default function DashboardPage() {
               <Row label="Data e horário" value={formatarDataHora(selecionado.data_hora)} />
             </div>
 
-            {reagendando && (
+            {reagendando && !isPassado && (
               <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-3">
                 <p className="text-xs uppercase tracking-widest font-medium text-gray-500">Nova data e horário</p>
                 <div className="flex gap-3">
@@ -449,7 +449,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {selecionado.status !== 'cancelado' && (
+            {selecionado.status !== 'cancelado' && !isPassado && (
               <div className="flex gap-3">
                 <button
                   onClick={cancelar}

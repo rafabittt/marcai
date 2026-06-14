@@ -25,7 +25,7 @@ function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
   return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
 }
 type Negocio     = { id: string; nome: string; horarios: HorariosMap | null; plano: string | null }
-type Servico     = { id: string; nome: string; duracao: string }
+type Servico     = { id: string; nome: string; duracao: string; profissional_id?: string }
 type Profissional = { id: string; nome: string; cargo: string }
 
 const selectClass = 'w-full border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent'
@@ -66,7 +66,7 @@ export default function AgendarInternoPage() {
       setNegocio(neg)
 
       const [{ data: srvData }, { data: profData }] = await Promise.all([
-        supabase.from('servicos').select('id, nome, duracao').eq('negocio_id', neg.id),
+        supabase.from('servicos').select('id, nome, duracao, profissional_id').eq('negocio_id', neg.id),
         supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id),
       ])
 
@@ -79,21 +79,13 @@ export default function AgendarInternoPage() {
 
   useEffect(() => {
     if (!data || !negocio?.id) { setOcupados([]); return }
-    supabase
-      .from('agendamentos')
-      .select('data_hora')
-      .eq('negocio_id', negocio.id)
-      .neq('status', 'cancelado')
-      .gte('data_hora', `${data}T00:00:00.000Z`)
-      .lte('data_hora', `${data}T23:59:59.999Z`)
-      .then(({ data: rows }) => {
-        const slots = (rows ?? []).map(r => {
-          const d = new Date(r.data_hora)
-          return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
-        })
-        setOcupados(slots)
-      })
-  }, [data, negocio?.id])
+    const params = new URLSearchParams({ negocio_id: negocio.id, data })
+    if (profissionalId) params.set('profissional_id', profissionalId)
+    fetch(`/api/agendar/ocupados?${params}`)
+      .then(r => r.json())
+      .then(({ ocupados: slots }) => setOcupados(slots ?? []))
+      .catch(() => setOcupados([]))
+  }, [data, negocio?.id, profissionalId])
 
   const horariosDisponiveis = useMemo<string[] | null>(() => {
     if (!data) return null
@@ -293,40 +285,12 @@ export default function AgendarInternoPage() {
                 />
               </div>
 
-              <div>
-                <label className={labelClass}>Serviço</label>
-                {servicos.length > 0 ? (
-                  <select
-                    value={servicoId}
-                    onChange={e => setServicoId(e.target.value)}
-                    required
-                    className={selectClass}
-                  >
-                    <option value="">Selecione um serviço</option>
-                    {servicos.map(s => (
-                      <option key={s.id} value={String(s.id)}>
-                        {s.nome} ({s.duracao})
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={servicoId}
-                    onChange={e => setServicoId(e.target.value)}
-                    required
-                    placeholder="Ex: Corte de cabelo"
-                    className={inputClass}
-                  />
-                )}
-              </div>
-
               {profissionais.length > 0 && (
                 <div>
                   <label className={labelClass}>Profissional</label>
                   <select
                     value={profissionalId}
-                    onChange={e => setProfissionalId(e.target.value)}
+                    onChange={e => { setProfissionalId(e.target.value); setServicoId('') }}
                     required
                     className={selectClass}
                   >
@@ -339,6 +303,39 @@ export default function AgendarInternoPage() {
                   </select>
                 </div>
               )}
+
+              <div>
+                <label className={labelClass}>Serviço</label>
+                {(() => {
+                  const servicosFiltrados = profissionalId
+                    ? servicos.filter(s => s.profissional_id === profissionalId)
+                    : servicos
+                  return servicosFiltrados.length > 0 ? (
+                    <select
+                      value={servicoId}
+                      onChange={e => setServicoId(e.target.value)}
+                      required
+                      className={selectClass}
+                    >
+                      <option value="">Selecione um serviço</option>
+                      {servicosFiltrados.map(s => (
+                        <option key={s.id} value={String(s.id)}>
+                          {s.nome} ({s.duracao})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={servicoId}
+                      onChange={e => setServicoId(e.target.value)}
+                      required
+                      placeholder="Ex: Corte de cabelo"
+                      className={inputClass}
+                    />
+                  )
+                })()}
+              </div>
 
               <div>
                 <label className={labelClass}>Data</label>

@@ -23,7 +23,7 @@ export async function GET(
   }
 
   const [{ data: servicos }, { data: profissionais }] = await Promise.all([
-    supabase.from('servicos').select('id, nome, duracao').eq('negocio_id', neg.id),
+    supabase.from('servicos').select('id, nome, duracao, profissional_id').eq('negocio_id', neg.id),
     supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id),
   ])
 

@@ -49,7 +49,7 @@ type Negocio = {
   horarios: HorariosMap | null
 }
 
-type Servico      = { id: string; nome: string; duracao: string }
+type Servico      = { id: string; nome: string; duracao: string; profissional_id?: string }
 type Profissional = { id: string; nome: string; cargo: string }
 
 function formatarEndereco(e: Endereco | null): string | null {
@@ -89,11 +89,13 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
 
   useEffect(() => {
     if (!data || !negocio?.id) { setOcupados([]); return }
-    fetch(`/api/agendar/ocupados?negocio_id=${negocio.id}&data=${data}`)
+    const params = new URLSearchParams({ negocio_id: negocio.id, data })
+    if (profissionalId) params.set('profissional_id', profissionalId)
+    fetch(`/api/agendar/ocupados?${params}`)
       .then(r => r.json())
       .then(({ ocupados: slots }) => setOcupados(slots ?? []))
       .catch(() => setOcupados([]))
-  }, [data, negocio?.id])
+  }, [data, negocio?.id, profissionalId])
 
   // Horários disponíveis para a data selecionada
   const horariosDisponiveis = useMemo<string[] | null>(() => {
@@ -298,40 +300,12 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
             />
           </div>
 
-          <div>
-            <label className={labelClass}>Serviço desejado</label>
-            {servicos.length > 0 ? (
-              <select
-                value={servicoId}
-                onChange={e => setServicoId(e.target.value)}
-                required
-                className={selectClass}
-              >
-                <option value="">Selecione um serviço</option>
-                {servicos.map(s => (
-                  <option key={s.id} value={String(s.id)}>
-                    {s.nome} ({s.duracao})
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={servicoId}
-                onChange={e => setServicoId(e.target.value)}
-                required
-                placeholder="Ex: Corte de cabelo"
-                className={inputClass}
-              />
-            )}
-          </div>
-
           {profissionais.length > 0 && (
             <div>
               <label className={labelClass}>Profissional</label>
               <select
                 value={profissionalId}
-                onChange={e => setProfissionalId(e.target.value)}
+                onChange={e => { setProfissionalId(e.target.value); setServicoId('') }}
                 required
                 className={selectClass}
               >
@@ -344,6 +318,39 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
               </select>
             </div>
           )}
+
+          <div>
+            <label className={labelClass}>Serviço desejado</label>
+            {(() => {
+              const servicosFiltrados = profissionalId
+                ? servicos.filter(s => s.profissional_id === profissionalId)
+                : servicos
+              return servicosFiltrados.length > 0 ? (
+                <select
+                  value={servicoId}
+                  onChange={e => setServicoId(e.target.value)}
+                  required
+                  className={selectClass}
+                >
+                  <option value="">Selecione um serviço</option>
+                  {servicosFiltrados.map(s => (
+                    <option key={s.id} value={String(s.id)}>
+                      {s.nome} ({s.duracao})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={servicoId}
+                  onChange={e => setServicoId(e.target.value)}
+                  required
+                  placeholder="Ex: Corte de cabelo"
+                  className={inputClass}
+                />
+              )
+            })()}
+          </div>
 
           <div>
             <label className={labelClass}>Data</label>
