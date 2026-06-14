@@ -57,9 +57,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Telefone inválido' }, { status: 400 })
   }
 
-  // Validar que data+horário não está no passado
+  // Validar que data+horário não está no passado.
+  // Horários usam "naive UTC" (sem conversão de fuso). Vercel roda em UTC, então
+  // comparamos subtraindo 3h para obter o equivalente Brazil naive.
   const dataAgendamento = new Date(`${data}T${horario}:00.000Z`)
-  if (isNaN(dataAgendamento.getTime()) || dataAgendamento < new Date()) {
+  const naiveNow = new Date(Date.now() - 3 * 60 * 60 * 1000)
+  if (isNaN(dataAgendamento.getTime()) || dataAgendamento < naiveNow) {
     return NextResponse.json({ error: 'Data ou horário inválido' }, { status: 400 })
   }
 

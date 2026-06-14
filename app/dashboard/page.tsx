@@ -25,23 +25,29 @@ function inicialAvatar(nome: string) {
   return nome.trim().charAt(0).toUpperCase()
 }
 
+// Times are stored as "naive UTC" — the digits shown are the intended local time.
+// Always use UTC accessors for display to avoid timezone shifts.
+function localDateStr(d: Date = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
+function naiveNowISO(): string {
+  const n = new Date()
+  return `${localDateStr(n)}T${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}.000Z`
+}
+
 function formatarDataHora(iso: string) {
   const d = new Date(iso)
-  const hoje = new Date()
-  const amanha = new Date(hoje)
-  amanha.setDate(hoje.getDate() + 1)
-
-  const mesmaData = (a: Date, b: Date) =>
-    a.getDate() === b.getDate() &&
-    a.getMonth() === b.getMonth() &&
-    a.getFullYear() === b.getFullYear()
-
-  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-
-  if (mesmaData(d, hoje)) return `Hoje, ${hora}`
-  if (mesmaData(d, amanha)) return `Amanhã, ${hora}`
-
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + `, ${hora}`
+  const hoje  = localDateStr()
+  const amanhaDate = new Date(); amanhaDate.setDate(amanhaDate.getDate() + 1)
+  const amanha = localDateStr(amanhaDate)
+  const dateStr = iso.slice(0, 10)
+  const hora = `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`
+  if (dateStr === hoje)   return `Hoje, ${hora}`
+  if (dateStr === amanha) return `Amanhã, ${hora}`
+  const [y, mo, dy] = dateStr.split('-').map(Number)
+  const label = new Date(y, mo - 1, dy).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  return `${label}, ${hora}`
 }
 
 function toInputDate(iso: string) {
@@ -49,7 +55,8 @@ function toInputDate(iso: string) {
 }
 
 function toInputTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const d = new Date(iso)
+  return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`
 }
 
 function saudacao(): string {
@@ -114,15 +121,15 @@ export default function DashboardPage() {
         .maybeSingle()
       setNomeNegocio(neg?.nome ?? null)
 
-      const hoje = new Date()
-      const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString()
-      const fimHoje   = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1).toISOString()
+      const hojeStr    = localDateStr()
+      const inicioHoje = `${hojeStr}T00:00:00.000Z`
+      const fimHoje    = `${hojeStr}T23:59:59.999Z`
 
       const { data: dataHoje } = await supabase
         .from('agendamentos')
         .select('id, cliente_nome, cliente_telefone, servico, profissional, data_hora, status')
         .gte('data_hora', inicioHoje)
-        .lt('data_hora', fimHoje)
+        .lte('data_hora', fimHoje)
         .order('data_hora', { ascending: true })
 
       setAgendamentosHoje(dataHoje ?? [])
@@ -130,7 +137,7 @@ export default function DashboardPage() {
       const { data } = await supabase
         .from('agendamentos')
         .select('id, cliente_nome, cliente_telefone, servico, profissional, data_hora, status')
-        .gte('data_hora', new Date().toISOString())
+        .gte('data_hora', naiveNowISO())
         .order('data_hora', { ascending: true })
         .limit(20)
 
@@ -157,7 +164,7 @@ export default function DashboardPage() {
   }, [agendamentosPassados, agendamentosHoje, proximosAgendamentos])
 
   const totalCount      = todosUnicos.length
-  const agora           = new Date().toISOString()
+  const agora           = naiveNowISO()
   const concluidosCount = todosUnicos.filter(a => a.status !== 'cancelado' && a.data_hora < agora).length
   const canceladosCount = todosUnicos.filter(a => a.status === 'cancelado').length
 
@@ -209,7 +216,7 @@ export default function DashboardPage() {
   async function reagendar() {
     if (!selecionado || !novaData || !novoHorario) return
     setSalvando(true)
-    const novaDataHora = new Date(`${novaData}T${novoHorario}`).toISOString()
+    const novaDataHora = `${novaData}T${novoHorario}:00.000Z`
     await supabase.from('agendamentos').update({ data_hora: novaDataHora, status: 'confirmado' }).eq('id', selecionado.id)
     atualizarLista(selecionado.id, { data_hora: novaDataHora, status: 'confirmado' })
     setSelecionado(prev => prev ? { ...prev, data_hora: novaDataHora, status: 'confirmado' } : prev)
@@ -228,7 +235,7 @@ export default function DashboardPage() {
   }
 
   const isPassado = selecionado
-    ? agendamentosPassados.some(a => a.id === selecionado.id) || new Date(selecionado.data_hora) < new Date()
+    ? agendamentosPassados.some(a => a.id === selecionado.id) || selecionado.data_hora < naiveNowISO()
     : false
   const pct = (n: number) => totalCount === 0 ? 0 : Math.round((n / totalCount) * 100)
 
