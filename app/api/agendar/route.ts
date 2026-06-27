@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Payload inválido' }, { status: 400 })
   }
 
-  const { slug, nome, telefone, servicoId, profissionalId, data, horario } = payload
+  const { slug, nome, telefone, servicoId, profissionalId, data, horario, accessToken } = payload
 
   // Validar campos obrigatórios
   if (!slug || !nome?.trim() || !telefone?.trim() || !data || !horario) {
@@ -120,15 +120,29 @@ export async function POST(req: NextRequest) {
   }
 
   // Checar se o slot já está ocupado (evita double-booking)
-  const { count: slotOcupado } = await supabase
+  // Se há profissional, verifica apenas conflitos do mesmo profissional
+  let doubleBookQuery = supabase
     .from('agendamentos')
     .select('id', { count: 'exact', head: true })
     .eq('negocio_id', neg.id)
     .eq('data_hora', dataAgendamento.toISOString())
     .neq('status', 'cancelado')
 
+  if (profissionalNome) {
+    doubleBookQuery = doubleBookQuery.eq('profissional', profissionalNome)
+  }
+
+  const { count: slotOcupado } = await doubleBookQuery
+
   if ((slotOcupado ?? 0) > 0) {
     return NextResponse.json({ error: 'horario_ocupado' }, { status: 409 })
+  }
+
+  // Identificar cliente logado (se enviou token)
+  let clienteUserId: string | null = null
+  if (accessToken) {
+    const { data: { user: clienteUser } } = await supabase.auth.getUser(accessToken)
+    clienteUserId = clienteUser?.id ?? null
   }
 
   // Inserir agendamento
@@ -140,6 +154,7 @@ export async function POST(req: NextRequest) {
     profissional:     profissionalNome,
     data_hora:        dataAgendamento.toISOString(),
     status:           'confirmado',
+    ...(clienteUserId ? { cliente_user_id: clienteUserId } : {}),
   })
 
   if (insertError) {

@@ -34,6 +34,7 @@ const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium 
 
 function LoginContent() {
   const searchParams = useSearchParams()
+  const [tipo, setTipo] = useState<'negocio' | 'cliente'>('negocio')
   const [modo, setModo] = useState<'login' | 'cadastro'>(
     searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login'
   )
@@ -41,6 +42,12 @@ function LoginContent() {
   useEffect(() => {
     setModo(searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login')
   }, [searchParams])
+
+  // Estado separado para login de cliente
+  const [clienteEmail,   setClienteEmail]   = useState('')
+  const [clienteSenha,   setClienteSenha]   = useState('')
+  const [clienteLoading, setClienteLoading] = useState(false)
+  const [clienteErro,    setClienteErro]    = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -175,17 +182,80 @@ function LoginContent() {
     setError('')
   }
 
+  async function handleClienteLogin(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setClienteLoading(true)
+    setClienteErro('')
+    const { error } = await supabase.auth.signInWithPassword({ email: clienteEmail, password: clienteSenha })
+    if (error) {
+      setClienteErro('E-mail ou senha incorretos.')
+      setClienteLoading(false)
+    } else {
+      const redirect = searchParams.get('redirect')
+      window.location.href = redirect ?? '/cliente/minha-conta'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <LandingHeader />
       <div className="flex items-center justify-center px-4 py-12">
       <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
 
+        {/* Toggle Negócio / Cliente */}
+        <div className="flex bg-gray-100 rounded-xl p-1 mb-8">
+          <button
+            type="button"
+            onClick={() => setTipo('negocio')}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${tipo === 'negocio' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Negócio
+          </button>
+          <button
+            type="button"
+            onClick={() => setTipo('cliente')}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${tipo === 'cliente' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Cliente
+          </button>
+        </div>
+
+        {tipo === 'negocio' && (
         <div className="mb-8">
           <p className="text-sm text-gray-500">
             {modo === 'login' ? 'Gerencie seus agendamentos com facilidade' : 'Crie sua conta e configure seu negócio'}
           </p>
         </div>
+        )}
+
+        {/* ── CLIENTE ── */}
+        {tipo === 'cliente' && (
+          <>
+            {clienteErro && (
+              <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">{clienteErro}</div>
+            )}
+            <form onSubmit={handleClienteLogin} className="space-y-4">
+              <div>
+                <label className={labelClass}>E-mail</label>
+                <input type="email" value={clienteEmail} onChange={e => setClienteEmail(e.target.value)} required placeholder="seu@email.com" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Senha</label>
+                <input type="password" value={clienteSenha} onChange={e => setClienteSenha(e.target.value)} required placeholder="••••••••" className={inputClass} />
+              </div>
+              <button type="submit" disabled={clienteLoading} className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] disabled:opacity-50">
+                {clienteLoading ? 'Entrando...' : 'Entrar'}
+              </button>
+            </form>
+            <p className="text-sm text-center text-gray-500 mt-5">
+              Não tem conta?{' '}
+              <a href="/cliente/cadastro" className="text-[#25D366] font-semibold hover:underline">Criar conta</a>
+            </p>
+          </>
+        )}
+
+        {/* ── NEGÓCIO ── */}
+        {tipo === 'negocio' && <>
 
         {error && (
           <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">
@@ -414,6 +484,8 @@ function LoginContent() {
             {modo === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}
           </button>
         </div>
+
+        </> /* fim bloco negócio */}
 
       </div>
       </div>

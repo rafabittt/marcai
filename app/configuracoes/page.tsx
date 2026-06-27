@@ -53,6 +53,7 @@ type Negocio = {
   slug: string
   horarios: HorariosMap | null
   endereco: Endereco | null
+  exigir_cadastro_cliente?: boolean
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -112,6 +113,9 @@ export default function ConfiguracoesPage() {
   // Horários
   const [horarios, setHorarios] = useState<HorariosMap>(HORARIOS_PADRAO)
 
+  // Cadastro de cliente
+  const [exigirCadastro, setExigirCadastro] = useState(false)
+
   // CEP
   const [cepLoading, setCepLoading] = useState(false)
 
@@ -127,12 +131,13 @@ export default function ConfiguracoesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
 
-      const { data: neg } = await supabase
+      const { data: neg, error: negError } = await supabase
         .from('negocios')
-        .select('id, nome, tipo, telefone, slug, horarios, endereco')
+        .select('id, nome, tipo, telefone, slug, horarios, endereco, exigir_cadastro_cliente')
         .eq('user_id', user.id)
         .maybeSingle()
 
+      if (negError) { console.error('[configuracoes] erro na query:', negError); setLoading(false); return }
       if (!neg) { setLoading(false); return }
 
       setNegocio(neg)
@@ -142,6 +147,7 @@ export default function ConfiguracoesPage() {
       setNegSlug(neg.slug)
       setHorarios(neg.horarios ?? HORARIOS_PADRAO)
       setEndereco(neg.endereco ?? ENDERECO_PADRAO)
+      setExigirCadastro(neg.exigir_cadastro_cliente ?? false)
 
       setLoading(false)
     }
@@ -228,7 +234,7 @@ export default function ConfiguracoesPage() {
     // A: update negocios (dados básicos + horários + endereço)
     const negUpdate = supabase
       .from('negocios')
-      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco })
+      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco, exigir_cadastro_cliente: exigirCadastro })
       .eq('id', negocioId)
 
     const negResult = await negUpdate
@@ -238,7 +244,7 @@ export default function ConfiguracoesPage() {
     } else {
       setSucesso(true)
       setNegocio(prev => prev
-        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco }
+        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco, exigir_cadastro_cliente: exigirCadastro }
         : prev
       )
     }
@@ -338,6 +344,20 @@ export default function ConfiguracoesPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Exigir cadastro do cliente</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Clientes precisarão criar uma conta antes de agendar</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExigirCadastro(p => !p)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${exigirCadastro ? 'bg-[#25D366]' : 'bg-gray-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${exigirCadastro ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
               </div>
             </Section>
 

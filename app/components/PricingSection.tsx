@@ -56,7 +56,7 @@ const plans = [
   {
     name: 'Pro',
     price: 'R$99',
-    idealFor: 'Salão com 2–3 profissionais',
+    idealFor: 'Negócio com 2–3 profissionais',
     items: [
       'Até 3 profissionais',
       'Tudo do Básico',

@@ -68,8 +68,10 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const isClientePage = pathname.startsWith('/cliente')
+
   // Nunca mostra na home, login, recuperação de senha, agendamento público ou páginas com Sidebar
-  if (isHome || isLogin || isAgendar || isPublicPage || isAuthFlow || isSidebarPage) return null
+  if (isHome || isLogin || isAgendar || isPublicPage || isAuthFlow || isSidebarPage || isClientePage) return null
 
   // Enquanto carrega (evita flash)
   if (!loaded) return null

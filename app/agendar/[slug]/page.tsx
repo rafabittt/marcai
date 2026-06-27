@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
+import { createClient } from '@/lib/supabase'
 
 const HORARIOS = Array.from({ length: 25 }, (_, i) => {
   const minutos = 8 * 60 + i * 30
@@ -47,6 +48,7 @@ type Negocio = {
   telefone: string
   endereco: Endereco | null
   horarios: HorariosMap | null
+  exigir_cadastro_cliente?: boolean
 }
 
 type Servico      = { id: string; nome: string; duracao: string; profissional_id?: string }
@@ -77,6 +79,8 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   const [submitting,    setSubmitting]    = useState(false)
   const [sucesso,       setSucesso]       = useState(false)
   const [erro,          setErro]          = useState('')
+  const [clienteLogado, setClienteLogado] = useState(false)
+  const [clienteToken,  setClienteToken]  = useState<string | null>(null)
 
   // Campos do formulário
   const [nome,          setNome]          = useState('')
@@ -137,6 +141,24 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         setNegocio(neg)
         setServicos(srvData)
         setProfissionais(profData)
+
+        if (neg.exigir_cadastro_cliente) {
+          const supabase = createClient()
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            const { data: cli } = await supabase
+              .from('clientes').select('nome, telefone').eq('user_id', session.user.id).maybeSingle()
+            if (cli) {
+              // Usuário tem conta de cliente — libera e preenche os campos
+              setClienteLogado(true)
+              setClienteToken(session.access_token)
+              setNome(cli.nome ?? '')
+              setTelefone(cli.telefone ?? '')
+            }
+            // Se não tem registro em clientes (ex: dono do negócio testando),
+            // clienteLogado fica false e o gate aparece normalmente
+          }
+        }
       } catch (err) {
         console.error('[agendar] catch:', err)
         setNotFound(true)
@@ -166,6 +188,7 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
           profissionalId,
           data,
           horario,
+          accessToken: clienteToken ?? undefined,
         }),
       })
 
@@ -254,6 +277,35 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   }
 
   const enderecoFormatado = formatarEndereco(negocio?.endereco ?? null)
+  const slugEncoded = encodeURIComponent(`/agendar/${negocio?.slug ?? slug}`)
+
+  if (negocio?.exigir_cadastro_cliente && !clienteLogado) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-8 text-center">
+          <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mx-auto mb-6" />
+          <h1 className="text-xl font-bold text-gray-900 mb-1">{negocio.nome}</h1>
+          <p className="text-sm text-gray-500 mb-8">
+            Para agendar, crie uma conta ou faça login. É rápido e gratuito.
+          </p>
+          <div className="flex flex-col gap-3">
+            <a
+              href={`/cliente/cadastro?redirect=${slugEncoded}`}
+              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] text-center"
+            >
+              Criar conta
+            </a>
+            <a
+              href={`/cliente/login?redirect=${slugEncoded}`}
+              className="w-full py-3 rounded-xl text-sm font-semibold border-2 border-gray-200 text-gray-700 transition-all duration-200 hover:bg-gray-50 text-center"
+            >
+              Já tenho conta
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-12">
