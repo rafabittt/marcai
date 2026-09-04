@@ -14,15 +14,32 @@
 // ou tudo desloca 3h.
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type Intervalo = { inicio: string; fim: string }
+
 export type HorarioDia = {
   abertura?: string
   fechamento?: string
   fechado?: boolean
   ativo?: boolean
   aberto24h?: boolean
+  /** Pausas dentro do expediente (almoço, café). Bloqueiam [inicio, fim). */
+  intervalos?: Intervalo[]
 }
 
-export type HorariosMap = Record<string, HorarioDia>
+/**
+ * Conteúdo de negocios.horarios (JSONB).
+ *
+ * Guarda as chaves de dia ('segunda'|'seg'|...) lado a lado com a configuração
+ * global do negócio (buffer_min, folgas). Ficam no mesmo objeto de propósito:
+ * evita migração de schema. Sempre leia via getConfDia/getBuffer/getFolgas,
+ * que fazem a distinção com segurança.
+ */
+export type HorariosMap = {
+  buffer_min?: number
+  folgas?: string[]
+} & {
+  [chave: string]: HorarioDia | number | string[] | undefined
+}
 
 /** Grade padrão do app: 08:00 às 20:00, de 30 em 30 minutos. */
 export const GRADE_INICIO_MIN = 8 * 60
@@ -61,9 +78,35 @@ export const HORARIOS = gerarGrade()
 const CHAVE_LONGA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
 const CHAVE_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
 
+function ehHorarioDia(v: unknown): v is HorarioDia {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
 /** Aceita as duas convenções de chave já presentes no banco ('segunda' e 'seg'). */
 export function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
-  return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
+  const v = horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]]
+  return ehHorarioDia(v) ? v : null
+}
+
+/** Minutos de folga entre atendimentos. 0 quando não configurado. */
+export function getBuffer(horarios?: HorariosMap | null): number {
+  const b = horarios?.buffer_min
+  return typeof b === 'number' && b > 0 ? b : 0
+}
+
+/** Datas 'YYYY-MM-DD' em que o negócio inteiro não atende. */
+export function getFolgas(horarios?: HorariosMap | null): string[] {
+  const f = horarios?.folgas
+  return Array.isArray(f) ? f.filter((d): d is string => typeof d === 'string') : []
+}
+
+/** Um horário cai dentro de alguma pausa? Intervalo é [inicio, fim). */
+export function emIntervalo(hhmm: string, intervalos?: Intervalo[]): boolean {
+  if (!intervalos?.length) return false
+  const t = hhmmParaMinutos(hhmm)
+  return intervalos.some(iv =>
+    t >= hhmmParaMinutos(iv.inicio) && t < hhmmParaMinutos(iv.fim)
+  )
 }
 
 /** Dia da semana (0=domingo) de uma data 'YYYY-MM-DD', sem passar por UTC. */
@@ -82,10 +125,14 @@ export function horariosDoDia(
   grade: string[] = HORARIOS,
 ): string[] {
   if (!horarios) return grade
+  // Folga do negócio: dia inteiro indisponível, independente do expediente.
+  if (getFolgas(horarios).includes(dataStr)) return []
   const conf = getConfDia(horarios, diaDaSemana(dataStr))
   if (!conf) return grade.filter(h => h >= FALLBACK_ABERTURA && h <= FALLBACK_FECHAMENTO)
   if (conf.fechado || conf.ativo === false) return []
-  return grade.filter(h => h >= conf.abertura! && h <= conf.fechamento!)
+  return grade
+    .filter(h => h >= conf.abertura! && h <= conf.fechamento!)
+    .filter(h => !emIntervalo(h, conf.intervalos))
 }
 
 /**

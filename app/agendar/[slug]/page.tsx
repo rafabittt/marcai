@@ -150,6 +150,12 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         return
       }
 
+      if (res.status === 422) {
+        setErro('Este horário não está mais disponível na agenda (fora do expediente, pausa ou folga). Escolha outro.')
+        setHorario('')
+        return
+      }
+
       if (res.status === 409) {
         setErro('Este horário acabou de ser reservado por outra pessoa. Escolha outro horário.')
         setHorario('')

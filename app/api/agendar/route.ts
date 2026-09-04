@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { horariosDoDia, type HorariosMap } from '@/lib/agenda'
 
 function formatarTelefone(tel: string): string {
   const digits = tel.replace(/\D/g, '')
@@ -69,12 +70,21 @@ export async function POST(req: NextRequest) {
   // Buscar negócio pelo slug (validar que existe)
   const { data: neg, error: negError } = await supabase
     .from('negocios')
-    .select('id, nome, telefone, plano')
+    .select('id, nome, telefone, plano, horarios')
     .eq('slug', slug)
     .single()
 
   if (negError || !neg) {
     return NextResponse.json({ error: 'Negócio não encontrado' }, { status: 404 })
+  }
+
+  // O horário pedido precisa existir na agenda configurada do negócio.
+  // Uma checagem só cobre dia fechado, folga, fora do expediente e pausa
+  // (almoço). Sem isso a configuração valeria apenas no dropdown do browser,
+  // e um POST direto na API furaria todas essas regras.
+  const permitidos = horariosDoDia(neg.horarios as HorariosMap | null, data)
+  if (!permitidos.includes(horario)) {
+    return NextResponse.json({ error: 'horario_indisponivel' }, { status: 422 })
   }
 
   // Planos pagos não têm limite de agendamentos

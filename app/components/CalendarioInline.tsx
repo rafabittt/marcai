@@ -1,23 +1,16 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { horariosDoDia, localDateStr, type HorariosMap } from '@/lib/agenda'
 
 const DIAS_SEMANA_ABREV = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const MESES_NOMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
-const CHAVE_LONGA  = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
-const CHAVE_CURTA  = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
-
-type HorarioDia  = { abertura?: string; fechamento?: string; fechado?: boolean; ativo?: boolean }
-type HorariosMap = Record<string, HorarioDia>
 
 function toLocalDateString(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  return localDateStr(date)
 }
 
 interface Props {
@@ -60,14 +53,13 @@ export default function CalendarioInline({ value, onChange, maxDias = 60, horari
     return d < hoje || d > limite
   }
 
+  // Um dia está indisponível quando não sobra nenhum horário nele — isso
+  // cobre dia fechado, dia inativo e folga do negócio, com a mesma regra
+  // usada pelas telas de agendamento.
   function isClosed(dia: number): boolean {
     if (!horarios) return false
-    const dow = new Date(mesAtual.ano, mesAtual.mes, dia).getDay()
-    const confLonga = horarios[CHAVE_LONGA[dow]]
-    if (confLonga) return !!confLonga.fechado
-    const confCurta = horarios[CHAVE_CURTA[dow]]
-    if (confCurta) return confCurta.ativo === false
-    return false
+    const dataStr = toLocalDateString(new Date(mesAtual.ano, mesAtual.mes, dia))
+    return horariosDoDia(horarios, dataStr).length === 0
   }
 
   function handlePrevMes() {

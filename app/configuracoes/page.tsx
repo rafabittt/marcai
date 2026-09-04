@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
+import { getBuffer, getFolgas, localDateStr, type Intervalo, type HorariosMap as ConfigAgenda } from '@/lib/agenda'
+import { X, Plus } from 'lucide-react'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
 
@@ -33,7 +35,7 @@ const DIAS = [
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
-type HorarioDia  = { abertura: string; fechamento: string; fechado: boolean; aberto24h?: boolean }
+type HorarioDia  = { abertura: string; fechamento: string; fechado: boolean; aberto24h?: boolean; intervalos?: Intervalo[] }
 type HorariosMap = Record<string, HorarioDia>
 
 type Endereco = {
@@ -51,7 +53,8 @@ type Negocio = {
   tipo: string
   telefone: string
   slug: string
-  horarios: HorariosMap | null
+  // JSONB cru: chaves de dia + buffer_min/folgas. Lido via getBuffer/getFolgas.
+  horarios: Record<string, unknown> | null
   endereco: Endereco | null
   exigir_cadastro_cliente?: boolean
 }
@@ -64,6 +67,8 @@ const HORARIOS_PADRAO: HorariosMap = Object.fromEntries(
     { abertura: '08:00', fechamento: '18:00', fechado: fechadoPadrao },
   ])
 )
+
+const BUFFER_OPCOES = [0, 5, 10, 15, 20, 30]
 
 const ENDERECO_PADRAO: Endereco = { cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' }
 
@@ -113,6 +118,11 @@ export default function ConfiguracoesPage() {
   // Horários
   const [horarios, setHorarios] = useState<HorariosMap>(HORARIOS_PADRAO)
 
+  // Buffer entre atendimentos e folgas (guardados no mesmo JSONB de horarios)
+  const [bufferMin,  setBufferMin]  = useState(0)
+  const [folgas,     setFolgas]     = useState<string[]>([])
+  const [novaFolga,  setNovaFolga]  = useState('')
+
   // Cadastro de cliente
   const [exigirCadastro, setExigirCadastro] = useState(false)
 
@@ -145,7 +155,9 @@ export default function ConfiguracoesPage() {
       setNegTipo(neg.tipo ?? TIPOS[0])
       setNegTelefone(neg.telefone ?? '')
       setNegSlug(neg.slug)
-      setHorarios(neg.horarios ?? HORARIOS_PADRAO)
+      setHorarios((neg.horarios as HorariosMap | null) ?? HORARIOS_PADRAO)
+      setBufferMin(getBuffer(neg.horarios as ConfigAgenda | null))
+      setFolgas(getFolgas(neg.horarios as ConfigAgenda | null))
       setEndereco(neg.endereco ?? ENDERECO_PADRAO)
       setExigirCadastro(neg.exigir_cadastro_cliente ?? false)
 
@@ -179,6 +191,40 @@ export default function ConfiguracoesPage() {
         fechado:   false,
       },
     }))
+  }
+
+  function handleAddIntervalo(key: string) {
+    setHorarios(prev => {
+      const dia = prev[key] ?? HORARIOS_PADRAO[key]
+      const atuais = dia.intervalos ?? []
+      return { ...prev, [key]: { ...dia, intervalos: [...atuais, { inicio: '12:00', fim: '13:00' }] } }
+    })
+  }
+
+  function handleRemoveIntervalo(key: string, idx: number) {
+    setHorarios(prev => {
+      const dia = prev[key] ?? HORARIOS_PADRAO[key]
+      const atuais = (dia.intervalos ?? []).filter((_, i) => i !== idx)
+      return { ...prev, [key]: { ...dia, intervalos: atuais } }
+    })
+  }
+
+  function handleIntervalo(key: string, idx: number, campo: keyof Intervalo, valor: string) {
+    setHorarios(prev => {
+      const dia = prev[key] ?? HORARIOS_PADRAO[key]
+      const atuais = (dia.intervalos ?? []).map((iv, i) => i === idx ? { ...iv, [campo]: valor } : iv)
+      return { ...prev, [key]: { ...dia, intervalos: atuais } }
+    })
+  }
+
+  function handleAddFolga() {
+    if (!novaFolga) return
+    setFolgas(prev => prev.includes(novaFolga) ? prev : [...prev, novaFolga].sort())
+    setNovaFolga('')
+  }
+
+  function handleRemoveFolga(data: string) {
+    setFolgas(prev => prev.filter(d => d !== data))
   }
 
   function handleEndereco(campo: keyof Endereco, valor: string) {
@@ -231,10 +277,13 @@ export default function ConfiguracoesPage() {
 
     const negocioId = negocio!.id
 
+    // buffer e folgas moram no mesmo JSONB dos dias — sem coluna nova
+    const horariosCompletos: Record<string, unknown> = { ...horarios, buffer_min: bufferMin, folgas }
+
     // A: update negocios (dados básicos + horários + endereço)
     const negUpdate = supabase
       .from('negocios')
-      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco, exigir_cadastro_cliente: exigirCadastro })
+      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios: horariosCompletos, endereco, exigir_cadastro_cliente: exigirCadastro })
       .eq('id', negocioId)
 
     const negResult = await negUpdate
@@ -244,7 +293,7 @@ export default function ConfiguracoesPage() {
     } else {
       setSucesso(true)
       setNegocio(prev => prev
-        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios, endereco, exigir_cadastro_cliente: exigirCadastro }
+        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios: horariosCompletos, endereco, exigir_cadastro_cliente: exigirCadastro }
         : prev
       )
     }
@@ -487,10 +536,123 @@ export default function ConfiguracoesPage() {
                           <span className="text-xs text-gray-500">Aberto 24 horas</span>
                         </div>
                       )}
+
+                      {/* Pausas dentro do expediente (almoco, cafe) */}
+                      {!dia.fechado && !dia.aberto24h && (
+                        <div className="pl-10 space-y-1.5 pb-1">
+                          {(dia.intervalos ?? []).map((iv, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400 w-12 flex-shrink-0">Pausa</span>
+                              <select
+                                value={iv.inicio}
+                                onChange={e => handleIntervalo(key, idx, 'inicio', e.target.value)}
+                                className="flex-1 border border-[#e5e7eb] rounded-xl px-3 py-2 text-xs text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                              >
+                                <HorarioOptions />
+                              </select>
+                              <span className="text-xs text-gray-400 flex-shrink-0">até</span>
+                              <select
+                                value={iv.fim}
+                                onChange={e => handleIntervalo(key, idx, 'fim', e.target.value)}
+                                className="flex-1 border border-[#e5e7eb] rounded-xl px-3 py-2 text-xs text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                              >
+                                <HorarioOptions />
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveIntervalo(key, idx)}
+                                aria-label="Remover pausa"
+                                className="text-gray-300 hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => handleAddIntervalo(key)}
+                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#128C7E] transition-colors"
+                          >
+                            <Plus size={12} />
+                            Adicionar pausa
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
               </div>
+
+              {/* Buffer entre atendimentos */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <label className={labelClass}>Intervalo entre atendimentos</label>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={bufferMin}
+                    onChange={e => setBufferMin(Number(e.target.value))}
+                    className="w-40 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                  >
+                    {BUFFER_OPCOES.map(m => (
+                      <option key={m} value={m}>{m === 0 ? 'Sem intervalo' : `${m} minutos`}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 flex-1">
+                    Tempo reservado após cada atendimento para preparo ou limpeza.
+                    Vale para todos os serviços.
+                  </p>
+                </div>
+              </div>
+            </Section>
+
+            {/* 4. FOLGAS */}
+            <Section title="Folgas e feriados">
+              <p className="text-xs text-gray-500 mb-5">
+                Dias em que o negócio não atende. A agenda pública fica indisponível
+                nessas datas, mesmo que o dia da semana esteja aberto.
+              </p>
+
+              <div className="flex gap-2 mb-5">
+                <input
+                  type="date"
+                  value={novaFolga}
+                  min={localDateStr()}
+                  onChange={e => setNovaFolga(e.target.value)}
+                  className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddFolga}
+                  disabled={!novaFolga}
+                  className="px-5 py-3 rounded-2xl text-sm font-semibold text-white bg-[#25D366] transition-colors hover:bg-[#128C7E] disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                >
+                  Adicionar
+                </button>
+              </div>
+
+              {folgas.length === 0 ? (
+                <p className="text-sm text-gray-400">Nenhuma folga cadastrada.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {folgas.map(d => (
+                    <span
+                      key={d}
+                      className="inline-flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-full pl-4 pr-2 py-1.5 text-sm text-gray-700"
+                    >
+                      {new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFolga(d)}
+                        aria-label={`Remover folga ${d}`}
+                        className="text-gray-300 hover:text-red-400 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </Section>
 
             {/* BOTÃO GLOBAL + FEEDBACK */}
