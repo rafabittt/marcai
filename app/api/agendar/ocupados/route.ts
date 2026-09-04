@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-function parseDuracaoMin(servicoTexto: string): number {
-  const match = servicoTexto.match(/\(([^)]+)\)$/)
-  if (!match) return 30
-  const dur = match[1]
-  const h   = dur.match(/(\d+)\s*h/)
-  const m   = dur.match(/(\d+)\s*min/)
-  return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0) || 30
-}
+import { parseDuracaoDoServico, slotsOcupadosPor } from '@/lib/agenda'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
@@ -56,11 +48,10 @@ export async function GET(req: NextRequest) {
   // Generate all 30-min slots covered by each booking's duration
   const bloqueados = new Set<string>()
   for (const row of rows ?? []) {
-    const d          = new Date(row.data_hora)
-    const startMin   = d.getUTCHours() * 60 + d.getUTCMinutes()
-    const duracaoMin = parseDuracaoMin(row.servico ?? '')
-    for (let t = startMin; t < startMin + duracaoMin; t += 30) {
-      bloqueados.add(`${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`)
+    const d        = new Date(row.data_hora)
+    const startMin = d.getUTCHours() * 60 + d.getUTCMinutes()
+    for (const slot of slotsOcupadosPor(startMin, parseDuracaoDoServico(row.servico ?? ''))) {
+      bloqueados.add(slot)
     }
   }
 

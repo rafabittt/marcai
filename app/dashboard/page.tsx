@@ -10,6 +10,10 @@ import {
 } from 'lucide-react'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
+import { localDateStr, naiveNowISO, horaDe, dataDe, montarDataHora } from '@/lib/agenda'
+import StatusBadge from '@/app/components/StatusBadge'
+import MetricCard from '@/app/components/MetricCard'
+import InfoRow from '@/app/components/InfoRow'
 
 type Agendamento = {
   id: string
@@ -25,38 +29,18 @@ function inicialAvatar(nome: string) {
   return nome.trim().charAt(0).toUpperCase()
 }
 
-// Times are stored as "naive UTC" — the digits shown are the intended local time.
-// Always use UTC accessors for display to avoid timezone shifts.
-function localDateStr(d: Date = new Date()): string {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-}
-
-function naiveNowISO(): string {
-  const n = new Date()
-  return `${localDateStr(n)}T${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}.000Z`
-}
-
+// Convenção "naive UTC" e helpers de data vivem em lib/agenda.ts.
 function formatarDataHora(iso: string) {
-  const d = new Date(iso)
   const hoje  = localDateStr()
   const amanhaDate = new Date(); amanhaDate.setDate(amanhaDate.getDate() + 1)
   const amanha = localDateStr(amanhaDate)
-  const dateStr = iso.slice(0, 10)
-  const hora = `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`
+  const dateStr = dataDe(iso)
+  const hora = horaDe(iso)
   if (dateStr === hoje)   return `Hoje, ${hora}`
   if (dateStr === amanha) return `Amanhã, ${hora}`
   const [y, mo, dy] = dateStr.split('-').map(Number)
   const label = new Date(y, mo - 1, dy).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
   return `${label}, ${hora}`
-}
-
-function toInputDate(iso: string) {
-  return iso.slice(0, 10)
-}
-
-function toInputTime(iso: string) {
-  const d = new Date(iso)
-  return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`
 }
 
 function saudacao(): string {
@@ -73,22 +57,6 @@ function dataExtenso(): string {
     month: 'long',
     year: 'numeric',
   })
-}
-
-function Badge({ status, passado = false }: { status: string; passado?: boolean }) {
-  const resolvedStatus = passado && status === 'confirmado' ? 'concluido' : status
-  const map: Record<string, { label: string; classes: string }> = {
-    confirmado: { label: 'Confirmado', classes: 'bg-[#dcfce7] text-[#128C7E]' },
-    cancelado:  { label: 'Cancelado',  classes: 'bg-red-50 text-red-500' },
-    pendente:   { label: 'Pendente',   classes: 'bg-yellow-50 text-yellow-600' },
-    concluido:  { label: 'Realizado',  classes: 'bg-gray-100 text-gray-500' },
-  }
-  const s = map[resolvedStatus] ?? { label: resolvedStatus, classes: 'bg-gray-100 text-gray-500' }
-  return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${s.classes}`}>
-      {s.label}
-    </span>
-  )
 }
 
 export default function DashboardPage() {
@@ -188,8 +156,8 @@ export default function DashboardPage() {
   function abrirModal(ag: Agendamento) {
     setSelecionado(ag)
     setReagendando(false)
-    setNovaData(toInputDate(ag.data_hora))
-    setNovoHorario(toInputTime(ag.data_hora))
+    setNovaData(dataDe(ag.data_hora))
+    setNovoHorario(horaDe(ag.data_hora))
   }
 
   function fecharModal() {
@@ -216,7 +184,7 @@ export default function DashboardPage() {
   async function reagendar() {
     if (!selecionado || !novaData || !novoHorario) return
     setSalvando(true)
-    const novaDataHora = `${novaData}T${novoHorario}:00.000Z`
+    const novaDataHora = montarDataHora(novaData, novoHorario)
     await supabase.from('agendamentos').update({ data_hora: novaDataHora, status: 'confirmado' }).eq('id', selecionado.id)
     atualizarLista(selecionado.id, { data_hora: novaDataHora, status: 'confirmado' })
     setSelecionado(prev => prev ? { ...prev, data_hora: novaDataHora, status: 'confirmado' } : prev)
@@ -403,7 +371,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="font-bold" style={{ color: '#0a0a0a' }}>{selecionado.cliente_nome}</p>
-                  <Badge status={selecionado.status} passado={isPassado} />
+                  <StatusBadge status={selecionado.status} passado={isPassado} />
                 </div>
               </div>
               <button
@@ -416,10 +384,10 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-3 mb-6">
-              <Row label="Telefone"      value={selecionado.cliente_telefone} />
-              <Row label="Serviço"       value={selecionado.servico} />
-              {selecionado.profissional && <Row label="Profissional" value={selecionado.profissional} />}
-              <Row label="Data e horário" value={formatarDataHora(selecionado.data_hora)} />
+              <InfoRow label="Telefone"      value={selecionado.cliente_telefone} />
+              <InfoRow label="Serviço"       value={selecionado.servico} />
+              {selecionado.profissional && <InfoRow label="Profissional" value={selecionado.profissional} />}
+              <InfoRow label="Data e horário" value={formatarDataHora(selecionado.data_hora)} />
             </div>
 
             {reagendando && !isPassado && (
@@ -480,40 +448,6 @@ export default function DashboardPage() {
   )
 }
 
-// ── MetricCard ───────────────────────────────────────────────────────────────
-
-function MetricCard({
-  label, value, valueColor, iconBg, icon, progress, progressColor,
-}: {
-  label: string
-  value: number
-  valueColor: string
-  iconBg: string
-  icon: React.ReactNode
-  progress: number
-  progressColor: string
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 pt-5 pb-4 flex flex-col relative overflow-hidden">
-      <div className="flex items-start justify-between mb-3">
-        <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{label}</span>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconBg}`}>
-          {icon}
-        </div>
-      </div>
-      <span className={`text-5xl font-bold tracking-tight leading-none mb-4 ${valueColor}`}>{value}</span>
-      {/* Barra de progresso */}
-      <div className="h-1 w-full bg-gray-100 rounded-full mt-auto">
-        <div
-          className={`h-1 rounded-full transition-all duration-500 ${progressColor}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
-
 // ── AgendamentoCard ──────────────────────────────────────────────────────────
 
 function AgendamentoCard({
@@ -544,7 +478,7 @@ function AgendamentoCard({
         </p>
       </div>
       <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <Badge status={ag.status} passado={isEffectivelyPast} />
+        <StatusBadge status={ag.status} passado={isEffectivelyPast} />
         <span className={`text-xs font-medium ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
           {formatarDataHora(ag.data_hora)}
         </span>
@@ -615,13 +549,3 @@ function ListaComCancelados({
   )
 }
 
-// ── Row ──────────────────────────────────────────────────────────────────────
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0">
-      <span className="text-xs uppercase tracking-widest font-medium text-gray-500">{label}</span>
-      <span className="text-sm font-medium" style={{ color: '#0a0a0a' }}>{value}</span>
-    </div>
-  )
-}

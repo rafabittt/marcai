@@ -4,42 +4,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
 import { createClient } from '@/lib/supabase'
+import {
+  HORARIOS, horariosDoDia, horariosLivres as calcularLivres,
+  type HorariosMap,
+} from '@/lib/agenda'
 
-const HORARIOS = Array.from({ length: 25 }, (_, i) => {
-  const minutos = 8 * 60 + i * 30
-  if (minutos > 20 * 60) return null
-  const h = String(Math.floor(minutos / 60)).padStart(2, '0')
-  const m = minutos % 60 === 0 ? '00' : '30'
-  return `${h}:${m}`
-}).filter(Boolean) as string[]
-
-const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-
-function gerarProximosDias(qtd = 15) {
-  const dias: { value: string; label: string }[] = []
-  const hoje = new Date()
-  hoje.setHours(0, 0, 0, 0)
-  for (let i = 0; i < qtd; i++) {
-    const d = new Date(hoje)
-    d.setDate(hoje.getDate() + i)
-    const value = d.toISOString().slice(0, 10)
-    const label = `${DIAS_SEMANA[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`
-    dias.push({ value, label })
-  }
-  return dias
-}
-
-type Endereco    = { cep: string; rua: string; numero: string; bairro: string; cidade: string }
-type HorarioDia  = { abertura?: string; fechamento?: string; fechado?: boolean; ativo?: boolean }
-type HorariosMap = Record<string, HorarioDia>
-
-const CHAVE_LONGA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
-const CHAVE_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
-
-function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
-  return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
-}
+type Endereco = { cep: string; rua: string; numero: string; bairro: string; cidade: string }
 
 type Negocio = {
   id: string
@@ -104,30 +74,13 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   // Horários disponíveis para a data selecionada
   const horariosDisponiveis = useMemo<string[] | null>(() => {
     if (!data) return null
-    const [ano, mes, dia] = data.split('-').map(Number)
-    const dow = new Date(ano, mes - 1, dia).getDay()
-    const horarios = negocio?.horarios
-    if (!horarios) return HORARIOS
-    const conf = getConfDia(horarios, dow)
-    if (!conf) return HORARIOS.filter(h => h >= '08:00' && h <= '18:00')
-    if (conf.fechado || conf.ativo === false) return []
-    return HORARIOS.filter(h => h >= conf.abertura! && h <= conf.fechamento!)
+    return horariosDoDia(negocio?.horarios, data)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, JSON.stringify(negocio?.horarios)])
 
   const horariosLivres = useMemo(() => {
     if (!horariosDisponiveis) return null
-    const hoje = new Date()
-    const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`
-    const agoraMin = data === hojeStr ? hoje.getHours() * 60 + hoje.getMinutes() : -1
-    return horariosDisponiveis.filter(h => {
-      if (ocupados.includes(h)) return false
-      if (agoraMin >= 0) {
-        const [hh, mm] = h.split(':').map(Number)
-        if (hh * 60 + mm <= agoraMin) return false
-      }
-      return true
-    })
+    return calcularLivres(horariosDisponiveis, ocupados, data)
   }, [horariosDisponiveis, ocupados, data])
 
   const diaFechado = horariosDisponiveis !== null && horariosDisponiveis.length === 0

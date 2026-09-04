@@ -6,24 +6,11 @@ import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
+import {
+  HORARIOS, horariosDoDia, horariosLivres as calcularLivres,
+  montarDataHora, type HorariosMap,
+} from '@/lib/agenda'
 
-const HORARIOS = Array.from({ length: 25 }, (_, i) => {
-  const minutos = 8 * 60 + i * 30
-  if (minutos > 20 * 60) return null
-  const h = String(Math.floor(minutos / 60)).padStart(2, '0')
-  const m = minutos % 60 === 0 ? '00' : '30'
-  return `${h}:${m}`
-}).filter(Boolean) as string[]
-
-const CHAVE_LONGA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
-const CHAVE_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
-
-type HorarioDia  = { abertura?: string; fechamento?: string; fechado?: boolean; ativo?: boolean }
-type HorariosMap = Record<string, HorarioDia>
-
-function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
-  return horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]] ?? null
-}
 type Negocio     = { id: string; nome: string; horarios: HorariosMap | null; plano: string | null }
 type Servico     = { id: string; nome: string; duracao: string; profissional_id?: string }
 type Profissional = { id: string; nome: string; cargo: string }
@@ -89,30 +76,13 @@ export default function AgendarInternoPage() {
 
   const horariosDisponiveis = useMemo<string[] | null>(() => {
     if (!data) return null
-    const [ano, mes, dia] = data.split('-').map(Number)
-    const dow = new Date(ano, mes - 1, dia).getDay()
-    const horarios = negocio?.horarios
-    if (!horarios) return HORARIOS
-    const conf = getConfDia(horarios, dow)
-    if (!conf) return HORARIOS.filter(h => h >= '08:00' && h <= '18:00')
-    if (conf.fechado || conf.ativo === false) return []
-    return HORARIOS.filter(h => h >= conf.abertura! && h <= conf.fechamento!)
+    return horariosDoDia(negocio?.horarios, data)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, JSON.stringify(negocio?.horarios)])
 
   const horariosLivres = useMemo(() => {
     if (!horariosDisponiveis) return null
-    const hoje = new Date()
-    const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`
-    const agoraMin = data === hojeStr ? hoje.getHours() * 60 + hoje.getMinutes() : -1
-    return horariosDisponiveis.filter(h => {
-      if (ocupados.includes(h)) return false
-      if (agoraMin >= 0) {
-        const [hh, mm] = h.split(':').map(Number)
-        if (hh * 60 + mm <= agoraMin) return false
-      }
-      return true
-    })
+    return calcularLivres(horariosDisponiveis, ocupados, data)
   }, [horariosDisponiveis, ocupados, data])
 
   const diaFechado = horariosDisponiveis !== null && horariosDisponiveis.length === 0
@@ -158,7 +128,7 @@ export default function AgendarInternoPage() {
       ? `${servicoSelecionado.nome} (${servicoSelecionado.duracao})`
       : servicoId
 
-    const data_hora = `${data}T${horario}:00.000Z`
+    const data_hora = montarDataHora(data, horario)
     const dataFormatada = new Date(data_hora).toLocaleDateString('pt-BR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
     })
