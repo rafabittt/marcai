@@ -29,7 +29,7 @@ export type HorarioDia = {
 /**
  * Conteúdo de negocios.horarios (JSONB).
  *
- * Guarda as chaves de dia ('segunda'|'seg'|...) lado a lado com a configuração
+ * Guarda as chaves de dia ('segunda'|'terca'|...) lado a lado com a configuração
  * global do negócio (buffer_min, folgas). Ficam no mesmo objeto de propósito:
  * evita migração de schema. Sempre leia via getConfDia/getBuffer/getFolgas,
  * que fazem a distinção com segurança.
@@ -75,16 +75,22 @@ export const HORARIOS = gerarGrade()
 
 // ── Configuração por dia da semana ───────────────────────────────────────────
 
-const CHAVE_LONGA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
-const CHAVE_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
+const CHAVE_DIA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
 
 function ehHorarioDia(v: unknown): v is HorarioDia {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
 
-/** Aceita as duas convenções de chave já presentes no banco ('segunda' e 'seg'). */
+/**
+ * Configuração do dia, ou null quando não há definição utilizável.
+ *
+ * Houve uma segunda convenção de chave curta ('seg', 'ter', ...) que este
+ * acessor aceitava como fallback. Ela era resíduo — a tela /configuracoes
+ * nunca gravou nesse formato — e foi removida do banco pela migração em
+ * scripts/limpar-chaves-curtas.mjs. Só a convenção longa é lida.
+ */
 export function getConfDia(horarios: HorariosMap, dow: number): HorarioDia | null {
-  const v = horarios[CHAVE_LONGA[dow]] ?? horarios[CHAVE_CURTA[dow]]
+  const v = horarios[CHAVE_DIA[dow]]
   return ehHorarioDia(v) ? v : null
 }
 
