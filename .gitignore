@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backups de dados de produção (rollback/dumps) — nunca versionar
+scripts/_backups/
