@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
 import { createClient } from '@/lib/supabase'
+import FluxoAgendamento, { type DadosAgendamento } from '@/app/components/agendamento/FluxoAgendamento'
+import { usarUiNovaAgendamento } from '@/lib/flags'
 import {
   HORARIOS, horariosDoDia, horariosLivres as calcularLivres,
   type HorariosMap,
@@ -52,6 +54,11 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   const [erro,          setErro]          = useState('')
   const [clienteLogado, setClienteLogado] = useState(false)
   const [clienteToken,  setClienteToken]  = useState<string | null>(null)
+
+  // Resolvida depois da montagem: a flag olha window.location, e decidir no
+  // primeiro render faria o HTML do servidor divergir do cliente.
+  const [uiNova, setUiNova] = useState(false)
+  useEffect(() => { setUiNova(usarUiNovaAgendamento()) }, [])
 
   // Campos do formulário
   const [nome,          setNome]          = useState('')
@@ -125,6 +132,12 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
+    await enviar({ nome, telefone, servicoId, profissionalId, data, horario })
+  }
+
+  // POST compartilhado pelas duas UIs — o contrato de /api/agendar nao muda
+  // com a flag. O fluxo novo guarda os proprios campos e os entrega aqui.
+  async function enviar(d: DadosAgendamento) {
     if (!negocio) return
 
     setSubmitting(true)
@@ -135,13 +148,8 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          slug:           negocio.slug,
-          nome,
-          telefone,
-          servicoId,
-          profissionalId,
-          data,
-          horario,
+          slug: negocio.slug,
+          ...d,
           accessToken: clienteToken ?? undefined,
         }),
       })
@@ -168,6 +176,7 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         return
       }
 
+      setNome(d.nome)
       setSucesso(true)
     } catch {
       setErro('Erro ao realizar agendamento. Tente novamente.')
@@ -262,6 +271,41 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
               Já tenho conta
             </a>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── UI nova, atrás da flag ────────────────────────────────────────────────
+  // Branch separado de propósito: o formulário antigo abaixo fica intacto,
+  // então dá para comparar conversão e, depois de decidir, apagar um dos dois
+  // sem desfazer o outro.
+  if (uiNova && negocio) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 py-10 sm:py-14">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mb-5" />
+            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+              {negocio.nome}
+            </h1>
+            {enderecoFormatado && (
+              <p className="text-sm text-gray-500 mt-1.5">{enderecoFormatado}</p>
+            )}
+          </div>
+
+          <FluxoAgendamento
+            negocioId={negocio.id}
+            horarios={negocio.horarios}
+            servicos={servicos}
+            profissionais={profissionais}
+            nomeInicial={nome}
+            telefoneInicial={telefone}
+            erro={erro}
+            submitting={submitting}
+            onSubmit={enviar}
+          />
         </div>
       </div>
     )
