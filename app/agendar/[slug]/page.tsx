@@ -11,11 +11,12 @@ import {
 
 type Endereco = { cep: string; rua: string; numero: string; bairro: string; cidade: string }
 
+// Espelha a view negocios_publico. O telefone do dono NÃO entra aqui: é dado
+// privado e nunca deve trafegar para a página pública.
 type Negocio = {
   id: string
   nome: string
   slug: string
-  telefone: string
   endereco: Endereco | null
   horarios: HorariosMap | null
   exigir_cadastro_cliente?: boolean

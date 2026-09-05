@@ -7,14 +7,19 @@ export async function GET(
 ) {
   const { slug } = await params
 
+  // Anon key de propósito: esta rota só devolve dados públicos, e a view
+  // negocios_publico é o único caminho de leitura liberado para o role anon.
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
+  // Lê da VIEW, nunca da tabela `negocios`: a tabela tem cpf, telefone do dono,
+  // user_id e os ids do Asaas, que não podem sair numa resposta pública.
+  // RLS não resolveria — ela filtra linhas, não colunas. Ver scripts/sql/.
   const { data: neg, error: negError } = await supabase
-    .from('negocios')
-    .select('id, nome, slug, telefone, endereco, horarios, exigir_cadastro_cliente')
+    .from('negocios_publico')
+    .select('id, nome, slug, endereco, horarios, exigir_cadastro_cliente')
     .eq('slug', slug)
     .single()
 

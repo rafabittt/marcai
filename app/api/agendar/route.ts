@@ -33,10 +33,25 @@ async function enviarWhatsApp(telefone: string, mensagem: string) {
 }
 
 export async function POST(req: NextRequest) {
-  // Usar anon key — RLS controla INSERT na tabela agendamentos
+  // Service role, e não anon key.
+  //
+  // Com a anon key esta rota ficava CEGA para a tabela agendamentos: a RLS
+  // esconde as linhas do role anon, então todo `count` voltava 0 e as duas
+  // proteções abaixo nunca disparavam —
+  //   - o 409 de double-booking deixava passar horário já ocupado;
+  //   - o 403 de limite do plano gratuito nunca era atingido.
+  // Não era uma diferença teórica: verificado contra o banco, o mesmo count
+  // dava 0 (anon) e 1 (service role) para um horário comprovadamente ocupado.
+  //
+  // A rota também precisa de negocios.telefone e negocios.plano, que são
+  // colunas privadas e por isso ficaram fora da view negocios_publico.
+  //
+  // Isto é seguro porque o arquivo só roda no servidor e valida tudo por conta
+  // própria antes de gravar: existência do negócio, expediente, limite de
+  // plano e conflito de horário.
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
   let payload: Record<string, string>
