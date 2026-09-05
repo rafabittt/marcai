@@ -8,10 +8,12 @@ import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
 import {
   HORARIOS, horariosDoDia, horariosLivres as calcularLivres,
-  montarDataHora, type HorariosMap,
+  type HorariosMap,
 } from '@/lib/agenda'
 
-type Negocio     = { id: string; nome: string; horarios: HorariosMap | null; plano: string | null }
+// plano nao aparece aqui: o limite do plano e decidido no servidor, por
+// /api/agendar, junto com expediente e conflito de horario.
+type Negocio     = { id: string; nome: string; slug: string; horarios: HorariosMap | null }
 type Servico     = { id: string; nome: string; duracao: string; profissional_id?: string }
 type Profissional = { id: string; nome: string; cargo: string }
 
@@ -45,7 +47,7 @@ export default function AgendarInternoPage() {
 
       const { data: neg } = await supabase
         .from('negocios')
-        .select('id, nome, horarios, plano')
+        .select('id, nome, slug, horarios')
         .eq('user_id', user.id)
         .maybeSingle()
 
@@ -87,16 +89,6 @@ export default function AgendarInternoPage() {
 
   const diaFechado = horariosDisponiveis !== null && horariosDisponiveis.length === 0
 
-  async function enviarWhatsApp(tel: string, mensagem: string) {
-    try {
-      await fetch('/api/whatsapp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telefone: tel, mensagem }),
-      })
-    } catch {}
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!negocio) return
@@ -104,59 +96,63 @@ export default function AgendarInternoPage() {
     setSubmitting(true)
     setErro('')
 
-    if ((negocio.plano ?? 'gratuito') === 'gratuito') {
-      const agora = new Date()
-      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString()
-      const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59).toISOString()
-      const { count } = await supabase
-        .from('agendamentos')
-        .select('id', { count: 'exact', head: true })
-        .eq('negocio_id', negocio.id)
-        .gte('data_hora', inicioMes)
-        .lte('data_hora', fimMes)
-      if ((count ?? 0) >= 5) {
+    // Mesma rota da pagina publica, de proposito.
+    //
+    // Antes esta tela fazia INSERT direto no supabase do browser, pulando
+    // /api/agendar. Com isso o caminho do dono — o mais usado — nao tinha
+    // nenhuma das validacoes de servidor: gravava em horario ja ocupado
+    // (sem 409), gravava fora do expediente, pausa ou folga (sem 422), e
+    // notificava so o cliente, deixando o dono sem aviso do proprio
+    // agendamento. O limite de plano era reimplementado aqui, em duplicidade
+    // com a rota.
+    //
+    // Nada de logica de agendamento vive mais nesta tela: ela so coleta os
+    // campos e delega. Se um dia o dono precisar de encaixe fora da grade,
+    // isso entra como um override explicito no servidor — nunca voltando a
+    // pular a validacao.
+    try {
+      const res = await fetch('/api/agendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: negocio.slug,
+          nome,
+          telefone,
+          servicoId,
+          profissionalId,
+          data,
+          horario,
+        }),
+      })
+
+      if (res.status === 403) {
         setErro('Limite de 5 agendamentos/mês do plano Freemium atingido. Faça upgrade para continuar.')
-        setSubmitting(false)
         return
       }
-    }
 
-    const servicoSelecionado      = servicos.find(s => String(s.id) === servicoId)
-    const profissionalSelecionado = profissionais.find(p => String(p.id) === profissionalId)
+      if (res.status === 422) {
+        setErro('Este horário está fora da agenda configurada (expediente, pausa ou folga). Escolha outro.')
+        setHorario('')
+        return
+      }
 
-    const servicoTexto = servicoSelecionado
-      ? `${servicoSelecionado.nome} (${servicoSelecionado.duracao})`
-      : servicoId
+      if (res.status === 409) {
+        setErro('Este horário já está ocupado. Escolha outro.')
+        setHorario('')
+        return
+      }
 
-    const data_hora = montarDataHora(data, horario)
-    const dataFormatada = new Date(data_hora).toLocaleDateString('pt-BR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    })
+      if (!res.ok) {
+        setErro('Erro ao realizar agendamento. Tente novamente.')
+        return
+      }
 
-    const { error } = await supabase.from('agendamentos').insert({
-      negocio_id:       negocio.id,
-      cliente_nome:     nome,
-      cliente_telefone: telefone,
-      servico:          servicoTexto,
-      profissional:     profissionalSelecionado?.nome ?? null,
-      data_hora,
-      status:           'confirmado',
-    })
-
-    if (error) {
+      setSucesso(true)
+    } catch {
       setErro('Erro ao realizar agendamento. Tente novamente.')
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    const profTexto = profissionalSelecionado ? ` com ${profissionalSelecionado.nome}` : ''
-    enviarWhatsApp(
-      telefone,
-      `Olá ${nome}! Seu agendamento em ${negocio.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá!`
-    )
-
-    setSucesso(true)
-    setSubmitting(false)
   }
 
   function resetForm() {
