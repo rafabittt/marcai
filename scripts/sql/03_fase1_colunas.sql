@@ -33,6 +33,12 @@
 --   agora: ela continua sendo o nome exibido, inclusive para profissionais que
 --   já foram apagados.
 --
+--   ON DELETE SET NULL de propósito. Sem cláusula o padrão seria NO ACTION, e
+--   depois do backfill apagar um profissional com histórico passaria a falhar
+--   por violação de FK — em silêncio, porque o botão "Remover" em
+--   /profissionais não checa o erro. Com SET NULL, apagar zera o id e o nome
+--   continua no histórico pela coluna de texto.
+--
 -- agendamentos.observacoes
 --   Texto livre do dono sobre o atendimento. Usado pelo painel lateral.
 --
@@ -46,21 +52,27 @@
 --   bloqueio. É o único efeito deste arquivo sobre dados existentes.
 --
 -- cliente_nome / cliente_telefone: DROP NOT NULL
---   Um bloqueio não tem cliente. Efeito colateral a registrar: depois disto o
---   banco passa a aceitar um agendamento comum sem nome. Ver a nota sobre o
---   CHECK no fim do arquivo.
+--   Um bloqueio não tem cliente. Sozinho isso abriria espaço para agendamento
+--   comum sem nome, então o CHECK logo abaixo fecha de volta: só bloqueio pode
+--   ficar sem cliente.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 alter table servicos      add column preco numeric(10,2);
 
 alter table agendamentos  add column preco numeric(10,2);
 alter table agendamentos  add column duracao_min int;
-alter table agendamentos  add column profissional_id uuid references profissionais(id);
+alter table agendamentos  add column profissional_id uuid
+                            references profissionais(id) on delete set null;
 alter table agendamentos  add column observacoes text;
 alter table agendamentos  add column tipo text default 'agendamento';
 
 alter table agendamentos  alter column cliente_nome     drop not null;
 alter table agendamentos  alter column cliente_telefone drop not null;
+
+-- Devolve ao banco a garantia que o DROP NOT NULL tirou: agendamento de
+-- verdade continua exigindo cliente; só bloqueio pode ficar sem.
+alter table agendamentos  add constraint agendamentos_cliente_obrigatorio
+                            check (tipo = 'bloqueio' or cliente_nome is not null);
 
 
 -- ── Verificação, depois de rodar ─────────────────────────────────────────────
@@ -72,28 +84,9 @@ alter table agendamentos  alter column cliente_telefone drop not null;
 --  order by table_name, column_name;
 --
 -- select tipo, count(*) from agendamentos group by tipo;   -- 20 'agendamento'
-
-
--- ─────────────────────────────────────────────────────────────────────────────
--- DUAS COISAS QUE NÃO ESTOU APLICANDO, e que valem decisão — ver a conversa.
 --
--- 1. ON DELETE da FK. Sem cláusula, o padrão é NO ACTION: depois do backfill
---    da Etapa 3, apagar um profissional que tenha agendamentos passa a FALHAR
---    com violação de FK. O botão "Remover" em /profissionais não checa erro,
---    então falharia em silêncio. A alternativa é:
+-- select confdeltype from pg_constraint
+--  where conname = 'agendamentos_profissional_id_fkey';     -- 'n' = set null
 --
---      alter table agendamentos
---        drop constraint agendamentos_profissional_id_fkey,
---        add constraint agendamentos_profissional_id_fkey
---          foreign key (profissional_id) references profissionais(id)
---          on delete set null;
---
---    Com isso, apagar o profissional zera o id e o histórico preserva o nome
---    na coluna de texto `profissional`.
---
--- 2. CHECK protegendo o DROP NOT NULL, para agendamento comum continuar
---    exigindo cliente:
---
---      alter table agendamentos add constraint agendamentos_cliente_obrigatorio
---        check (tipo = 'bloqueio' or cliente_nome is not null);
--- ─────────────────────────────────────────────────────────────────────────────
+-- select conname from pg_constraint
+--  where conname = 'agendamentos_cliente_obrigatorio';      -- 1 linha
