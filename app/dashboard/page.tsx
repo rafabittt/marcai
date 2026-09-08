@@ -351,6 +351,36 @@ export default function DashboardPage() {
           </>
         ) : (
           <>
+            {/* Abre a aba: dá a leitura do período antes do item a item.
+                Vive junto do histórico, e não na home, para ela não crescer.
+                Reflete o que já foi carregado pela paginação abaixo. */}
+            <section>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 sm:px-6 pt-6 pb-4">
+                <p className="text-xs uppercase tracking-widest font-medium text-gray-500 mb-4">
+                  Volume diário — últimos dias
+                </p>
+                {chartData.length === 0 ? (
+                  <div className="flex items-center justify-center h-40">
+                    <p className="text-sm text-gray-400">Sem dados históricos ainda.</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={chartData} barSize={18} barGap={4}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
+                        cursor={{ fill: '#f9f9f9' }}
+                      />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '12px' }} />
+                      <Bar dataKey="Realizados" fill="#25D366" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Cancelados" fill="#fca5a5" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </section>
             <section>
               <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Histórico</h2>
               {passados.length === 0 ? (
@@ -380,35 +410,6 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* O gráfico vive aqui, junto dos dados que ele resume, para a home
-                não crescer. Ele reflete o que já foi carregado no histórico. */}
-            <section>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 sm:px-6 pt-6 pb-4">
-                <p className="text-xs uppercase tracking-widest font-medium text-gray-500 mb-4">
-                  Volume diário — últimos dias
-                </p>
-                {chartData.length === 0 ? (
-                  <div className="flex items-center justify-center h-40">
-                    <p className="text-sm text-gray-400">Sem dados históricos ainda.</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={chartData} barSize={18} barGap={4}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                      <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
-                      <Tooltip
-                        contentStyle={{ borderRadius: '12px', border: '1px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
-                        cursor={{ fill: '#f9f9f9' }}
-                      />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '12px' }} />
-                      <Bar dataKey="Realizados" fill="#25D366" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Cancelados" fill="#fca5a5" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </section>
           </>
         )}
       </main>
