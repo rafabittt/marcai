@@ -1,15 +1,10 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
-import { maskName, maskPhone } from '@/lib/masks'
-import CalendarioInline from '@/app/components/CalendarioInline'
+import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import FluxoAgendamento, { type DadosAgendamento } from '@/app/components/agendamento/FluxoAgendamento'
-import { usarUiNovaAgendamento } from '@/lib/flags'
-import {
-  HORARIOS, horariosDoDia, horariosLivres as calcularLivres,
-  type HorariosMap,
-} from '@/lib/agenda'
+import FluxoAgendamento, { type DadosAgendamento, type Profissional } from '@/app/components/agendamento/FluxoAgendamento'
+import { type Servico } from '@/app/components/agendamento/CardsServico'
+import { type HorariosMap } from '@/lib/agenda'
 
 type Endereco = { cep: string; rua: string; numero: string; bairro: string; cidade: string }
 
@@ -24,9 +19,6 @@ type Negocio = {
   exigir_cadastro_cliente?: boolean
 }
 
-type Servico      = { id: string; nome: string; duracao: string; profissional_id?: string }
-type Profissional = { id: string; nome: string; cargo: string }
-
 function formatarEndereco(e: Endereco | null): string | null {
   if (!e) return null
   const partes = [
@@ -36,10 +28,6 @@ function formatarEndereco(e: Endereco | null): string | null {
   ].filter(Boolean)
   return partes.length > 0 ? partes.join(' — ') : null
 }
-
-const selectClass = 'w-full border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent'
-const inputClass  = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const labelClass  = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
 
 export default function AgendarPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = React.use(params)
@@ -55,43 +43,12 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   const [clienteLogado, setClienteLogado] = useState(false)
   const [clienteToken,  setClienteToken]  = useState<string | null>(null)
 
-  // Resolvida depois da montagem: a flag olha window.location, e decidir no
-  // primeiro render faria o HTML do servidor divergir do cliente.
-  const [uiNova, setUiNova] = useState(false)
-  useEffect(() => { setUiNova(usarUiNovaAgendamento()) }, [])
-
-  // Campos do formulário
-  const [nome,          setNome]          = useState('')
-  const [telefone,      setTelefone]      = useState('')
-  const [servicoId,     setServicoId]     = useState('')
-  const [profissionalId, setProfissionalId] = useState('')
-  const [data,          setData]          = useState('')
-  const [horario,       setHorario]       = useState('')
-  const [ocupados,      setOcupados]      = useState<string[]>([])
-
-  useEffect(() => {
-    if (!data || !negocio?.id) { setOcupados([]); return }
-    const params = new URLSearchParams({ negocio_id: negocio.id, data })
-    if (profissionalId) params.set('profissional_id', profissionalId)
-    fetch(`/api/agendar/ocupados?${params}`)
-      .then(r => r.json())
-      .then(({ ocupados: slots }) => setOcupados(slots ?? []))
-      .catch(() => setOcupados([]))
-  }, [data, negocio?.id, profissionalId])
-
-  // Horários disponíveis para a data selecionada
-  const horariosDisponiveis = useMemo<string[] | null>(() => {
-    if (!data) return null
-    return horariosDoDia(negocio?.horarios, data)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, JSON.stringify(negocio?.horarios)])
-
-  const horariosLivres = useMemo(() => {
-    if (!horariosDisponiveis) return null
-    return calcularLivres(horariosDisponiveis, ocupados, data)
-  }, [horariosDisponiveis, ocupados, data])
-
-  const diaFechado = horariosDisponiveis !== null && horariosDisponiveis.length === 0
+  // Prefill do cliente logado, e nome para a tela de sucesso. Os campos do
+  // agendamento em si vivem dentro do FluxoAgendamento.
+  const [nome,     setNome]     = useState('')
+  const [telefone, setTelefone] = useState('')
+  // Remonta o fluxo do zero em "Fazer outro agendamento".
+  const [tentativa, setTentativa] = useState(0)
 
   useEffect(() => {
     async function init() {
@@ -130,13 +87,6 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     init()
   }, [slug])
 
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault()
-    await enviar({ nome, telefone, servicoId, profissionalId, data, horario })
-  }
-
-  // POST compartilhado pelas duas UIs — o contrato de /api/agendar nao muda
-  // com a flag. O fluxo novo guarda os proprios campos e os entrega aqui.
   async function enviar(d: DadosAgendamento) {
     if (!negocio) return
 
@@ -161,13 +111,11 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
 
       if (res.status === 422) {
         setErro('Este horário não está mais disponível na agenda (fora do expediente, pausa ou folga). Escolha outro.')
-        setHorario('')
         return
       }
 
       if (res.status === 409) {
         setErro('Este horário acabou de ser reservado por outra pessoa. Escolha outro horário.')
-        setHorario('')
         return
       }
 
@@ -183,16 +131,6 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     } finally {
       setSubmitting(false)
     }
-  }
-
-  function resetForm() {
-    setSucesso(false)
-    setNome('')
-    setTelefone('')
-    setServicoId('')
-    setProfissionalId('')
-    setData('')
-    setHorario('')
   }
 
   if (loading) {
@@ -235,7 +173,7 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
             foi registrado com sucesso.
           </p>
           <button
-            onClick={resetForm}
+            onClick={() => { setSucesso(false); setTentativa(t => t + 1) }}
             className="mt-8 w-full py-3 rounded-xl text-sm font-semibold border-2 border-[#25D366] text-[#25D366] transition-all duration-200 hover:bg-[#dcfce7] hover:scale-[1.02]"
           >
             Fazer outro agendamento
@@ -252,6 +190,7 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-8 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mx-auto mb-6" />
           <h1 className="text-xl font-bold text-gray-900 mb-1">{negocio.nome}</h1>
           <p className="text-sm text-gray-500 mb-8">
@@ -276,183 +215,34 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
     )
   }
 
-  // ── UI nova, atrás da flag ────────────────────────────────────────────────
-  // Branch separado de propósito: o formulário antigo abaixo fica intacto,
-  // então dá para comparar conversão e, depois de decidir, apagar um dos dois
-  // sem desfazer o outro.
-  if (uiNova && negocio) {
-    return (
-      <div className="min-h-screen bg-gray-50 px-4 py-10 sm:py-14">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mb-5" />
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
-              {negocio.nome}
-            </h1>
-            {enderecoFormatado && (
-              <p className="text-sm text-gray-500 mt-1.5">{enderecoFormatado}</p>
-            )}
-          </div>
-
-          <FluxoAgendamento
-            negocioId={negocio.id}
-            horarios={negocio.horarios}
-            servicos={servicos}
-            profissionais={profissionais}
-            nomeInicial={nome}
-            telefoneInicial={telefone}
-            erro={erro}
-            submitting={submitting}
-            onSubmit={enviar}
-          />
-        </div>
-      </div>
-    )
-  }
+  if (!negocio) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-12">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-8">
-
-        {/* Cabeçalho */}
-        <div className="mb-8">
-          <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">{negocio?.nome}</h1>
+    <div className="min-h-screen bg-gray-50 px-4 py-10 sm:py-14">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mb-5" />
+          <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+            {negocio.nome}
+          </h1>
           {enderecoFormatado && (
-            <p className="text-sm text-gray-500 mt-1">{enderecoFormatado}</p>
+            <p className="text-sm text-gray-500 mt-1.5">{enderecoFormatado}</p>
           )}
-          <p className="text-gray-400 text-sm mt-1">Preencha os dados para agendar</p>
         </div>
 
-        {erro && (
-          <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-6">
-            {erro}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className={labelClass}>Seu nome</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={e => setNome(maskName(e.target.value))}
-              required
-              placeholder="João Silva"
-              className={inputClass}
-            />
-          </div>
-
-          <div>
-            <label className={labelClass}>Telefone / WhatsApp</label>
-            <input
-              type="tel"
-              value={telefone}
-              onChange={e => setTelefone(maskPhone(e.target.value))}
-              required
-              placeholder="(11) 99999-9999"
-              className={inputClass}
-            />
-          </div>
-
-          {profissionais.length > 0 && (
-            <div>
-              <label className={labelClass}>Profissional</label>
-              <select
-                value={profissionalId}
-                onChange={e => { setProfissionalId(e.target.value); setServicoId('') }}
-                required
-                className={selectClass}
-              >
-                <option value="">Selecione um profissional</option>
-                {profissionais.map(p => (
-                  <option key={p.id} value={String(p.id)}>
-                    {p.nome}{p.cargo ? ` — ${p.cargo}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label className={labelClass}>Serviço desejado</label>
-            {(() => {
-              const servicosFiltrados = profissionalId
-                ? servicos.filter(s => s.profissional_id === profissionalId)
-                : servicos
-              return servicosFiltrados.length > 0 ? (
-                <select
-                  value={servicoId}
-                  onChange={e => setServicoId(e.target.value)}
-                  required
-                  className={selectClass}
-                >
-                  <option value="">Selecione um serviço</option>
-                  {servicosFiltrados.map(s => (
-                    <option key={s.id} value={String(s.id)}>
-                      {s.nome} ({s.duracao})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  value={servicoId}
-                  onChange={e => setServicoId(e.target.value)}
-                  required
-                  placeholder="Ex: Corte de cabelo"
-                  className={inputClass}
-                />
-              )
-            })()}
-          </div>
-
-          <div>
-            <label className={labelClass}>Data</label>
-            <CalendarioInline
-              value={data}
-              onChange={v => { setData(v); setHorario('') }}
-              horarios={negocio?.horarios}
-            />
-          </div>
-
-          <div>
-            <label className={labelClass}>Horário</label>
-            <select
-              value={horario}
-              onChange={e => setHorario(e.target.value)}
-              required={!diaFechado}
-              disabled={!data || diaFechado}
-              className={`${selectClass} disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed`}
-            >
-              {!data && (
-                <option value="">Selecione uma data primeiro</option>
-              )}
-              {data && diaFechado && (
-                <option value="">Fechado neste dia</option>
-              )}
-              {data && !diaFechado && (
-                <>
-                  <option value="">Selecione um horário</option>
-                  {(horariosLivres ?? HORARIOS).map(h => (
-                    <option key={h} value={h}>{h}</option>
-                  ))}
-                </>
-              )}
-            </select>
-          </div>
-
-          <div className="pt-1">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
-            >
-              {submitting ? 'Agendando...' : 'Confirmar agendamento'}
-            </button>
-          </div>
-        </form>
+        <FluxoAgendamento
+          key={tentativa}
+          negocioId={negocio.id}
+          horarios={negocio.horarios}
+          servicos={servicos}
+          profissionais={profissionais}
+          nomeInicial={nome}
+          telefoneInicial={telefone}
+          erro={erro}
+          submitting={submitting}
+          onSubmit={enviar}
+        />
       </div>
     </div>
   )
