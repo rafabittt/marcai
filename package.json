@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test lib/*.test.ts",
+    "test:fusos": "for tz in UTC America/Sao_Paulo Asia/Tokyo; do echo \"── TZ=$tz ──\"; TZ=$tz node --test lib/*.test.ts || exit 1; done"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

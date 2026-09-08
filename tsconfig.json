@@ -6,6 +6,10 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // node --test roda os .ts direto (type stripping), e o Node exige o
+    // especificador com extensao: import ... from './agenda.ts'.
+    // Seguro porque nao ha emissao — noEmit ja esta ligado acima.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
