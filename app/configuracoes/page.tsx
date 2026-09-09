@@ -426,10 +426,23 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Exigir cadastro do cliente</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Clientes precisarão criar uma conta antes de agendar</p>
+              {/* Agendar sem cadastro é o diferencial do Marcaí: cada passo a mais
+                  antes de agendar derruba conversão. O selo desencoraja sem
+                  bloquear — quem tem motivo para exigir continua podendo. */}
+              <div className="flex items-center justify-between gap-4 pt-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-gray-900">Exigir cadastro do cliente</p>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 whitespace-nowrap">
+                      Não indicado
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Clientes precisarão criar uma conta antes de agendar.{' '}
+                    {exigirCadastro
+                      ? 'Isso costuma reduzir agendamentos — agendar em poucos toques, sem conta, é o nosso diferencial.'
+                      : 'Deixe desligado: agendar em poucos toques, sem conta, é o nosso diferencial.'}
+                  </p>
                 </div>
                 <button
                   type="button"
