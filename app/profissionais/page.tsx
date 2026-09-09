@@ -5,10 +5,13 @@ import { createClient } from '@/lib/supabase'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
 import { maskName } from '@/lib/masks'
+import { parsePreco, precoParaInput } from '@/lib/preco'
 
 const DURACOES = ['15 min', '30 min', '45 min', '1h', '1h 30min', '2h', '2h 30min', '3h']
 
-type Servico     = { id: string; nome: string; duracao: string; profissional_id: string }
+const FORM_SERVICO_VAZIO = { nome: '', duracao: '30 min', preco: '' }
+
+type Servico     = { id: string; nome: string; duracao: string; preco: number | null; profissional_id: string }
 type Profissional = { id: string; negocio_id: string; nome: string; cargo: string; foto_url: string | null; servicos: Servico[] }
 
 function getIniciais(nome: string): string {
@@ -31,8 +34,11 @@ export default function ProfissionaisPage() {
   const [cargo, setCargo] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const [novoServico,   setNovoServico]   = useState<Record<string, { nome: string; duracao: string }>>({})
+  const [novoServico,   setNovoServico]   = useState<Record<string, { nome: string; duracao: string; preco: string }>>({})
   const [savingServico, setSavingServico] = useState<string | null>(null)
+  // Preço em edição por serviço já existente, e qual acabou de ser salvo.
+  const [precoEdit,     setPrecoEdit]     = useState<Record<string, string>>({})
+  const [precoSalvo,    setPrecoSalvo]    = useState<string | null>(null)
   const [uploadingId,   setUploadingId]   = useState<string | null>(null)
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
@@ -58,7 +64,7 @@ export default function ProfissionaisPage() {
   async function carregarDados(negId: string) {
     const [{ data: profData }, { data: srvData }] = await Promise.all([
       supabase.from('profissionais').select('id, negocio_id, nome, cargo, foto_url').eq('negocio_id', negId).order('nome'),
-      supabase.from('servicos').select('id, nome, duracao, profissional_id').eq('negocio_id', negId),
+      supabase.from('servicos').select('id, nome, duracao, preco, profissional_id').eq('negocio_id', negId),
     ])
     const servicos = srvData ?? []
     setProfissionais((profData ?? []).map(p => ({
@@ -102,22 +108,56 @@ export default function ProfissionaisPage() {
 
   async function handleAdicionarServico(profId: string) {
     if (!negocioId) return
-    const form = novoServico[profId] ?? { nome: '', duracao: '30 min' }
+    const form = novoServico[profId] ?? FORM_SERVICO_VAZIO
     if (!form.nome.trim()) return
     setSavingServico(profId)
 
+    // Campo vazio grava null, não zero: serviço sem preço cadastrado é um
+    // estado legítimo e diferente de serviço de graça.
     const { error } = await supabase.from('servicos').insert({
       negocio_id: negocioId,
       profissional_id: profId,
       nome: form.nome.trim(),
       duracao: form.duracao,
+      preco: parsePreco(form.preco),
     })
 
     if (!error) {
-      setNovoServico(prev => ({ ...prev, [profId]: { nome: '', duracao: '30 min' } }))
+      setNovoServico(prev => ({ ...prev, [profId]: FORM_SERVICO_VAZIO }))
       await carregarDados(negocioId)
     }
     setSavingServico(null)
+  }
+
+  /**
+   * Salva o preço de um serviço que já existe. Os serviços cadastrados antes
+   * da migração estão todos sem preço, então editar é o caminho normal, não
+   * uma exceção — sem isto o dono teria que apagar e recriar cada um.
+   *
+   * Salva ao sair do campo, e só quando o valor realmente mudou.
+   */
+  async function salvarPreco(servico: Servico) {
+    const texto = precoEdit[servico.id]
+    if (texto === undefined) return
+    const novo = parsePreco(texto)
+    if (novo === servico.preco) { limparEdicao(servico.id); return }
+
+    await supabase.from('servicos').update({ preco: novo }).eq('id', servico.id)
+    setProfissionais(prev => prev.map(p => ({
+      ...p,
+      servicos: p.servicos.map(s => s.id === servico.id ? { ...s, preco: novo } : s),
+    })))
+    limparEdicao(servico.id)
+    setPrecoSalvo(servico.id)
+    setTimeout(() => setPrecoSalvo(atual => atual === servico.id ? null : atual), 1800)
+  }
+
+  function limparEdicao(servicoId: string) {
+    setPrecoEdit(prev => {
+      const resto = { ...prev }
+      delete resto[servicoId]
+      return resto
+    })
   }
 
   async function handleRemoverServico(servicoId: string, profId: string) {
@@ -167,7 +207,7 @@ export default function ProfissionaisPage() {
           )}
 
           {profissionais.map(prof => {
-            const form = novoServico[prof.id] ?? { nome: '', duracao: '30 min' }
+            const form = novoServico[prof.id] ?? FORM_SERVICO_VAZIO
             return (
               <div key={prof.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
 
@@ -225,31 +265,53 @@ export default function ProfissionaisPage() {
                   )}
 
                   <div className="space-y-2 mb-3">
-                    {prof.servicos.map(s => (
-                      <div key={s.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-2.5">
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{s.nome}</p>
-                          <p className="text-xs text-gray-500">{s.duracao}</p>
+                    {prof.servicos.map(s => {
+                      const editando = precoEdit[s.id] !== undefined
+                      return (
+                        <div key={s.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-800 truncate">{s.nome}</p>
+                            <p className="text-xs text-gray-500">{s.duracao}</p>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-xs text-gray-400">R$</span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              aria-label={`Preço de ${s.nome}`}
+                              value={editando ? precoEdit[s.id] : precoParaInput(s.preco)}
+                              onChange={e => setPrecoEdit(prev => ({ ...prev, [s.id]: e.target.value }))}
+                              onBlur={() => salvarPreco(s)}
+                              onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                              placeholder="—"
+                              className="w-20 text-right border border-transparent hover:border-gray-200 focus:border-[#25D366] rounded-lg px-2 py-1 text-sm text-gray-800 bg-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] transition-colors placeholder-gray-300"
+                            />
+                            <span className={`text-[#25D366] text-xs w-4 transition-opacity ${precoSalvo === s.id ? 'opacity-100' : 'opacity-0'}`}>
+                              ✓
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoverServico(s.id, prof.id)}
+                            className="text-xs text-red-400 hover:text-red-600 transition-colors shrink-0"
+                          >
+                            Remover
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoverServico(s.id, prof.id)}
-                          className="text-xs text-red-400 hover:text-red-600 transition-colors ml-4 shrink-0"
-                        >
-                          Remover
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <input
                       type="text"
                       value={form.nome}
                       onChange={e => setNovoServico(prev => ({ ...prev, [prof.id]: { ...form, nome: e.target.value } }))}
                       placeholder="Nome do serviço"
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdicionarServico(prof.id) } }}
-                      className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300"
+                      className="flex-1 min-w-[8rem] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300"
                     />
                     <select
                       value={form.duracao}
@@ -258,6 +320,16 @@ export default function ProfissionaisPage() {
                     >
                       {DURACOES.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={form.preco}
+                      onChange={e => setNovoServico(prev => ({ ...prev, [prof.id]: { ...form, preco: e.target.value } }))}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdicionarServico(prof.id) } }}
+                      placeholder="R$"
+                      aria-label="Preço do serviço (opcional)"
+                      className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300"
+                    />
                     <button
                       type="button"
                       onClick={() => handleAdicionarServico(prof.id)}
@@ -267,6 +339,9 @@ export default function ProfissionaisPage() {
                       {savingServico === prof.id ? '...' : '+ Add'}
                     </button>
                   </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Preço é opcional — deixe vazio se ainda não quiser definir.
+                  </p>
                 </div>
 
               </div>
