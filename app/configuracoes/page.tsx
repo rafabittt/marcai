@@ -1,10 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
 import { getBuffer, getFolgas, localDateStr, type Intervalo, type HorariosMap as ConfigAgenda } from '@/lib/agenda'
 import { X, Plus } from 'lucide-react'
+import EditorMensagem from '@/app/components/EditorMensagem'
+import {
+  getTemplateCliente, getTemplateDono, exemploVariaveis,
+  CHAVE_MSG_CLIENTE, CHAVE_MSG_DONO, MSG_CLIENTE_PADRAO, MSG_DONO_PADRAO,
+} from '@/lib/mensagens'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
 
@@ -126,6 +131,11 @@ export default function ConfiguracoesPage() {
   // Cadastro de cliente
   const [exigirCadastro, setExigirCadastro] = useState(false)
 
+  // Templates das mensagens de confirmação — moram no mesmo JSONB de horarios,
+  // junto de buffer_min e folgas.
+  const [msgCliente, setMsgCliente] = useState(MSG_CLIENTE_PADRAO)
+  const [msgDono,    setMsgDono]    = useState(MSG_DONO_PADRAO)
+
   // CEP
   const [cepLoading, setCepLoading] = useState(false)
 
@@ -158,6 +168,8 @@ export default function ConfiguracoesPage() {
       setHorarios((neg.horarios as HorariosMap | null) ?? HORARIOS_PADRAO)
       setBufferMin(getBuffer(neg.horarios as ConfigAgenda | null))
       setFolgas(getFolgas(neg.horarios as ConfigAgenda | null))
+      setMsgCliente(getTemplateCliente(neg.horarios))
+      setMsgDono(getTemplateDono(neg.horarios))
       setEndereco(neg.endereco ?? ENDERECO_PADRAO)
       setExigirCadastro(neg.exigir_cadastro_cliente ?? false)
 
@@ -277,8 +289,23 @@ export default function ConfiguracoesPage() {
 
     const negocioId = negocio!.id
 
-    // buffer e folgas moram no mesmo JSONB dos dias — sem coluna nova
-    const horariosCompletos: Record<string, unknown> = { ...horarios, buffer_min: bufferMin, folgas }
+    // buffer, folgas e os templates de mensagem moram no mesmo JSONB dos dias
+    // — sem coluna nova. Template igual ao padrão não é gravado: assim o
+    // negócio continua acompanhando o default se ele mudar no futuro.
+    const horariosCompletos: Record<string, unknown> = {
+      ...horarios,
+      buffer_min: bufferMin,
+      folgas,
+      [CHAVE_MSG_CLIENTE]: msgCliente,
+      [CHAVE_MSG_DONO]:    msgDono,
+    }
+
+    // Template idêntico ao padrão sai do JSONB em vez de ser gravado, para o
+    // negócio seguir acompanhando o default se ele mudar. Removido com delete,
+    // e não atribuindo undefined: a chave precisa sumir de fato do objeto, não
+    // depender de o serializador descartá-la.
+    if (msgCliente.trim() === MSG_CLIENTE_PADRAO) delete horariosCompletos[CHAVE_MSG_CLIENTE]
+    if (msgDono.trim()    === MSG_DONO_PADRAO)    delete horariosCompletos[CHAVE_MSG_DONO]
 
     // A: update negocios (dados básicos + horários + endereço)
     const negUpdate = supabase
@@ -299,6 +326,10 @@ export default function ConfiguracoesPage() {
     }
     setSaving(false)
   }
+
+  // Exemplo do preview: usa o nome real do negócio para o dono ver a mensagem
+  // como ela vai sair.
+  const exemplo = useMemo(() => exemploVariaveis(negNome), [negNome])
 
   if (loading) {
     return (
@@ -653,6 +684,36 @@ export default function ConfiguracoesPage() {
                   ))}
                 </div>
               )}
+            </Section>
+
+            {/* 5. MENSAGENS */}
+            <Section title="Mensagens de confirmação">
+              <p className="text-sm text-gray-500 -mt-2 mb-6">
+                O que é enviado no WhatsApp quando um agendamento é confirmado.
+                Clique numa variável para inseri-la no ponto do cursor. O que
+                estiver entre colchetes <span className="font-mono text-xs">[ ]</span> some
+                quando a variável dentro dele estiver vazia.
+              </p>
+
+              <div className="space-y-8">
+                <EditorMensagem
+                  titulo="Para o cliente"
+                  descricao="Chega no WhatsApp de quem agendou."
+                  valor={msgCliente}
+                  onChange={setMsgCliente}
+                  padrao={MSG_CLIENTE_PADRAO}
+                  exemplo={exemplo}
+                />
+                <div className="border-t border-gray-100" />
+                <EditorMensagem
+                  titulo="Para você"
+                  descricao="O aviso que chega no seu WhatsApp a cada novo agendamento."
+                  valor={msgDono}
+                  onChange={setMsgDono}
+                  padrao={MSG_DONO_PADRAO}
+                  exemplo={exemplo}
+                />
+              </div>
             </Section>
 
             {/* BOTÃO GLOBAL + FEEDBACK */}

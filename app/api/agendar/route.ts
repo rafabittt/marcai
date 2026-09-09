@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { horariosDoDia, type HorariosMap } from '@/lib/agenda'
+import { formatarEndereco, type Endereco } from '@/lib/endereco'
+import { getTemplateCliente, getTemplateDono, renderizarTemplate } from '@/lib/mensagens'
 
 function formatarTelefone(tel: string): string {
   const digits = tel.replace(/\D/g, '')
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
   // Buscar negócio pelo slug (validar que existe)
   const { data: neg, error: negError } = await supabase
     .from('negocios')
-    .select('id, nome, telefone, plano, horarios')
+    .select('id, nome, telefone, plano, horarios, endereco')
     .eq('slug', slug)
     .single()
 
@@ -188,21 +190,35 @@ export async function POST(req: NextRequest) {
   }
 
   // Notificações WhatsApp — aguardar antes de encerrar a função (Vercel mata fire-and-forget)
+  //
+  // Os textos vêm dos templates que o dono edita em /configuracoes, guardados
+  // no JSONB de configuração. Quando ele não editou nada, os defaults em
+  // lib/mensagens reproduzem letra por letra o que era enviado antes — ligar
+  // esta feature não muda nenhuma mensagem sozinha.
   const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   })
-  const profTexto = profissionalNome ? ` com ${profissionalNome}` : ''
 
-  await enviarWhatsApp(
+  const config = neg.horarios as HorariosMap | null
+  const variaveis = {
+    cliente:      nome.trim(),
     telefone,
-    `Olá ${nome.trim()}! Seu agendamento em ${neg.nome} foi confirmado para ${dataFormatada} às ${horario}${profTexto}. Até lá!`
-  )
+    servico:      servicoTexto,
+    profissional: profissionalNome,
+    data:         dataFormatada,
+    hora:         horario,
+    endereco:     formatarEndereco(neg.endereco as Endereco | null),
+    negocio:      neg.nome,
+  }
+
+  const textoCliente = renderizarTemplate(getTemplateCliente(config), variaveis)
+  if (textoCliente) await enviarWhatsApp(telefone, textoCliente)
 
   if (neg.telefone) {
-    await enviarWhatsApp(
-      neg.telefone,
-      `Novo agendamento! ${nome.trim()} agendou ${servicoTexto}${profTexto} para ${dataFormatada} às ${horario}. Tel: ${telefone}`
-    )
+    const textoDono = renderizarTemplate(getTemplateDono(config), variaveis)
+    // Template vazio é o dono desligando aquele aviso — não manda mensagem em
+    // branco para o Z-API.
+    if (textoDono) await enviarWhatsApp(neg.telefone, textoDono)
   }
 
   return NextResponse.json({ ok: true })

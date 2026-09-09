@@ -30,15 +30,18 @@ export type HorarioDia = {
  * Conteúdo de negocios.horarios (JSONB).
  *
  * Guarda as chaves de dia ('segunda'|'terca'|...) lado a lado com a configuração
- * global do negócio (buffer_min, folgas). Ficam no mesmo objeto de propósito:
- * evita migração de schema. Sempre leia via getConfDia/getBuffer/getFolgas,
- * que fazem a distinção com segurança.
+ * global do negócio (buffer_min, folgas e os templates de mensagem). Ficam no
+ * mesmo objeto de propósito: evita migração de schema. O nome da coluna é
+ * histórico — ela é a configuração do negócio, não só os horários.
+ *
+ * Sempre leia via getConfDia/getBuffer/getFolgas (e getTemplate* em
+ * lib/mensagens), que fazem a distinção com segurança.
  */
 export type HorariosMap = {
   buffer_min?: number
   folgas?: string[]
 } & {
-  [chave: string]: HorarioDia | number | string[] | undefined
+  [chave: string]: HorarioDia | number | string | string[] | undefined
 }
 
 /** Grade padrão do app: 08:00 às 20:00, de 30 em 30 minutos. */

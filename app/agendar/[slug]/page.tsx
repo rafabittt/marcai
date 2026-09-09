@@ -5,8 +5,7 @@ import { createClient } from '@/lib/supabase'
 import FluxoAgendamento, { type DadosAgendamento, type Profissional } from '@/app/components/agendamento/FluxoAgendamento'
 import { type Servico } from '@/app/components/agendamento/CardsServico'
 import { type HorariosMap } from '@/lib/agenda'
-
-type Endereco = { cep: string; rua: string; numero: string; bairro: string; cidade: string }
+import { formatarEndereco, type Endereco } from '@/lib/endereco'
 
 // Espelha a view negocios_publico. O telefone do dono NÃO entra aqui: é dado
 // privado e nunca deve trafegar para a página pública.
@@ -17,16 +16,6 @@ type Negocio = {
   endereco: Endereco | null
   horarios: HorariosMap | null
   exigir_cadastro_cliente?: boolean
-}
-
-function formatarEndereco(e: Endereco | null): string | null {
-  if (!e) return null
-  const partes = [
-    e.rua && e.numero ? `${e.rua}, ${e.numero}` : e.rua,
-    e.bairro,
-    e.cidade,
-  ].filter(Boolean)
-  return partes.length > 0 ? partes.join(' — ') : null
 }
 
 export default function AgendarPage({ params }: { params: Promise<{ slug: string }> }) {
