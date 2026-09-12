@@ -86,8 +86,10 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
 
 - `negocios` — `id, user_id, nome, slug, endereco, cpf, telefone, plano, asaas_customer_id,
   exigir_cadastro_cliente, horarios (jsonb)`. O `horarios` guarda a agenda (chaves longas
-  `segunda`..`domingo` como blocos `[{inicio,fim}]`, `buffer_min`, `folgas[]`) **e** os
-  templates `msg_confirmacao_cliente`/`msg_confirmacao_dono`. Dia sem blocos = fechado.
+  `segunda`..`domingo`, `buffer_min`, `folgas[]`) **e** os templates
+  `msg_confirmacao_cliente`/`msg_confirmacao_dono`. Cada dia é um objeto
+  `{abertura, fechamento, fechado, aberto24h, intervalos:[{inicio,fim}]}` — ver
+  `DECISOES.md` item 5 para o formato e as regras de leitura.
 - `servicos` — `id, negocio_id, nome, duracao, preco`. (`profissional_id` é **legado**,
   sendo substituído pela junção.)
 - `profissionais` — `id, negocio_id, nome, cargo, foto_url`.

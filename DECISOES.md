@@ -36,12 +36,38 @@ Antes, só o dropdown do browser limitava horário — um POST direto marcava à
 ou em dia fechado. `/api/agendar` agora revalida contra o expediente (`422`) além do
 double-booking (`409`) e do limite de plano (`403`).
 
-## 5. Config de agenda em blocos (JSONB)
+## 5. Config de agenda (JSONB)
 
-`negocios.horarios` guarda cada dia como array de blocos `[{inicio,fim}]` — o vão entre
-blocos é o almoço/intervalo, sem campo separado. Mais `buffer_min` (tempo após cada
-atendimento) e `folgas[]` (datas de exceção). Dia sem blocos = fechado. As chaves curtas
-antigas (`seg`..`dom`) eram resíduo divergente e foram migradas pras longas
+`negocios.horarios` guarda **um objeto por dia**, nas chaves longas `segunda`..`domingo`:
+
+```json
+"terca": {
+  "abertura": "08:00",
+  "fechamento": "18:00",
+  "fechado": false,
+  "aberto24h": false,
+  "intervalos": [{ "inicio": "12:00", "fim": "13:00" }]
+}
+```
+
+- **O expediente é o par `abertura`/`fechamento`** — não um array de blocos.
+- **As pausas (almoço, café) são explícitas em `intervalos`**, cada uma `{inicio, fim}`.
+  O intervalo é semiaberto `[inicio, fim)`: 12:00 é bloqueado, 13:00 já atende.
+- **`fechado: true` fecha o dia.** `ativo: false` também fecha — é resíduo da convenção
+  antiga, que `getConfDia` ainda honra; código novo deve escrever `fechado`.
+- **`aberto24h` é flag de UI.** Quem gera a grade só olha `abertura`/`fechamento`; a tela
+  usa a flag para travar os selects e gravar 00:00–23:59.
+
+Fora as chaves de dia, no mesmo objeto: `buffer_min` (minutos somados ao tempo reservado
+de cada atendimento, para dar folga entre clientes) e `folgas[]` (datas `YYYY-MM-DD` em
+que o negócio inteiro não atende, vencendo o expediente do dia).
+
+**Dia sem configuração NÃO é fechado** — cai no fallback **08:00–18:00** (`horariosDoDia`).
+E `horarios` nulo devolve a grade inteira, 08:00–20:00. Quem quiser fechar um dia precisa
+dizer isso com `fechado: true`; a ausência da chave significa "não configurado", não
+"fechado".
+
+As chaves curtas antigas (`seg`..`dom`) eram resíduo divergente e foram migradas pras longas
 (`segunda`..`domingo`) e removidas; o fallback pra chave curta em `getConfDia` foi removido.
 
 ## 6. Preço congelado no agendamento
