@@ -2,9 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-} from 'recharts'
 import { CalendarClock, CalendarCheck, Clock3, ChevronDown } from 'lucide-react'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import GooLoader from '@/app/components/GooLoader'
@@ -16,6 +13,7 @@ import StatusBadge from '@/app/components/StatusBadge'
 import MetricCard from '@/app/components/MetricCard'
 import InfoRow from '@/app/components/InfoRow'
 import PainelLateral from '@/app/components/PainelLateral'
+import GraficoVolume from '@/app/components/GraficoVolume'
 
 const POR_PAGINA = 10
 const PROXIMOS_NA_HOME = 5
@@ -178,23 +176,6 @@ export default function DashboardPage() {
     [ativosHoje, agora],
   )
 
-  const chartData = useMemo(() => {
-    const byDay: Record<string, { Realizados: number; Cancelados: number }> = {}
-    passados.forEach(ag => {
-      const day = dataDe(ag.data_hora)
-      if (!byDay[day]) byDay[day] = { Realizados: 0, Cancelados: 0 }
-      if (ag.status === 'cancelado') byDay[day].Cancelados++
-      else byDay[day].Realizados++
-    })
-    return Object.entries(byDay)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-7)
-      .map(([date, counts]) => ({
-        dia: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-        ...counts,
-      }))
-  }, [passados])
-
   function abrirPainel(ag: Agendamento) {
     setSelecionado(ag)
     setReagendando(false)
@@ -352,35 +333,13 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* Abre a aba: dá a leitura do período antes do item a item.
-                Vive junto do histórico, e não na home, para ela não crescer.
-                Reflete o que já foi carregado pela paginação abaixo. */}
+                Faz a própria consulta por período — antes montava em cima da
+                lista paginada, então mostrava só o que já tinha sido carregado
+                por "Ver mais". */}
             <section>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 sm:px-6 pt-6 pb-4">
-                <p className="text-xs uppercase tracking-widest font-medium text-gray-500 mb-4">
-                  Volume diário — últimos dias
-                </p>
-                {chartData.length === 0 ? (
-                  <div className="flex items-center justify-center h-40">
-                    <p className="text-sm text-gray-400">Sem dados históricos ainda.</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={chartData} barSize={18} barGap={4}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                      <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
-                      <Tooltip
-                        contentStyle={{ borderRadius: '12px', border: '1px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
-                        cursor={{ fill: '#f9f9f9' }}
-                      />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '12px' }} />
-                      <Bar dataKey="Realizados" fill="#25D366" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Cancelados" fill="#fca5a5" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
+              <GraficoVolume negocioId={negocioId} />
             </section>
+
             <section>
               <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Histórico</h2>
               {passados.length === 0 ? (
