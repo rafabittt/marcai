@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Check } from 'lucide-react'
 import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
 import { type HorariosMap } from '@/lib/agenda'
@@ -48,7 +49,6 @@ type Props = {
 }
 
 const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const selectClass = 'w-full border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent'
 
 function Passo({
   numero, titulo, ativo, children,
@@ -86,69 +86,79 @@ export default function FluxoAgendamento({
     [servicos, servicoId],
   )
 
-  // Cada serviço pertence a um profissional (servicos.profissional_id). Quando
-  // o serviço escolhido já define quem atende, o passo do profissional some —
-  // perguntar seria pedir uma informação que já foi dada.
-  const profissionalDoServico = useMemo(() => {
-    if (!servicoSel?.profissional_id) return null
-    return profissionais.find(p => String(p.id) === String(servicoSel.profissional_id)) ?? null
-  }, [servicoSel, profissionais])
+  // Sem catálogo cadastrado, o serviço é texto livre e qualquer profissional
+  // da casa pode atender.
+  const semCatalogo = servicos.length === 0
 
-  const profissionalEfetivoId = profissionalDoServico
-    ? String(profissionalDoServico.id)
-    : profissionalId
+  // Negócio sem equipe cadastrada não tem quem escolher — o passo some e o
+  // agendamento vai sem profissional, como sempre foi. É diferente de "sem
+  // preferência", que é escolha do cliente e ainda não existe.
+  const temEquipe = profissionais.length > 0
 
-  const profissionalSel = profissionalDoServico
-    ?? profissionais.find(p => String(p.id) === profissionalId)
-    ?? null
+  // Só entram no catálogo os serviços que alguém executa. Serviço sem ninguém
+  // atribuído levaria a um beco sem saída no passo seguinte; o dono é avisado
+  // disso em /servicos.
+  const servicosAgendaveis = useMemo(
+    () => semCatalogo ? servicos : servicos.filter(s => (s.profissionais_ids?.length ?? 0) > 0),
+    [servicos, semCatalogo],
+  )
 
-  // Estável de propósito: se TODO serviço já aponta um profissional, o passo
-  // nunca vai ser necessário. Decidir isso só depois da escolha faria o total
-  // de passos pular de 5 para 4 no meio do fluxo.
-  const servicosDefinemProfissional =
-    servicos.length > 0 && servicos.every(s => !!s.profissional_id)
+  // Quem faz o serviço escolhido, pela junção servico_profissional. A coluna
+  // legada servicos.profissional_id não é mais lida aqui.
+  const profissionaisDoServico = useMemo(() => {
+    if (!temEquipe) return []
+    if (semCatalogo) return profissionais
+    if (!servicoSel) return []
+    const ids = servicoSel.profissionais_ids ?? []
+    return profissionais.filter(p => ids.includes(String(p.id)))
+  }, [temEquipe, semCatalogo, servicoSel, profissionais])
 
-  const precisaEscolherProfissional =
-    !servicosDefinemProfissional && !profissionalDoServico && profissionais.length > 0
+  const profissionalSel =
+    profissionais.find(p => String(p.id) === profissionalId) ?? null
 
-  // Precisa ser o profissional EFETIVO, não o escolhido à mão: quando o
-  // serviço já define quem atende, `profissionalId` fica vazio, e sem filtro
-  // a rota de ocupados devolve as reservas de todos — a agenda de um
-  // profissional passaria a bloquear horário do outro.
   const { livres, diaFechado, lotado, carregando } =
-    useDisponibilidade(negocioId, horarios, data, profissionalEfetivoId)
+    useDisponibilidade(negocioId, horarios, data, profissionalId)
 
   function trocarServico(id: string) {
     setServicoId(id)
-    // Trocar de serviço pode trocar de profissional, e a disponibilidade é por
-    // profissional — o horário já escolhido deixa de valer.
+    // A disponibilidade é por profissional, e trocar de serviço troca a lista
+    // de quem atende — o que já estava escolhido deixa de valer.
     setHorario('')
-    if (!servicos.some(s => String(s.id) === id && s.profissional_id)) return
-    setProfissionalId('')
+
+    const srv = servicos.find(s => String(s.id) === id)
+    const ids = srv?.profissionais_ids ?? []
+    const candidatos = semCatalogo
+      ? profissionais
+      : profissionais.filter(p => ids.includes(String(p.id)))
+
+    // Um único profissional possível não é uma escolha: já vem marcado.
+    setProfissionalId(candidatos.length === 1 ? String(candidatos[0].id) : '')
   }
 
   const passoServicoOk = servicoId !== ''
-  const passoProfOk    = !precisaEscolherProfissional || profissionalId !== ''
+  const passoProfOk    = !temEquipe || profissionalId !== ''
   const passoDataOk    = data !== ''
   const passoHoraOk    = horario !== ''
   const podeEnviar     = passoServicoOk && passoProfOk && passoDataOk && passoHoraOk
     && nome.trim() !== '' && telefone.trim() !== ''
 
-  const totalPassos = precisaEscolherProfissional ? 5 : 4
-  const feitos = [passoServicoOk, precisaEscolherProfissional ? passoProfOk : null, passoDataOk, passoHoraOk]
+  // temEquipe não muda durante a sessão, então o total de passos é estável —
+  // o contador não pula no meio do fluxo.
+  const totalPassos = temEquipe ? 5 : 4
+  const feitos = [passoServicoOk, temEquipe ? passoProfOk : null, passoDataOk, passoHoraOk]
     .filter(v => v === true).length
   const progresso = Math.round((feitos / totalPassos) * 100)
 
   let n = 0
   const nServico = ++n
-  const nProf    = precisaEscolherProfissional ? ++n : 0
+  const nProf    = temEquipe ? ++n : 0
   const nData    = ++n
   const nHora    = ++n
   const nDados   = ++n
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    onSubmit({ nome, telefone, servicoId, profissionalId: profissionalEfetivoId, data, horario })
+    onSubmit({ nome, telefone, servicoId, profissionalId, data, horario })
   }
 
   return (
@@ -176,28 +186,66 @@ export default function FluxoAgendamento({
         )}
 
         <Passo numero={nServico} titulo="Escolha o serviço" ativo>
-          <CardsServico
-            servicos={servicos}
-            valor={servicoId}
-            onChange={trocarServico}
-            inputClass={inputClass}
-          />
+          {servicos.length > 0 && servicosAgendaveis.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-10 text-center">
+              <p className="text-sm text-gray-500">
+                Nenhum serviço disponível para agendamento no momento.
+              </p>
+            </div>
+          ) : (
+            <CardsServico
+              servicos={servicosAgendaveis}
+              valor={servicoId}
+              onChange={trocarServico}
+              inputClass={inputClass}
+            />
+          )}
         </Passo>
 
-        {precisaEscolherProfissional && (
+        {temEquipe && (
           <Passo numero={nProf} titulo="Escolha o profissional" ativo={passoServicoOk}>
-            <select
-              value={profissionalId}
-              onChange={e => { setProfissionalId(e.target.value); setHorario('') }}
-              className={selectClass}
-            >
-              <option value="">Selecione um profissional</option>
-              {profissionais.map(p => (
-                <option key={p.id} value={String(p.id)}>
-                  {p.nome}{p.cargo ? ` — ${p.cargo}` : ''}
-                </option>
-              ))}
-            </select>
+            {profissionaisDoServico.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-10 text-center">
+                <p className="text-sm text-gray-500">
+                  {passoServicoOk
+                    ? 'Nenhum profissional faz este serviço.'
+                    : 'Escolha um serviço para ver quem atende.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {profissionaisDoServico.map(p => {
+                  const selecionado = profissionalId === String(p.id)
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { setProfissionalId(String(p.id)); setHorario('') }}
+                      aria-pressed={selecionado}
+                      className={[
+                        'w-full text-left rounded-2xl px-4 py-3.5 flex items-center gap-3 transition-all duration-150',
+                        selecionado
+                          ? 'bg-[#dcfce7] border-2 border-[#25D366]'
+                          : 'bg-white border-2 border-gray-100 hover:border-gray-200',
+                      ].join(' ')}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-[#dcfce7] flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-bold text-[#128C7E]">
+                          {p.nome.trim().charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-[#0a0a0a] truncate">{p.nome}</p>
+                        {p.cargo && <p className="text-xs text-gray-500 truncate">{p.cargo}</p>}
+                      </div>
+                      {selecionado && (
+                        <Check size={16} className="text-[#25D366] flex-shrink-0" strokeWidth={3} />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </Passo>
         )}
 

@@ -16,7 +16,9 @@ export type Servico = {
   id: string
   nome: string
   duracao: string
-  profissional_id?: string
+  preco?: number | null
+  /** Ids dos profissionais que executam este serviço, vindos da junção. */
+  profissionais_ids?: string[]
 }
 
 type Props = {

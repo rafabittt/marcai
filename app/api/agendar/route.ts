@@ -146,6 +146,29 @@ export async function POST(req: NextRequest) {
     profissionalNome = prof?.nome ?? null
   }
 
+  // O profissional escolhido precisa realmente fazer o serviço escolhido.
+  // A tela já filtra por isso, mas filtro de tela não é validação: um POST
+  // direto, ou uma aba aberta desde antes de o dono mudar a atribuição,
+  // gravaria um par que não existe no catálogo.
+  //
+  // Só vale quando há vínculo cadastrado para o serviço. Sem nenhum, não há
+  // o que checar — é serviço de texto livre ou catálogo ainda não atribuído,
+  // e recusar aí bloquearia agendamento legítimo.
+  const ehUuid = (v: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+
+  if (profissionalId && servicoId && ehUuid(servicoId)) {
+    const { data: vinculos } = await supabase
+      .from('servico_profissional')
+      .select('profissional_id')
+      .eq('servico_id', servicoId)
+
+    if (vinculos && vinculos.length > 0
+        && !vinculos.some(v => v.profissional_id === profissionalId)) {
+      return NextResponse.json({ error: 'profissional_nao_faz_servico' }, { status: 422 })
+    }
+  }
+
   // Checar se o slot já está ocupado (evita double-booking)
   // Se há profissional, verifica apenas conflitos do mesmo profissional
   let doubleBookQuery = supabase

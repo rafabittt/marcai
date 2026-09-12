@@ -28,13 +28,26 @@ export async function GET(
   }
 
   const [{ data: servicos }, { data: profissionais }] = await Promise.all([
-    supabase.from('servicos').select('id, nome, duracao, profissional_id').eq('negocio_id', neg.id),
-    supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id),
+    supabase.from('servicos').select('id, nome, duracao, preco').eq('negocio_id', neg.id).order('nome'),
+    supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id).order('nome'),
   ])
+
+  // Quem faz cada serviço vem da junção. A coluna legada
+  // servicos.profissional_id não é mais lida: um serviço pode ser feito por
+  // vários profissionais, e ela só comporta um.
+  const ids = (servicos ?? []).map(s => s.id)
+  const { data: vinculos } = ids.length
+    ? await supabase.from('servico_profissional').select('servico_id, profissional_id').in('servico_id', ids)
+    : { data: [] as { servico_id: string; profissional_id: string }[] }
 
   return NextResponse.json({
     negocio: neg,
-    servicos: servicos ?? [],
+    servicos: (servicos ?? []).map(s => ({
+      ...s,
+      profissionais_ids: (vinculos ?? [])
+        .filter(v => v.servico_id === s.id)
+        .map(v => v.profissional_id),
+    })),
     profissionais: profissionais ?? [],
   })
 }

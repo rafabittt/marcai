@@ -15,10 +15,11 @@ import { Check, Trash2, Plus } from 'lucide-react'
 // vive na junção servico_profissional, e a atribuição é feita aqui, como em
 // Fresha e GoDaddy.
 //
-// servicos.profissional_id é legado. Continua sendo gravada com o PRIMEIRO
-// profissional marcado porque o fluxo de agendamento ainda lê essa coluna; a
-// troca para a junção é a Etapa D. Sem isso, serviço criado aqui sumiria da
-// tela de agendamento.
+// servicos.profissional_id é legado e NÃO é mais lida por ninguém — tudo lê a
+// junção. Continua sendo gravada, com o primeiro profissional marcado, só como
+// rede de segurança: enquanto a coluna existir, um rollback de deploy para o
+// código antigo ainda encontra o vínculo. Some junto com a coluna, num passo
+// separado.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DURACOES = ['15 min', '30 min', '45 min', '1h', '1h 30min', '2h', '2h 30min', '3h']
@@ -189,8 +190,7 @@ export default function ServicosPage() {
       nome: r.nome.trim(),
       duracao: r.duracao,
       preco: parsePreco(r.preco),
-      // Coluna legada: primeiro marcado, para o fluxo de agendamento (que ainda
-      // lê daqui até a Etapa D) continuar enxergando o serviço.
+      // Coluna legada, mantida em sincronia só para um eventual rollback.
       profissional_id: r.profissionaisIds[0] ?? null,
     }).eq('id', s.id)
 

@@ -42,11 +42,21 @@ export default function AgendarInternoPage() {
       setNegocio(neg)
 
       const [{ data: srvData }, { data: profData }] = await Promise.all([
-        supabase.from('servicos').select('id, nome, duracao, profissional_id').eq('negocio_id', neg.id),
-        supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id),
+        supabase.from('servicos').select('id, nome, duracao, preco').eq('negocio_id', neg.id).order('nome'),
+        supabase.from('profissionais').select('id, nome, cargo').eq('negocio_id', neg.id).order('nome'),
       ])
 
-      setServicos(srvData ?? [])
+      // Quem faz cada serviço vem da junção, igual à pública. A coluna legada
+      // servicos.profissional_id não é mais lida.
+      const ids = (srvData ?? []).map(s => s.id)
+      const { data: vinc } = ids.length
+        ? await supabase.from('servico_profissional').select('servico_id, profissional_id').in('servico_id', ids)
+        : { data: [] as { servico_id: string; profissional_id: string }[] }
+
+      setServicos((srvData ?? []).map(s => ({
+        ...s,
+        profissionais_ids: (vinc ?? []).filter(v => v.servico_id === s.id).map(v => v.profissional_id),
+      })))
       setProfissionais(profData ?? [])
       setLoading(false)
     }
