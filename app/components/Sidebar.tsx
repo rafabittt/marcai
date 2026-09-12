@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
-  CalendarPlus, LayoutDashboard, Users, Settings, LogOut, Copy, Check, CreditCard, Lightbulb,
+  CalendarPlus, LayoutDashboard, Users, Scissors, Settings, LogOut, Copy, Check, CreditCard, Lightbulb,
 } from 'lucide-react'
 import FeedbackModal from './FeedbackModal'
 
@@ -21,6 +21,7 @@ function getIniciais(nome: string | null, email: string): string {
 const NAV = [
   { href: '/agendar-interno', label: 'Agendar',        icon: CalendarPlus,     cta: true  },
   { href: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard,  cta: false },
+  { href: '/servicos',        label: 'Serviços',       icon: Scissors,         cta: false },
   { href: '/profissionais',   label: 'Profissionais',  icon: Users,            cta: false },
   { href: '/configuracoes',   label: 'Configurações',  icon: Settings,         cta: false },
   { href: '/plano',           label: 'Plano',          icon: CreditCard,       cta: false },
