@@ -28,6 +28,10 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
 - **Vercel** — produção, deploy automático no push pra `main`. Domínio `marcai.net.br`.
 - Repo: `github.com/rafabittt/marcai`. Local: `~/marcai` (fora do iCloud — nunca de volta
   pra Documents/Desktop, o iCloud corrompe `.next`/`node_modules`).
+- **`marketing/videos/`** — projeto **Remotion** separado (Reels da marca), com o próprio
+  `package.json`. **Não faz parte do app:** está excluído do `tsconfig`, do eslint e do
+  git (`node_modules/` e `out/` com os MP4). Não importe nada dele no app nem vice-versa.
+  Rodar: `cd marketing/videos && npm install && npm run studio`.
 
 ## Regras críticas (violar isso quebra em produção, às vezes em silêncio)
 

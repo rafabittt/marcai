@@ -42,3 +42,8 @@ next-env.d.ts
 
 # backups de dados de produção (rollback/dumps) — nunca versionar
 scripts/_backups/
+
+# marketing/videos: projeto Remotion. Código versionado; dependências e
+# vídeos renderizados (MP4) ficam só no disco, nunca no git/deploy.
+/marketing/videos/node_modules/
+/marketing/videos/out/
