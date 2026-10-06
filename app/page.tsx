@@ -4,6 +4,7 @@ import PricingSection from './components/PricingSection'
 import FAQSection from './components/FAQSection'
 import LandingFooter from './components/LandingFooter'
 import LandingHeader from './components/LandingHeader'
+import MetaPixel from './components/MetaPixel'
 import { Link2, Smartphone, MessageCircle, Check, MessageSquare } from 'lucide-react'
 
 export default function LandingPage() {
@@ -209,6 +210,9 @@ export default function LandingPage() {
       </section>
 
       <LandingFooter />
+
+      {/* Pixel + banner de consentimento. Só aqui e no cadastro do /login. */}
+      <MetaPixel />
 
     </div>
   )

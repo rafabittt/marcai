@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase'
 import { maskName, maskPhone } from '@/lib/masks'
 import { decidirCadastro, emailJaCadastrado, ehLinkDuplicado } from '@/lib/cadastro'
 import LandingHeader from '../components/LandingHeader'
+import MetaPixel from '../components/MetaPixel'
+import { rastrearCadastroConcluido } from '@/lib/pixel'
 
 const TIPOS = [
   'Clínica',
@@ -208,6 +210,11 @@ function LoginContent() {
         body: JSON.stringify({ nome: negNome, tipo: negTipo, email }),
       }).catch(() => {})
 
+      // Cadastro concluído de verdade: conta pronta E negócio gravado (inclui a
+      // retomada). Nenhum erro acima chega aqui. O evento não leva nenhum dado
+      // pessoal, e só dispara se o Pixel foi carregado (produção + consentimento).
+      await rastrearCadastroConcluido()
+
       const redirect = searchParams.get('redirect')
       window.location.href = redirect ?? '/configuracoes'
     } catch {
@@ -238,6 +245,9 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LandingHeader />
+      {/* Pixel só no cadastro de NEGÓCIO. Esta página também tem a aba de login
+          do cliente final, que não pode ser rastreado. */}
+      {tipo === 'negocio' && modo === 'cadastro' && <MetaPixel />}
       <div className="flex items-center justify-center px-4 py-12">
       <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
 

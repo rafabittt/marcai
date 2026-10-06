@@ -13,7 +13,7 @@ const columns = [
   {
     heading: 'Suporte',
     links: [
-      { label: 'Falar no WhatsApp', href: 'https://wa.me/5511999999999', external: true },
+      { label: 'Falar no WhatsApp', href: 'https://wa.me/5511924905512', external: true },
       { label: 'Instagram', href: 'https://instagram.com/usemarcai', external: true },
     ],
   },

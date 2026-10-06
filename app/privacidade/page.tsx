@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import LandingHeader from '../components/LandingHeader'
 import { Check } from 'lucide-react'
 
@@ -11,7 +12,7 @@ export default function PrivacidadePage() {
         <div className="mb-10">
           <p className="text-xs uppercase tracking-widest font-semibold text-[#25D366] mb-3">Legal</p>
           <h1 className="text-4xl font-bold tracking-tight" style={{ color: '#0a0a0a' }}>Política de Privacidade</h1>
-          <p className="text-gray-500 mt-2 text-sm">Última atualização: março de 2026 — Em conformidade com a Lei nº 13.709/2018 (LGPD)</p>
+          <p className="text-gray-500 mt-2 text-sm">Última atualização: outubro de 2026 — Em conformidade com a Lei nº 13.709/2018 (LGPD)</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 space-y-10">
@@ -61,7 +62,7 @@ export default function PrivacidadePage() {
               <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> Melhorar continuamente a plataforma com base em padrões de uso anonimizados.</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-3">
-              Não utilizamos seus dados para venda a terceiros, publicidade direcionada ou qualquer outra finalidade não listada acima.
+              Não vendemos seus dados a ninguém. Também não usamos os dados de agendamento — nem os seus, nem os dos seus clientes — para publicidade. O único uso ligado a anúncios é o cookie da Meta descrito na seção 4, que só funciona nas nossas páginas de divulgação e de cadastro, e só se você aceitar.
             </p>
           </section>
 
@@ -85,15 +86,55 @@ export default function PrivacidadePage() {
                   Utilizado para o envio de mensagens de confirmação via WhatsApp. Transmitimos o número de telefone e o texto da mensagem para a API da Z-API exclusivamente no momento do envio. Não armazenamos dados no Z-API além do necessário para a entrega da mensagem. Saiba mais em <span className="text-[#25D366] font-medium">z-api.io</span>.
                 </p>
               </div>
+              <div className="bg-gray-50 rounded-xl p-5">
+                <p className="font-semibold text-gray-800 mb-1">Asaas</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Utilizado para a cobrança da assinatura dos planos pagos. Quando você assina, enviamos ao Asaas o seu nome, e-mail e CPF, além do plano escolhido e do valor, para emitir as cobranças. Os dados de pagamento, como cartão, são informados por você diretamente no Asaas, e o Marcaí não tem acesso a eles. Dados de agendamentos e de clientes finais nunca são enviados ao Asaas.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-5">
+                <p className="font-semibold text-gray-800 mb-1">Vercel</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Empresa que hospeda o site do Marcaí. Ao acessar qualquer página, a Vercel registra informações técnicas da visita — endereço IP, navegador, página acessada e horário — para entregar o site e manter a segurança. Esses registros são usados apenas para operação e não para publicidade. Saiba mais em <span className="text-[#25D366] font-medium">vercel.com/legal/privacy-notice</span>.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-5">
+                <p className="font-semibold text-gray-800 mb-1">Meta (Facebook e Instagram)</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Usamos o Meta Pixel para medir se os nossos anúncios trazem novos cadastros. Ele só é ativado se você clicar em &quot;Aceitar&quot; no aviso de cookies, e só na página inicial e na tela de cadastro de negócio. Quando ativo, a Meta recebe informações técnicas da visita — páginas vistas, o aviso de que um cadastro foi concluído, dados do navegador e endereço IP — e pode associá-las à sua conta no Facebook ou Instagram, se você tiver uma. Não enviamos à Meta nome, e-mail, telefone, CPF nem nenhum dado de agendamento. Saiba mais em <span className="text-[#25D366] font-medium">facebook.com/privacy/policy</span>.
+                </p>
+              </div>
             </div>
 
             <p className="text-gray-600 text-sm mt-4">
-              Não compartilhamos dados com outras empresas, anunciantes ou parceiros comerciais.
+              Fora os fornecedores listados acima, não compartilhamos dados com outras empresas. Não vendemos dados, e nenhum dado dos clientes finais (quem agenda) é compartilhado com anunciantes.
+            </p>
+          </section>
+
+          <section id="cookies" className="scroll-mt-24">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">4. Cookies e rastreamento</h2>
+            <p className="text-gray-600 leading-relaxed mb-3">
+              O Marcaí usa dois tipos de armazenamento no seu navegador:
+            </p>
+            <ul className="space-y-2 text-gray-600 mb-4">
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0 mt-1" /> <span><strong className="text-gray-800">Essenciais</strong> — mantêm você logado e guardam a sua escolha sobre cookies. Sem eles o site não funciona, por isso não pedimos consentimento para eles.</span></li>
+              <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0 mt-1" /> <span><strong className="text-gray-800">De publicidade (Meta Pixel)</strong> — cookies da Meta, como o <code className="text-sm">_fbp</code>, usados para medir os nossos anúncios. Só são gravados se você aceitar.</span></li>
+            </ul>
+            <p className="text-gray-600 leading-relaxed mb-3">
+              <strong className="text-gray-800">Onde o Pixel pode funcionar:</strong> apenas na página inicial (marcai.net.br) e na tela de cadastro de negócio. Ele nunca é carregado no link de agendamento que você compartilha com seus clientes, no painel de quem tem conta, nem na área do cliente. Quem agenda pelo Marcaí não é rastreado por nós.
+            </p>
+            <p className="text-gray-600 leading-relaxed mb-3">
+              <strong className="text-gray-800">Sem dados pessoais:</strong> além da visita, o único evento enviado é o aviso de &quot;cadastro concluído&quot;, sem nome, e-mail, telefone ou CPF.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              <strong className="text-gray-800">Base legal e como mudar de ideia:</strong> esses cookies dependem do seu consentimento (Art. 7º, I, da LGPD), que você pode retirar a qualquer momento. Abra <Link href="/?rever_cookies=1" className="text-[#128C7E] underline hover:text-[#25D366]">marcai.net.br/?rever_cookies=1</Link> para ver o aviso de novo, ou apague os dados do site nas configurações do navegador. Você também pode limitar anúncios nas configurações da sua conta na Meta.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">4. Por quanto tempo armazenamos os dados</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">5. Por quanto tempo armazenamos os dados</h2>
             <ul className="space-y-2 text-gray-600">
               <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados de conta ativa</strong> — mantidos enquanto a conta estiver ativa.</li>
               <li className="flex gap-2"><Check size={14} className="text-[#25D366] flex-shrink-0" /> <strong className="text-gray-800">Dados de agendamentos</strong> — armazenados por até 12 meses após a data do agendamento para fins de histórico.</li>
@@ -103,7 +144,7 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">5. Direitos do titular dos dados</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">6. Direitos do titular dos dados</h2>
             <p className="text-gray-600 leading-relaxed mb-3">
               Em conformidade com os Art. 17 a 22 da LGPD, você tem os seguintes direitos sobre seus dados pessoais:
             </p>
@@ -121,14 +162,14 @@ export default function PrivacidadePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">6. Segurança dos dados</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">7. Segurança dos dados</h2>
             <p className="text-gray-600 leading-relaxed">
               Adotamos medidas técnicas e organizacionais para proteger seus dados contra acesso não autorizado, perda ou alteração indevida, incluindo: comunicação criptografada via HTTPS, autenticação gerenciada pelo Supabase com armazenamento seguro de senhas (hashing), e controle de acesso por função. Nenhum sistema é 100% invulnerável, mas nos comprometemos a agir com diligência e a comunicar incidentes de segurança relevantes à Autoridade Nacional de Proteção de Dados (ANPD) e aos usuários afetados, conforme exigido pela LGPD.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">7. Contato e encarregado de dados (DPO)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">8. Contato e encarregado de dados (DPO)</h2>
             <p className="text-gray-600 leading-relaxed">
               Para exercer seus direitos, tirar dúvidas sobre esta Política ou solicitar a exclusão dos seus dados, entre em contato:
             </p>
