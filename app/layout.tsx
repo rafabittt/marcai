@@ -13,6 +13,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Marcaí",
   description: "Gerencie seus agendamentos com facilidade",
+  // Verificação de domínio da Meta. Via metadata para sair no HTML renderizado
+  // no servidor — o robô da Meta não executa JavaScript.
+  other: {
+    "facebook-domain-verification": "d9fi5q6feg32is7lx77etzso3wgwfd",
+  },
 };
 
 export default function RootLayout({
