@@ -24,7 +24,10 @@ export default function LandingPage() {
                 <MessageSquare size={12} /> Confirmação via WhatsApp
               </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6" style={{ color: '#0a0a0a' }}>
+              {/* No celular a fonte acompanha a largura da tela: "Agendamentos" é
+                  uma palavra só, não quebra, e a 48px fixos cortava na lateral em
+                  360, 390 e 414px. A partir de ~460px volta aos 48px de antes. */}
+              <h1 className="text-[clamp(2rem,10.5vw,3rem)] md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6" style={{ color: '#0a0a0a' }}>
                 Agendamentos<br />
                 simples.<br />
                 <span className="text-[#25D366]">Clientes felizes.</span>
