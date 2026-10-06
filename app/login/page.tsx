@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { maskName, maskPhone } from '@/lib/masks'
+import { decidirCadastro, emailJaCadastrado, ehLinkDuplicado } from '@/lib/cadastro'
 import LandingHeader from '../components/LandingHeader'
 
 const TIPOS = [
@@ -119,37 +120,71 @@ function LoginContent() {
     setError('')
 
     try {
-      // 1. Criar conta no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password, options: { data: { full_name: nomeCompleto } } })
-      if (authError) {
-        setError('Erro ao criar conta: ' + authError.message)
-        setLoading(false)
-        return
-      }
-
-      const user = authData.user
-      if (!user) {
-        setError('Erro inesperado ao criar conta. Tente novamente.')
-        setLoading(false)
-        return
-      }
-
-      // 2. Verificar unicidade do slug
-      const { data: existing } = await supabase
-        .from('negocios')
+      // 1. O link está livre? Checado ANTES de criar a conta, para nunca sobrar
+      //    conta sem negócio por causa de link repetido. Pela VIEW pública: a
+      //    tabela negocios não é legível sem login, e consultá-la aqui daria
+      //    "permissão negada" — o código leria isso como "link livre".
+      const { data: ocupado, error: erroLink } = await supabase
+        .from('negocios_publico')
         .select('id')
         .eq('slug', negSlug)
         .maybeSingle()
 
-      if (existing) {
+      if (erroLink) {
+        setError('Não foi possível verificar o link agora. Tente novamente.')
+        setLoading(false)
+        return
+      }
+      if (ocupado) {
         setError('Esse link já está em uso. Escolha outro.')
         setLoading(false)
         return
       }
 
-      // 3. Inserir negócio
+      // 2. Criar a conta — ou, se o e-mail já existe, decidir o que fazer.
+      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password, options: { data: { full_name: nomeCompleto } } })
+
+      let userId = authData?.user?.id ?? null
+      const conta = authError
+        ? (emailJaCadastrado(authError) ? 'email_existe' : 'erro')
+        : (userId ? 'criada' : 'erro')
+
+      let loginOk: boolean | undefined
+      let temNegocio: boolean | undefined
+      if (conta === 'email_existe') {
+        // Pode ser uma tentativa anterior que criou a conta e falhou no
+        // negócio. Só seguimos se a senha conferir.
+        const { data: login, error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+        loginOk = !loginError && !!login.user
+        if (loginOk && login.user) {
+          userId = login.user.id
+          const { data: neg } = await supabase
+            .from('negocios').select('id').eq('user_id', userId).maybeSingle()
+          temNegocio = !!neg
+        }
+      }
+
+      const proximo = decidirCadastro({ conta, mensagemErro: authError?.message, loginOk, temNegocio })
+
+      if (proximo.acao === 'erro') {
+        setError(proximo.mensagem)
+        setLoading(false)
+        return
+      }
+      if (proximo.acao === 'ir_painel') {
+        // Já é cliente e a senha conferiu: só leva para o painel.
+        window.location.href = '/dashboard'
+        return
+      }
+      if (!userId) {
+        setError('Erro inesperado ao criar conta. Tente novamente.')
+        setLoading(false)
+        return
+      }
+
+      // 3. Gravar o negócio.
       const { error: negError } = await supabase.from('negocios').insert({
-        user_id: user.id,
+        user_id: userId,
         nome: negNome,
         tipo: negTipo,
         telefone: negTelefone,
@@ -157,7 +192,11 @@ function LoginContent() {
       })
 
       if (negError) {
-        setError('Conta criada, mas erro ao salvar negócio: ' + negError.message)
+        // A conta fica criada, mas não trava mais: enviar de novo com o mesmo
+        // e-mail e senha cai no passo 2 e retoma daqui.
+        setError(ehLinkDuplicado(negError)
+          ? 'Esse link acabou de ser usado por outra pessoa. Escolha outro e envie de novo — sua conta já está criada e será aproveitada.'
+          : 'Não foi possível salvar o negócio. Envie de novo com o mesmo e-mail e senha para concluir.')
         setLoading(false)
         return
       }
@@ -166,12 +205,12 @@ function LoginContent() {
       fetch('/api/notify-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: negNome, tipo: negTipo, email: user.email }),
+        body: JSON.stringify({ nome: negNome, tipo: negTipo, email }),
       }).catch(() => {})
 
       const redirect = searchParams.get('redirect')
       window.location.href = redirect ?? '/configuracoes'
-    } catch (err) {
+    } catch {
       setError('Ocorreu um erro inesperado. Tente novamente.')
       setLoading(false)
     }
