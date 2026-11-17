@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import LandingHeader from '../components/LandingHeader'
+import LandingFooter from '../components/LandingFooter'
 import { Check } from 'lucide-react'
 
 export default function PrivacidadePage() {
@@ -183,6 +184,7 @@ export default function PrivacidadePage() {
         </div>
       </div>
       </div>
+      <LandingFooter />
     </div>
   )
 }

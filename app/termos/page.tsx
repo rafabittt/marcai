@@ -1,4 +1,5 @@
 import LandingHeader from '../components/LandingHeader'
+import LandingFooter from '../components/LandingFooter'
 import { Check } from 'lucide-react'
 
 export default function TermosPage() {
@@ -123,6 +124,7 @@ export default function TermosPage() {
         </div>
       </div>
       </div>
+      <LandingFooter />
     </div>
   )
 }

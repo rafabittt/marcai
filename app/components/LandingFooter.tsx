@@ -71,8 +71,9 @@ export default function LandingFooter() {
             <span>© 2026 Marcaí</span>
             <Link href="/termos" className="hover:text-gray-600 transition-colors">Termos</Link>
             <Link href="/privacidade" className="hover:text-gray-600 transition-colors">Privacidade</Link>
+            <Link href="/spool" className="hover:text-gray-600 transition-colors">Spool</Link>
           </div>
-          <span>Feito para pequenos negócios brasileiros</span>
+          <span className="text-center sm:text-right">MARCAI TECNOLOGIA LTDA · CNPJ 66.469.940/0001-32 · Barueri/SP</span>
         </div>
       </div>
 

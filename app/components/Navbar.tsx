@@ -28,7 +28,7 @@ export default function Navbar() {
   const isLogin = pathname.startsWith('/login')
   const isHome = pathname === '/'
   const isAgendar = pathname.startsWith('/agendar')
-  const isPublicPage = pathname === '/termos' || pathname === '/privacidade'
+  const isPublicPage = pathname === '/termos' || pathname === '/privacidade' || pathname.startsWith('/spool')
   const isAuthFlow = pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
   const isSidebarPage =
     pathname.startsWith('/dashboard') ||
