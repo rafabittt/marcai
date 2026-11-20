@@ -26,7 +26,7 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
   texto que a gente monta.
 - **Asaas** — cobrança por assinatura recorrente + webhook.
 - **Vercel** — produção, deploy automático no push pra `main`. Domínio `marcai.net.br`.
-- Repo: `github.com/rafabittt/marcai`. Local: `~/marcai` (fora do iCloud — nunca de volta
+- Repo: `github.com/rafabittt/marcai`. Local: `~/projects/apps/marcai` (fora do iCloud — nunca de volta
   pra Documents/Desktop, o iCloud corrompe `.next`/`node_modules`).
 - **`marketing/videos/`** — projeto **Remotion** separado (Reels da marca), com o próprio
   `package.json`. **Não faz parte do app:** está excluído do `tsconfig`, do eslint e do

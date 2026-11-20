@@ -4,7 +4,7 @@ Runbook das operações recorrentes e do troubleshooting do que já quebrou. Fa�
 
 ## Ambiente local
 
-- Projeto vive em `~/marcai` (disco interno, **fora do iCloud** — Documents/Desktop
+- Projeto vive em `~/projects/apps/marcai` (disco interno, **fora do iCloud** — Documents/Desktop
   corrompem `.next`/`node_modules`).
 - Rodar: `npm run dev` (= `next dev --webpack`). Sobe em `localhost:3000`.
 - `.env.local` fica na raiz e **nunca** vai pro git (`.gitignore` cobre `.env*`). Confira com
@@ -91,7 +91,7 @@ Z-API (confira instância "Conectada" em `app.z-api.io` e as env na Vercel).
 ## Troubleshooting (já aconteceu)
 
 **`npm install` diz "no such file... package.json"** → você está na pasta errada. O projeto
-é `~/marcai` (entre nele antes).
+é `~/projects/apps/marcai` (entre nele antes).
 
 **Vermelho no VS Code / centenas de "Problems" após clonar** → faltou `npm install`
 (o clone não traz `node_modules`). Rode e recarregue a janela.
@@ -101,7 +101,7 @@ rodando. Mate o processo (`lsof -ti:3000 | xargs kill -9`) e suba de novo; se pe
 `rm -f .next/dev/lock`.
 
 **Arquivos `... 2.ts` duplicados quebrando o `tsc`** → sincronização do iCloud sobre o
-projeto. Solução definitiva: manter o repo fora de Documents/Desktop (já está em `~/marcai`).
+projeto. Solução definitiva: manter o repo fora de Documents/Desktop (já está em `~/projects/apps/marcai`).
 
 **WhatsApp não dispara em produção (mas o curl do Z-API funciona)** → env `ZAPI_*` faltando
 ou desatualizada na Vercel (o `.env.local` é só local), ou o envio não está `await`-ado
@@ -115,4 +115,4 @@ ou `ASAAS_BASE_URL` errada (o Asaas mudou o domínio de sandbox).
 deploy do código novo. Rode o aditivo → push → restritivo.
 
 **"multiple lockfiles" no boot do Next** → `package-lock.json` órfão numa pasta acima. Apague
-o de cima (`rm ../package-lock.json`, estando dentro de `~/marcai`).
+o de cima (`rm ../package-lock.json`, estando dentro de `~/projects/apps/marcai`).
