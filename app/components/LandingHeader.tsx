@@ -13,18 +13,18 @@ export default function LandingHeader() {
           <LogoLink />
 
           <nav className="hidden md:flex items-center gap-7">
-            <a href="/#como-funciona" className="text-sm text-muted hover:text-fg transition-colors duration-150">
+            <Link href="/#como-funciona" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               Como funciona
-            </a>
-            <a href="/#recursos" className="text-sm text-muted hover:text-fg transition-colors duration-150">
+            </Link>
+            <Link href="/#recursos" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               Recursos
-            </a>
-            <a href="/#faq" className="text-sm text-muted hover:text-fg transition-colors duration-150">
+            </Link>
+            <Link href="/#faq" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               FAQ
-            </a>
-            <a href="/#precos" className="text-sm text-muted hover:text-fg transition-colors duration-150">
+            </Link>
+            <Link href="/#precos" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               Preços
-            </a>
+            </Link>
           </nav>
         </div>
 

@@ -19,7 +19,7 @@ export async function GET(
   // RLS não resolveria — ela filtra linhas, não colunas. Ver scripts/sql/.
   const { data: neg, error: negError } = await supabase
     .from('negocios_publico')
-    .select('id, nome, slug, endereco, horarios, exigir_cadastro_cliente')
+    .select('id, nome, slug, endereco, horarios')
     .eq('slug', slug)
     .single()
 

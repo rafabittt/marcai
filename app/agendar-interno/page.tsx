@@ -22,6 +22,7 @@ export default function AgendarInternoPage() {
   const [sucesso,       setSucesso]       = useState(false)
   const [nomeCliente,   setNomeCliente]   = useState('')
   const [erro,          setErro]          = useState('')
+  const [horarioRecusado, setHorarioRecusado] = useState(0)
   // Remonta o fluxo do zero a cada "Novo agendamento", zerando o estado
   // interno dele sem precisar levantar cada campo para cá.
   const [tentativa,     setTentativa]     = useState(0)
@@ -88,10 +89,12 @@ export default function AgendarInternoPage() {
       }
       if (res.status === 422) {
         setErro('Este horário está fora da agenda configurada (expediente, pausa ou folga). Escolha outro.')
+        setHorarioRecusado(n => n + 1)
         return
       }
       if (res.status === 409) {
         setErro('Este horário já está ocupado. Escolha outro.')
+        setHorarioRecusado(n => n + 1)
         return
       }
       if (!res.ok) {
@@ -162,6 +165,7 @@ export default function AgendarInternoPage() {
         {negocio && (
           <div className="max-w-[560px]">
             <FluxoAgendamento
+              horarioRecusado={horarioRecusado}
               key={tentativa}
               negocioId={negocio.id}
               horarios={negocio.horarios}

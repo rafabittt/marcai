@@ -60,8 +60,7 @@ Fases do produto e o que já foi feito. Atualize o status conforme avança.
   destaque, clientes que voltam (por telefone). Depende do preço.
 - **Bloquear horário** — usar `tipo='bloqueio'` (a query do limite do plano já deve filtrar
   `tipo='agendamento'`).
-- **Login com Google** — Supabase Auth; dono por padrão, cliente opcional por negócio
-  (`exigir_cadastro_cliente`), desligado por padrão.
+- **Login com Google** — Supabase Auth, só para o dono. O cliente agenda sempre sem login.
 - **Reels no visual novo** — migrar o projeto Remotion (`marketing/videos/`) para o
   `marketing/BRAND-GUIDE.md` (Inter, fundo claro/escuro, gravações do app novo).
 - **Agenda visual do dono** — colunas por profissional, blocos por status, arrastar pra

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -10,6 +10,7 @@ import LandingHeader from '../components/LandingHeader'
 import MetaPixel from '../components/MetaPixel'
 import Abas from '../components/Abas'
 import { rastrearCadastroConcluido } from '@/lib/pixel'
+import { destinoSeguro } from '@/lib/destino'
 
 const TIPOS = [
   'Clínica',
@@ -47,9 +48,14 @@ function LoginContent() {
     searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login'
   )
 
-  useEffect(() => {
-    setModo(searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login')
-  }, [searchParams])
+  // Link "Criar conta"/"Entrar" do topo troca o ?modo= sem recarregar a página:
+  // acompanha a mudança durante a renderização (sem efeito em cascata).
+  const modoDaUrl = searchParams.get('modo') === 'cadastro' ? 'cadastro' : 'login'
+  const [modoUrlVisto, setModoUrlVisto] = useState(modoDaUrl)
+  if (modoDaUrl !== modoUrlVisto) {
+    setModoUrlVisto(modoDaUrl)
+    setModo(modoDaUrl)
+  }
 
   // Estado separado para login de cliente
   const [clienteEmail,   setClienteEmail]   = useState('')
@@ -100,7 +106,7 @@ function LoginContent() {
       setLoading(false)
     } else {
       const redirect = searchParams.get('redirect')
-      window.location.href = redirect ?? '/dashboard'
+      window.location.href = destinoSeguro(redirect, '/dashboard')
     }
   }
 
@@ -221,7 +227,7 @@ function LoginContent() {
       await rastrearCadastroConcluido()
 
       const redirect = searchParams.get('redirect')
-      window.location.href = redirect ?? '/configuracoes'
+      window.location.href = destinoSeguro(redirect, '/configuracoes')
     } catch {
       setError('Ocorreu um erro inesperado. Tente novamente.')
       setLoading(false)
@@ -243,7 +249,7 @@ function LoginContent() {
       setClienteLoading(false)
     } else {
       const redirect = searchParams.get('redirect')
-      window.location.href = redirect ?? '/cliente/minha-conta'
+      window.location.href = destinoSeguro(redirect, '/cliente/minha-conta')
     }
   }
 
@@ -285,12 +291,12 @@ function LoginContent() {
             )}
             <form onSubmit={handleClienteLogin} className="space-y-4">
               <div>
-                <label className={labelClass}>E-mail</label>
-                <input type="email" value={clienteEmail} onChange={e => setClienteEmail(e.target.value)} required placeholder="seu@email.com" className={inputClass} />
+                <label htmlFor="login-1" className={labelClass}>E-mail</label>
+                <input id="login-1" type="email" value={clienteEmail} onChange={e => setClienteEmail(e.target.value)} required placeholder="seu@email.com" className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Senha</label>
-                <input type="password" value={clienteSenha} onChange={e => setClienteSenha(e.target.value)} required placeholder="••••••••" className={inputClass} />
+                <label htmlFor="login-2" className={labelClass}>Senha</label>
+                <input id="login-2" type="password" value={clienteSenha} onChange={e => setClienteSenha(e.target.value)} required placeholder="••••••••" className={inputClass} />
               </div>
               <div className="pt-1">
                 <button type="submit" disabled={clienteLoading} className="btn btn-primary btn-lg btn-block">
@@ -318,8 +324,8 @@ function LoginContent() {
         {modo === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className={labelClass}>Email</label>
-              <input
+              <label htmlFor="login-3" className={labelClass}>Email</label>
+              <input id="login-3"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -329,9 +335,9 @@ function LoginContent() {
               />
             </div>
             <div>
-              <label className={labelClass}>Senha</label>
+              <label htmlFor="login-4" className={labelClass}>Senha</label>
               <div className="relative">
-                <input
+                <input id="login-4"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -374,8 +380,8 @@ function LoginContent() {
         {modo === 'cadastro' && (
           <form onSubmit={handleCadastro} className="space-y-4">
             <div>
-              <label className={labelClass}>Seu nome completo</label>
-              <input
+              <label htmlFor="login-5" className={labelClass}>Seu nome completo</label>
+              <input id="login-5"
                 type="text"
                 value={nomeCompleto}
                 onChange={e => setNomeCompleto(maskName(e.target.value))}
@@ -385,8 +391,8 @@ function LoginContent() {
               />
             </div>
             <div>
-              <label className={labelClass}>Email</label>
-              <input
+              <label htmlFor="login-6" className={labelClass}>Email</label>
+              <input id="login-6"
                 type="email"
                 value={email}
                 onChange={e => { setEmail(e.target.value); setConfirmEmailError('') }}
@@ -396,8 +402,8 @@ function LoginContent() {
               />
             </div>
             <div>
-              <label className={labelClass}>Confirme seu email</label>
-              <input
+              <label htmlFor="login-7" className={labelClass}>Confirme seu email</label>
+              <input id="login-7"
                 type="email"
                 value={confirmEmail}
                 onChange={e => { setConfirmEmail(e.target.value); setConfirmEmailError('') }}
@@ -411,9 +417,9 @@ function LoginContent() {
               )}
             </div>
             <div>
-              <label className={labelClass}>Senha</label>
+              <label htmlFor="login-8" className={labelClass}>Senha</label>
               <div className="relative">
-                <input
+                <input id="login-8"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => { setPassword(e.target.value); setConfirmPasswordError('') }}
@@ -433,9 +439,9 @@ function LoginContent() {
               </div>
             </div>
             <div>
-              <label className={labelClass}>Confirme sua senha</label>
+              <label htmlFor="login-9" className={labelClass}>Confirme sua senha</label>
               <div className="relative">
-                <input
+                <input id="login-9"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordError('') }}
@@ -463,8 +469,8 @@ function LoginContent() {
               <h2 className="t-section mb-4">Seu negócio</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>Nome do negócio</label>
-                  <input
+                  <label htmlFor="login-10" className={labelClass}>Nome do negócio</label>
+                  <input id="login-10"
                     type="text"
                     value={negNome}
                     onChange={e => handleNegNomeChange(e.target.value)}
@@ -475,8 +481,8 @@ function LoginContent() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Tipo do negócio</label>
-                  <select
+                  <label htmlFor="login-11" className={labelClass}>Tipo do negócio</label>
+                  <select id="login-11"
                     value={negTipo}
                     onChange={e => setNegTipo(e.target.value)}
                     className="field"
@@ -486,8 +492,8 @@ function LoginContent() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Telefone / WhatsApp</label>
-                  <input
+                  <label htmlFor="login-12" className={labelClass}>Telefone / WhatsApp</label>
+                  <input id="login-12"
                     type="tel"
                     value={negTelefone}
                     onChange={e => setNegTelefone(maskPhone(e.target.value))}
@@ -498,8 +504,8 @@ function LoginContent() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Seu link público</label>
-                  <input
+                  <label htmlFor="login-13" className={labelClass}>Seu link público</label>
+                  <input id="login-13"
                     type="text"
                     value={negSlug}
                     onChange={e => handleNegSlugChange(e.target.value)}

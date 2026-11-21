@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react'
 import { Check } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
 import Carregando from '@/app/components/Carregando'
 import FluxoAgendamento, { type DadosAgendamento, type Profissional } from '@/app/components/agendamento/FluxoAgendamento'
 import { type Servico } from '@/app/components/agendamento/CardsServico'
@@ -17,7 +16,6 @@ type Negocio = {
   slug: string
   endereco: Endereco | null
   horarios: HorariosMap | null
-  exigir_cadastro_cliente?: boolean
 }
 
 export default function AgendarPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -31,13 +29,15 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   const [submitting,    setSubmitting]    = useState(false)
   const [sucesso,       setSucesso]       = useState(false)
   const [erro,          setErro]          = useState('')
-  const [clienteLogado, setClienteLogado] = useState(false)
-  const [clienteToken,  setClienteToken]  = useState<string | null>(null)
+  const [horarioRecusado, setHorarioRecusado] = useState(0)
 
-  // Prefill do cliente logado, e nome para a tela de sucesso. Os campos do
-  // agendamento em si vivem dentro do FluxoAgendamento.
+  // Nome para a tela de sucesso. Os campos do agendamento vivem dentro do
+  // FluxoAgendamento.
+  //
+  // REGRA DO PRODUTO: o cliente agenda SEMPRE sem conta e sem login. Esta página
+  // não pode ter portão de login, nem opção do negócio para exigir cadastro
+  // (a opção existiu e foi removida em 20/11/2026: ver DECISOES.md item 14).
   const [nome,     setNome]     = useState('')
-  const [telefone, setTelefone] = useState('')
   // Remonta o fluxo do zero em "Fazer outro agendamento".
   const [tentativa, setTentativa] = useState(0)
 
@@ -50,24 +50,6 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         setNegocio(neg)
         setServicos(srvData)
         setProfissionais(profData)
-
-        if (neg.exigir_cadastro_cliente) {
-          const supabase = createClient()
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            const { data: cli } = await supabase
-              .from('clientes').select('nome, telefone').eq('user_id', session.user.id).maybeSingle()
-            if (cli) {
-              // Usuário tem conta de cliente — libera e preenche os campos
-              setClienteLogado(true)
-              setClienteToken(session.access_token)
-              setNome(cli.nome ?? '')
-              setTelefone(cli.telefone ?? '')
-            }
-            // Se não tem registro em clientes (ex: dono do negócio testando),
-            // clienteLogado fica false e o gate aparece normalmente
-          }
-        }
       } catch (err) {
         console.error('[agendar] catch:', err)
         setNotFound(true)
@@ -91,7 +73,6 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         body: JSON.stringify({
           slug: negocio.slug,
           ...d,
-          accessToken: clienteToken ?? undefined,
         }),
       })
 
@@ -102,11 +83,13 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
 
       if (res.status === 422) {
         setErro('Este horário não está mais disponível na agenda (fora do expediente, pausa ou folga). Escolha outro.')
+        setHorarioRecusado(n => n + 1)
         return
       }
 
       if (res.status === 409) {
         setErro('Este horário acabou de ser reservado por outra pessoa. Escolha outro horário.')
+        setHorarioRecusado(n => n + 1)
         return
       }
 
@@ -177,36 +160,6 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
   }
 
   const enderecoFormatado = formatarEndereco(negocio?.endereco ?? null)
-  const slugEncoded = encodeURIComponent(`/agendar/${negocio?.slug ?? slug}`)
-
-  if (negocio?.exigir_cadastro_cliente && !clienteLogado) {
-    return (
-      <main className="min-h-dvh grid place-items-center px-4 py-12">
-        <div className="card w-full max-w-[440px] text-center !p-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Marcaí" className="h-6 object-contain mx-auto mb-6" />
-          <h1 className="t-title">{negocio.nome}</h1>
-          <p className="t-sub !mt-2 mb-8">
-            Para agendar, crie uma conta ou faça login. É rápido e gratuito.
-          </p>
-          <div className="flex flex-col gap-2.5">
-            <a
-              href={`/cliente/cadastro?redirect=${slugEncoded}`}
-              className="btn btn-primary btn-lg btn-block"
-            >
-              Criar conta
-            </a>
-            <a
-              href={`/cliente/login?redirect=${slugEncoded}`}
-              className="btn btn-lg btn-block"
-            >
-              Já tenho conta
-            </a>
-          </div>
-        </div>
-      </main>
-    )
-  }
 
   if (!negocio) return null
 
@@ -224,13 +177,13 @@ export default function AgendarPage({ params }: { params: Promise<{ slug: string
         </header>
 
         <FluxoAgendamento
+          horarioRecusado={horarioRecusado}
           key={tentativa}
           negocioId={negocio.id}
           horarios={negocio.horarios}
           servicos={servicos}
           profissionais={profissionais}
           nomeInicial={nome}
-          telefoneInicial={telefone}
           erro={erro}
           submitting={submitting}
           onSubmit={enviar}

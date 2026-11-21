@@ -91,9 +91,9 @@ export default function ResetPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className={labelClass}>Nova senha</label>
+                <label htmlFor="nova-1" className={labelClass}>Nova senha</label>
                 <div className="relative">
-                  <input
+                  <input id="nova-1"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}

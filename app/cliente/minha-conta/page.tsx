@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Carregando from '@/app/components/Carregando'
+// Etiqueta compartilhada com o painel (antes havia uma cópia aqui, sem "Faltou").
+import StatusBadge from '@/app/components/StatusBadge'
 
 type Agendamento = {
   id: string
@@ -35,23 +37,6 @@ function naiveNow(): string {
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}T${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:00.000Z`
 }
 
-// Etiqueta de status (Grafite): verde só no "Confirmado"; o resto em cinza.
-// O estado nunca é só cor: a etiqueta sempre leva o texto.
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    confirmado: { label: 'Confirmado', cls: 'badge-accent' },
-    cancelado:  { label: 'Cancelado',  cls: '' },
-    realizado:  { label: 'Realizado',  cls: '' },
-  }
-  const s = map[status] ?? { label: status, cls: '' }
-  return (
-    <span className={`badge ${s.cls}`}>
-      <span className="badge-dot" aria-hidden />
-      {s.label}
-    </span>
-  )
-}
-
 // Uma linha da lista (sem caixa própria: o cartão é a seção inteira).
 function AgCard({ a, dim }: { a: Agendamento; dim?: boolean }) {
   return (
@@ -62,7 +47,7 @@ function AgCard({ a, dim }: { a: Agendamento; dim?: boolean }) {
         {a.profissional && <p className="t-cap mt-0.5">com {a.profissional}</p>}
         <p className="t-cap tabular mt-1.5">{formatarDataHora(a.data_hora)}</p>
       </div>
-      <StatusBadge status={a.status} />
+      <StatusBadge status={a.status} passado={dim} />
     </li>
   )
 }

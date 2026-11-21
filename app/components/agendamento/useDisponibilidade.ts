@@ -32,6 +32,8 @@ export function useDisponibilidade(
   horarios: HorariosMap | null | undefined,
   data: string,
   profissionalId: string,
+  /** Muda quando é preciso buscar os ocupados de novo (ex.: horário recusado com 409). */
+  recarregar = 0,
 ): Disponibilidade {
   const [ocupados, setOcupados] = useState<string[]>([])
   const [carregando, setCarregando] = useState(false)
@@ -50,7 +52,7 @@ export function useDisponibilidade(
     // Resposta antiga não pode sobrescrever a nova quando o usuário troca de
     // data rápido — daí o flag de cancelamento.
     return () => { cancelado = true }
-  }, [data, negocioId, profissionalId])
+  }, [data, negocioId, profissionalId, recarregar])
 
   const disponiveis = useMemo<string[] | null>(() => {
     if (!data) return null

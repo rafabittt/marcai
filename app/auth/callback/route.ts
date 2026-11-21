@@ -1,11 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { destinoSeguro } from '@/lib/destino'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/reset-password'
+  // Só caminho interno: "?next=@site.com" virava marcai.net.br@site.com (outro site).
+  const next = destinoSeguro(searchParams.get('next'), '/reset-password')
 
   if (code) {
     const cookieStore = await cookies()

@@ -61,7 +61,6 @@ type Negocio = {
   // JSONB cru: chaves de dia + buffer_min/folgas. Lido via getBuffer/getFolgas.
   horarios: Record<string, unknown> | null
   endereco: Endereco | null
-  exigir_cadastro_cliente?: boolean
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -131,7 +130,6 @@ export default function ConfiguracoesPage() {
   const [novaFolga,  setNovaFolga]  = useState('')
 
   // Cadastro de cliente
-  const [exigirCadastro, setExigirCadastro] = useState(false)
 
   // Templates das mensagens de confirmação — moram no mesmo JSONB de horarios,
   // junto de buffer_min e folgas.
@@ -155,7 +153,7 @@ export default function ConfiguracoesPage() {
 
       const { data: neg, error: negError } = await supabase
         .from('negocios')
-        .select('id, nome, tipo, telefone, slug, horarios, endereco, exigir_cadastro_cliente')
+        .select('id, nome, tipo, telefone, slug, horarios, endereco')
         .eq('user_id', user.id)
         .maybeSingle()
 
@@ -173,7 +171,6 @@ export default function ConfiguracoesPage() {
       setMsgCliente(getTemplateCliente(neg.horarios))
       setMsgDono(getTemplateDono(neg.horarios))
       setEndereco(neg.endereco ?? ENDERECO_PADRAO)
-      setExigirCadastro(neg.exigir_cadastro_cliente ?? false)
 
       setLoading(false)
     }
@@ -191,14 +188,16 @@ export default function ConfiguracoesPage() {
   }
 
   function handleHorario(key: string, campo: keyof HorarioDia, valor: string | boolean) {
-    setHorarios(prev => ({ ...prev, [key]: { ...prev[key], [campo]: valor } }))
+    // Dia ainda não salvo (negócio antigo sem esse dia no banco) parte do padrão,
+    // senão gravava um dia incompleto (só o campo mexido).
+    setHorarios(prev => ({ ...prev, [key]: { ...(prev[key] ?? HORARIOS_PADRAO[key]), [campo]: valor } }))
   }
 
   function handleAberto24h(key: string, ativo: boolean) {
     setHorarios(prev => ({
       ...prev,
       [key]: {
-        ...prev[key],
+        ...(prev[key] ?? HORARIOS_PADRAO[key]),
         aberto24h: ativo,
         abertura:  ativo ? '00:00' : '08:00',
         fechamento: ativo ? '23:59' : '18:00',
@@ -312,7 +311,7 @@ export default function ConfiguracoesPage() {
     // A: update negocios (dados básicos + horários + endereço)
     const negUpdate = supabase
       .from('negocios')
-      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios: horariosCompletos, endereco, exigir_cadastro_cliente: exigirCadastro })
+      .update({ nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios: horariosCompletos, endereco })
       .eq('id', negocioId)
 
     const negResult = await negUpdate
@@ -322,7 +321,7 @@ export default function ConfiguracoesPage() {
     } else {
       setSucesso(true)
       setNegocio(prev => prev
-        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios: horariosCompletos, endereco, exigir_cadastro_cliente: exigirCadastro }
+        ? { ...prev, nome: negNome, tipo: negTipo, telefone: negTelefone, slug: negSlug, horarios: horariosCompletos, endereco }
         : prev
       )
     }
@@ -357,7 +356,16 @@ export default function ConfiguracoesPage() {
           <p className="t-cap">Nenhum negócio encontrado. Faça o cadastro primeiro.</p>
         </section>
       ) : (
-        <form onSubmit={handleSalvar} className="space-y-[14px]">
+        <form
+          onSubmit={handleSalvar}
+          // Qualquer mexida depois de salvar apaga o "salvo com sucesso", senão o
+          // aviso ficava na tela mesmo com alterações ainda não salvas.
+          onChangeCapture={() => setSucesso(false)}
+          onClickCapture={e => {
+            if ((e.target as HTMLElement).closest('button:not([type="submit"])')) setSucesso(false)
+          }}
+          className="space-y-[14px]"
+        >
 
           {/* 1. DADOS BÁSICOS */}
           <Section title="Dados básicos">
@@ -434,31 +442,6 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
-            {/* Agendar sem cadastro é o diferencial do Marcaí: cada passo a mais
-                antes de agendar derruba conversão. O selo desencoraja sem
-                bloquear — quem tem motivo para exigir continua podendo. */}
-            <div className="flex items-center justify-between gap-4 mt-5 pt-4 border-t border-hairline">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p id="cfg-exigir" className="text-[15px] font-medium text-fg">Exigir cadastro do cliente</p>
-                  <span className="badge">Não indicado</span>
-                </div>
-                <p className="t-cap mt-0.5">
-                  Clientes precisarão criar uma conta antes de agendar.{' '}
-                  {exigirCadastro
-                    ? 'Isso costuma reduzir agendamentos — agendar em poucos toques, sem conta, é o nosso diferencial.'
-                    : 'Deixe desligado: agendar em poucos toques, sem conta, é o nosso diferencial.'}
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={exigirCadastro}
-                aria-labelledby="cfg-exigir"
-                onClick={() => setExigirCadastro(p => !p)}
-                className="switch"
-              />
-            </div>
           </Section>
 
           {/* 2. ENDEREÇO */}

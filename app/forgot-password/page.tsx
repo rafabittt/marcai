@@ -67,8 +67,8 @@ function ForgotPasswordContent() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className={labelClass}>Email</label>
-                <input
+                <label htmlFor="esq-1" className={labelClass}>Email</label>
+                <input id="esq-1"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}

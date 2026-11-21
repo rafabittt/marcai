@@ -54,22 +54,6 @@ export default function ProfissionaisPage() {
 
   const supabase = createClient()
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-
-      const { data: neg } = await supabase
-        .from('negocios').select('id, plano').eq('user_id', user.id).maybeSingle()
-
-      if (!neg) { setLoading(false); return }
-      setNegocioId(neg.id)
-      setPlano(neg.plano ?? 'gratuito')
-      await carregarDados(neg.id)
-      setLoading(false)
-    }
-    init()
-  }, [])
 
   async function carregarDados(negId: string) {
     const [{ data: profData }, { data: srvData }] = await Promise.all([
@@ -94,6 +78,23 @@ export default function ProfissionaisPage() {
         .filter((s): s is Servico => s !== undefined),
     })))
   }
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/login'; return }
+
+      const { data: neg } = await supabase
+        .from('negocios').select('id, plano').eq('user_id', user.id).maybeSingle()
+
+      if (!neg) { setLoading(false); return }
+      setNegocioId(neg.id)
+      setPlano(neg.plano ?? 'gratuito')
+      await carregarDados(neg.id)
+      setLoading(false)
+    }
+    init()
+  }, [])
 
   const limiteProf = plano === 'prime' ? Infinity : plano === 'pro' ? 3 : 1
 
@@ -124,10 +125,15 @@ export default function ProfissionaisPage() {
   }
 
   async function handleRemover(id: string) {
+    const prof = profissionais.find(p => p.id === id)
+    // Apagar não tem volta: confirma antes (antes apagava no primeiro toque).
+    if (!window.confirm(`Remover ${prof?.nome ?? 'este profissional'}? Isso não pode ser desfeito.`)) return
+    setErro('')
     // A janela "Novo profissional" fecha quando a lista cresce (ver janelaNova).
     // Esquece o tamanho guardado, senão apagar um item a faria reabrir sozinha.
     setNovoAbertoCom(null)
-    await supabase.from('profissionais').delete().eq('id', id)
+    const { error } = await supabase.from('profissionais').delete().eq('id', id)
+    if (error) { setErro('Erro ao remover o profissional. Tente novamente.'); return }
     setProfissionais(prev => prev.filter(p => p.id !== id))
   }
 

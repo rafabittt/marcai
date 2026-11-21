@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { maskName, maskPhone } from '@/lib/masks'
+import { destinoSeguro } from '@/lib/destino'
+import { emailJaCadastrado } from '@/lib/cadastro'
 
 // Grafite: campo e rótulo vêm das peças prontas do globals.css.
 const inputClass = 'field'
@@ -20,7 +22,7 @@ function CadastroForm() {
 
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const redirect     = searchParams.get('redirect') ?? '/cliente/minha-conta'
+  const redirect     = destinoSeguro(searchParams.get('redirect'), '/cliente/minha-conta')
   const supabase     = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -35,22 +37,49 @@ function CadastroForm() {
       options: { data: { nome } },
     })
 
+    let userId = data.user?.id
     if (error) {
-      setErro(
-        error.message.includes('already registered')
-          ? 'Este e-mail já está cadastrado. Faça login.'
-          : 'Erro ao criar conta. Tente novamente.'
-      )
+      if (!emailJaCadastrado(error)) {
+        setErro('Erro ao criar conta. Tente novamente.')
+        setLoading(false)
+        return
+      }
+      // E-mail já existe. Pode ser uma tentativa anterior que criou a conta mas
+      // não gravou os dados do cliente. Com a senha certa, retomamos de onde parou.
+      const login = await supabase.auth.signInWithPassword({ email, password: senha })
+      if (login.error || !login.data.user) {
+        setErro('Este e-mail já está cadastrado. Faça login.')
+        setLoading(false)
+        return
+      }
+      userId = login.data.user.id
+    }
+
+    if (!userId) {
+      setErro('Erro ao criar conta. Tente novamente.')
       setLoading(false)
       return
     }
 
-    if (data.user) {
-      await supabase.from('clientes').insert({
-        user_id:  data.user.id,
+    // Grava os dados do cliente só se ainda não existem (retomada não duplica).
+    const { data: existente } = await supabase
+      .from('clientes')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (!existente) {
+      const { error: erroInsert } = await supabase.from('clientes').insert({
+        user_id:  userId,
         nome:     nome.trim(),
         telefone,
       })
+      if (erroInsert) {
+        // Antes o erro era ignorado e a pessoa seguia sem cadastro de cliente.
+        setErro('Sua conta foi criada, mas não conseguimos salvar seus dados. Toque em "Criar conta" de novo.')
+        setLoading(false)
+        return
+      }
     }
 
     router.push(redirect)
@@ -72,8 +101,8 @@ function CadastroForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className={labelClass}>Nome completo</label>
-            <input
+            <label htmlFor="cad-1" className={labelClass}>Nome completo</label>
+            <input id="cad-1"
               type="text"
               value={nome}
               onChange={e => setNome(maskName(e.target.value))}
@@ -83,8 +112,8 @@ function CadastroForm() {
             />
           </div>
           <div>
-            <label className={labelClass}>Telefone / WhatsApp</label>
-            <input
+            <label htmlFor="cad-2" className={labelClass}>Telefone / WhatsApp</label>
+            <input id="cad-2"
               type="tel"
               value={telefone}
               onChange={e => setTelefone(maskPhone(e.target.value))}
@@ -94,8 +123,8 @@ function CadastroForm() {
             />
           </div>
           <div>
-            <label className={labelClass}>E-mail</label>
-            <input
+            <label htmlFor="cad-3" className={labelClass}>E-mail</label>
+            <input id="cad-3"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -105,8 +134,8 @@ function CadastroForm() {
             />
           </div>
           <div>
-            <label className={labelClass}>Senha</label>
-            <input
+            <label htmlFor="cad-4" className={labelClass}>Senha</label>
+            <input id="cad-4"
               type="password"
               value={senha}
               onChange={e => setSenha(e.target.value)}

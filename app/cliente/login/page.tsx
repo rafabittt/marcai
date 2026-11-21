@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { destinoSeguro } from '@/lib/destino'
 
 // Grafite: campo e rótulo vêm das peças prontas do globals.css.
 const inputClass = 'field'
@@ -17,7 +18,7 @@ function LoginForm() {
 
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const redirect     = searchParams.get('redirect') ?? '/cliente/minha-conta'
+  const redirect     = destinoSeguro(searchParams.get('redirect'), '/cliente/minha-conta')
   const supabase     = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -52,8 +53,8 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className={labelClass}>E-mail</label>
-            <input
+            <label htmlFor="cli-1" className={labelClass}>E-mail</label>
+            <input id="cli-1"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -63,8 +64,8 @@ function LoginForm() {
             />
           </div>
           <div>
-            <label className={labelClass}>Senha</label>
-            <input
+            <label htmlFor="cli-2" className={labelClass}>Senha</label>
+            <input id="cli-2"
               type="password"
               value={senha}
               onChange={e => setSenha(e.target.value)}

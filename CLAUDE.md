@@ -5,6 +5,10 @@ clínica, estúdio de tattoo, nail designer, nutri, personal, estética). O dono
 **link único de agendamento**; o cliente agenda pelo celular **sem app e sem cadastro**;
 a **confirmação cai no WhatsApp** dos dois automaticamente.
 
+**Regra nº 1 do produto: o cliente agenda SEMPRE sem login.** É o principal diferencial.
+Nada pode exigir conta, cadastro ou login antes de agendar, nem como opção do negócio
+(ver `DECISOES.md` item 14).
+
 **O dono do negócio é o cliente pagante — a UX dele vem primeiro.** O cliente final
 não paga e não deve ter atrito (nada de obrigar cadastro/app).
 
@@ -47,8 +51,8 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
 
 3. **Segurança de dados é levada a sério — já tivemos vazamento de PII.**
    - A tabela `negocios` **não é legível por anon**. A página pública lê a **view
-     `negocios_publico`** (só colunas seguras: `id, nome, slug, endereco, horarios,
-     exigir_cadastro_cliente`). CPF e telefone do dono NUNCA saem em resposta pública.
+     `negocios_publico`** (só colunas seguras: `id, nome, slug, endereco, horarios`).
+     CPF e telefone do dono NUNCA saem em resposta pública.
    - `/api/agendar` roda com **service role**, não anon. Motivo: com anon, a RLS escondia
      `agendamentos` e as checagens de double-booking (409) e limite de plano (403) voltavam
      `count=0` — passavam batido. Service role corrige.
@@ -102,7 +106,7 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
 ## Estrutura de dados (resumo)
 
 - `negocios` — `id, user_id, nome, slug, endereco, cpf, telefone, plano, asaas_customer_id,
-  exigir_cadastro_cliente, horarios (jsonb)`. O `horarios` guarda a agenda (chaves longas
+  horarios (jsonb)`. O `horarios` guarda a agenda (chaves longas
   `segunda`..`domingo`, `buffer_min`, `folgas[]`) **e** os templates
   `msg_confirmacao_cliente`/`msg_confirmacao_dono`. Cada dia é um objeto
   `{abertura, fechamento, fechado, aberto24h, intervalos:[{inicio,fim}]}` — ver

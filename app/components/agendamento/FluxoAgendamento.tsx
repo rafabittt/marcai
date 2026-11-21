@@ -45,6 +45,12 @@ type Props = {
   textoBotao?: string
   erro?: string
   submitting?: boolean
+  /**
+   * A página soma 1 sempre que a API recusa o horário (409 ocupado, 422 fora da
+   * agenda). O fluxo então desmarca o horário e busca os ocupados de novo, para
+   * a pessoa não reenviar o mesmo horário que já foi tomado.
+   */
+  horarioRecusado?: number
   onSubmit: (dados: DadosAgendamento) => void
 }
 
@@ -61,6 +67,8 @@ function Passo({
 }) {
   return (
     <section
+      // inert: passo bloqueado também some do Tab e do leitor de tela, não só do mouse.
+      inert={!ativo}
       className={`transition-opacity duration-200 ease-grafite ${ativo ? '' : 'opacity-40 pointer-events-none select-none'}`}
     >
       <div className="flex items-center gap-2.5 mb-3">
@@ -78,7 +86,7 @@ export default function FluxoAgendamento({
   negocioId, horarios, servicos, profissionais,
   nomeInicial = '', telefoneInicial = '',
   rotuloNome = 'Seu nome', textoBotao = 'Confirmar agendamento',
-  erro, submitting = false, onSubmit,
+  erro, submitting = false, horarioRecusado = 0, onSubmit,
 }: Props) {
   const [nome,           setNome]           = useState(nomeInicial)
   const [telefone,       setTelefone]       = useState(telefoneInicial)
@@ -86,6 +94,14 @@ export default function FluxoAgendamento({
   const [profissionalId, setProfissionalId] = useState('')
   const [data,           setData]           = useState('')
   const [horario,        setHorario]        = useState('')
+
+  // Horário recusado pela API: desmarca (ajuste de estado durante a renderização,
+  // o jeito do React para "estado que depende de uma prop").
+  const [recusasVistas, setRecusasVistas] = useState(horarioRecusado)
+  if (horarioRecusado !== recusasVistas) {
+    setRecusasVistas(horarioRecusado)
+    setHorario('')
+  }
 
   const servicoSel = useMemo(
     () => servicos.find(s => String(s.id) === servicoId) ?? null,
@@ -123,7 +139,7 @@ export default function FluxoAgendamento({
     profissionais.find(p => String(p.id) === profissionalId) ?? null
 
   const { livres, diaFechado, lotado, carregando } =
-    useDisponibilidade(negocioId, horarios, data, profissionalId)
+    useDisponibilidade(negocioId, horarios, data, profissionalId, horarioRecusado)
 
   function trocarServico(id: string) {
     setServicoId(id)

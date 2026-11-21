@@ -6,6 +6,7 @@ import { maskCPF, maskName, maskPhone } from '@/lib/masks'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import Carregando from '@/app/components/Carregando'
 import { CheckCircle2 } from 'lucide-react'
+import { destinoSeguro } from '@/lib/destino'
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true)
@@ -56,8 +57,19 @@ export default function PerfilPage() {
         : Promise.resolve({ error: null }),
     ])
 
-    if (authResult.error || negResult.error) setErro('Erro ao salvar. Tente novamente.')
-    else setSucesso(true)
+    if (authResult.error || negResult.error) {
+      setErro('Erro ao salvar. Tente novamente.')
+      setSaving(false)
+      return
+    }
+
+    // Veio de outra tela (ex.: /assinar pedindo CPF)? Depois de salvar, volta pra ela.
+    const voltarPara = new URLSearchParams(window.location.search).get('redirect')
+    if (voltarPara) {
+      window.location.href = destinoSeguro(voltarPara, '/perfil')
+      return
+    }
+    setSucesso(true)
     setSaving(false)
   }
 
@@ -99,8 +111,8 @@ export default function PerfilPage() {
 
           <form onSubmit={handleSalvar} className="space-y-5">
             <div>
-              <label className={labelClass}>Nome completo</label>
-              <input
+              <label htmlFor="perfil-1" className={labelClass}>Nome completo</label>
+              <input id="perfil-1"
                 type="text"
                 value={nome}
                 onChange={e => { setNome(maskName(e.target.value)); setSucesso(false) }}
@@ -110,8 +122,8 @@ export default function PerfilPage() {
             </div>
 
             <div>
-              <label className={labelClass}>Telefone pessoal</label>
-              <input
+              <label htmlFor="perfil-2" className={labelClass}>Telefone pessoal</label>
+              <input id="perfil-2"
                 type="tel"
                 value={telefone}
                 onChange={e => { setTelefone(maskPhone(e.target.value)); setSucesso(false) }}
@@ -121,8 +133,8 @@ export default function PerfilPage() {
             </div>
 
             <div>
-              <label className={labelClass}>CPF</label>
-              <input
+              <label htmlFor="perfil-3" className={labelClass}>CPF</label>
+              <input id="perfil-3"
                 type="text"
                 value={cpf}
                 onChange={e => { setCpf(maskCPF(e.target.value)); setSucesso(false) }}
@@ -132,8 +144,8 @@ export default function PerfilPage() {
             </div>
 
             <div>
-              <label className={labelClass}>Email</label>
-              <input
+              <label htmlFor="perfil-4" className={labelClass}>Email</label>
+              <input id="perfil-4"
                 type="email"
                 value={email}
                 readOnly

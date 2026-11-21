@@ -17,7 +17,7 @@ da máquina e deslocam 3h em SP. Centralizado em `lib/agenda.ts`. O harness
 
 RLS filtra linha, não coluna. Pra esconder CPF/telefone do dono sem quebrar a página
 pública, `negocios` teve o acesso anon **revogado** e a leitura pública passou pela view
-`negocios_publico` (só `id, nome, slug, endereco, horarios, exigir_cadastro_cliente`).
+`negocios_publico` (só `id, nome, slug, endereco, horarios`; `exigir_cadastro_cliente` saiu no item 14).
 SQL: `scripts/sql/01`+`02`. Aprendizado: qualquer config nova no JSONB `horarios` que não
 deva ser pública precisa ser removida da projeção da view (foi o caso dos templates de
 mensagem, `scripts/sql/05`).
@@ -127,9 +127,8 @@ erro de digitação), funciona sem login.
 ## 12. Login com Google (planejado)
 
 Supabase Auth nativo (`signInWithOAuth('google')` + rota `/auth/callback` com
-`exchangeCodeForSession`), sem OAuth na mão. Login do DONO por padrão. Login do CLIENTE é
-**opcional por negócio** (toggle `exigir_cadastro_cliente`) e **desligado por padrão** —
-obrigar cadastro do cliente quebra o diferencial "sem app, sem cadastro". Nunca torne global.
+`exchangeCodeForSession`), sem OAuth na mão. Só para o DONO. O cliente final continua
+agendando sem login (ver item 14).
 
 ## 13. Design: Grafite (20/11/2026)
 
@@ -159,3 +158,17 @@ apps dele, mais calmo e "Apple", e com modo escuro.
 
 *Decisões acumuladas ao longo do desenvolvimento. Atualize aqui sempre que uma escolha de
 arquitetura for tomada ou revista.*
+
+## 14. Cliente agenda SEMPRE sem login (20/11/2026)
+
+Agendar sem app, sem conta e sem login é o principal diferencial do Marcaí. Por decisão do
+Rafa, **nenhum negócio pode exigir cadastro do cliente**: o interruptor "Exigir cadastro do
+cliente" saiu de Configurações e o portão de login saiu da página pública
+(`/agendar/[slug]`). A coluna `negocios.exigir_cadastro_cliente` sai do banco em
+`scripts/sql/06_remover_exigir_cadastro.sql` (rodar depois do deploy).
+
+- Não volte a pôr login, cadastro ou qualquer passo obrigatório antes de agendar, nem como
+  opção do negócio. Qualquer mudança em `/agendar/[slug]`, `FluxoAgendamento` ou
+  `/api/agendar` tem que manter o agendamento funcionando para quem nunca criou conta.
+- A área do cliente (`/cliente/*`) continua existindo como opção para quem quiser ver os
+  próprios agendamentos, mas nunca é caminho obrigatório.

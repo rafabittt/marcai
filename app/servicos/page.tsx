@@ -232,11 +232,15 @@ export default function ServicosPage() {
   }
 
   async function remover(s: Servico) {
+    // Apagar não tem volta: confirma antes (antes apagava no primeiro toque).
+    if (!window.confirm(`Remover o serviço "${s.nome}"? Isso não pode ser desfeito.`)) return
+    setErro('')
     // A janela "Novo serviço" fecha quando a lista cresce (ver janelaNova).
     // Esquece o tamanho guardado, senão apagar um item a faria reabrir sozinha.
     setNovoAbertoCom(null)
     // A junção tem ON DELETE CASCADE — os vínculos somem junto.
-    await supabase.from('servicos').delete().eq('id', s.id)
+    const { error } = await supabase.from('servicos').delete().eq('id', s.id)
+    if (error) { setErro('Erro ao remover o serviço. Tente novamente.'); return }
     setServicos(prev => prev.filter(x => x.id !== s.id))
   }
 

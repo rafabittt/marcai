@@ -16,14 +16,14 @@ const PLANO_LABELS: Record<string, { nome: string; preco: string }> = {
 function AssinarContent() {
   const searchParams  = useSearchParams()
   const plano         = searchParams.get('plano') ?? ''
-  const [erro, setErro] = useState('')
+  const [erroApi, setErro] = useState('')
+  // Plano inválido é derivado do endereço, não precisa de estado.
+  const planoInvalido = !plano || !PLANO_LABELS[plano]
+  const erro = planoInvalido ? 'Plano inválido. Escolha um plano na página inicial.' : erroApi
   const [cpfFaltando, setCpfFaltando] = useState(false)
 
   useEffect(() => {
-    if (!plano || !PLANO_LABELS[plano]) {
-      setErro('Plano inválido. Escolha um plano na página inicial.')
-      return
-    }
+    if (planoInvalido) return
 
     fetch('/api/asaas/checkout', {
       method:  'POST',
@@ -32,13 +32,13 @@ function AssinarContent() {
     })
       .then(async r => {
         const data = await r.json()
-        if (r.status === 401) { window.location.href = `/login?redirect=/assinar?plano=${plano}`; return }
+        if (r.status === 401) { window.location.href = `/login?redirect=${encodeURIComponent(`/assinar?plano=${plano}`)}`; return }
         if (data.error === 'cpf_required') { setCpfFaltando(true); return }
         if (!r.ok || data.error) { setErro(data.error ?? 'Erro ao iniciar pagamento.'); return }
         window.location.href = data.paymentUrl
       })
       .catch(() => setErro('Erro de conexão. Tente novamente.'))
-  }, [plano])
+  }, [plano, planoInvalido])
 
   const info = PLANO_LABELS[plano]
 
@@ -53,7 +53,7 @@ function AssinarContent() {
             Preencha-o na página de perfil e volte aqui.
           </p>
           <Link
-            href={`/perfil?redirect=/assinar?plano=${plano}`}
+            href={`/perfil?redirect=${encodeURIComponent(`/assinar?plano=${plano}`)}`}
             className="btn btn-primary btn-lg btn-block"
           >
             Ir para Meu Perfil
