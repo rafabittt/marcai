@@ -12,6 +12,7 @@ import {
 } from '@/lib/mensagens'
 import SidebarLayout from '@/app/components/SidebarLayout'
 import Carregando from '@/app/components/Carregando'
+import { ehLinkDuplicado } from '@/lib/cadastro'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -277,10 +278,11 @@ export default function ConfiguracoesPage() {
     setSucesso(false)
     setErro('')
 
-    // Verifica unicidade do slug apenas se mudou
+    // Verifica unicidade do slug apenas se mudou. Lê da view pública (o link já
+    // é público): a tabela `negocios` só mostra ao dono o próprio negócio.
     if (negSlug !== negocio?.slug) {
       const { data: existing } = await supabase
-        .from('negocios').select('id').eq('slug', negSlug).maybeSingle()
+        .from('negocios_publico').select('id').eq('slug', negSlug).maybeSingle()
       if (existing) {
         setErro('Esse link já está em uso. Escolha outro.')
         setSaving(false)
@@ -317,7 +319,10 @@ export default function ConfiguracoesPage() {
     const negResult = await negUpdate
 
     if (negResult.error) {
-      setErro('Erro ao salvar. Tente novamente.')
+      // Rede de segurança: dois donos escolhendo o mesmo link ao mesmo tempo.
+      setErro(ehLinkDuplicado(negResult.error)
+        ? 'Esse link já está em uso. Escolha outro.'
+        : 'Erro ao salvar. Tente novamente.')
     } else {
       setSucesso(true)
       setNegocio(prev => prev
