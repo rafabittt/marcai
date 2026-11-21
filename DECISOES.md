@@ -21,6 +21,10 @@ pública, `negocios` teve o acesso anon **revogado** e a leitura pública passou
 SQL: `scripts/sql/01`+`02`. Aprendizado: qualquer config nova no JSONB `horarios` que não
 deva ser pública precisa ser removida da projeção da view (foi o caso dos templates de
 mensagem, `scripts/sql/05`).
+Atenção que o `02` não bastou: uma política antiga (`SELECT USING true` para todos os papéis)
+deixava qualquer usuário **logado** ler todos os negócios. Fechada em 20/11/2026
+(`scripts/sql/07`, junto do insert direto em `agendamentos`). Regra: nenhuma política
+`USING (true)` em `negocios` ou `agendamentos`; leitura pública só pela view.
 
 ## 3. `/api/agendar` usa service role, não anon
 
