@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import SidebarLayout from '@/app/components/SidebarLayout'
-import GooLoader from '@/app/components/GooLoader'
-import { parsePreco, precoParaInput } from '@/lib/preco'
-import { Check, Trash2, Plus } from 'lucide-react'
+import Carregando from '@/app/components/Carregando'
+import { parsePreco, precoParaInput, formatarPreco } from '@/lib/preco'
+import { Check, Trash2, Plus, Pencil, X, Scissors } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catálogo de serviços.
@@ -37,8 +37,6 @@ type Servico = {
 /** Estado editável de um serviço — o preço fica como texto enquanto se digita. */
 type Rascunho = { nome: string; duracao: string; preco: string; profissionaisIds: string[] }
 
-const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const labelClass = 'text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1.5 block'
 
 function rascunhoDe(s: Servico): Rascunho {
   return { nome: s.nome, duracao: s.duracao, preco: precoParaInput(s.preco), profissionaisIds: [...s.profissionaisIds] }
@@ -62,9 +60,9 @@ function QuemFaz({
 }) {
   if (profissionais.length === 0) {
     return (
-      <p className="text-xs text-gray-400">
+      <p className="t-cap">
         Nenhum profissional cadastrado ainda —{' '}
-        <a href="/profissionais" className="text-[#128C7E] underline">cadastre a equipe</a>{' '}
+        <a href="/profissionais" className="link">cadastre a equipe</a>{' '}
         para poder atribuir.
       </p>
     )
@@ -79,14 +77,11 @@ function QuemFaz({
             type="button"
             onClick={() => onToggle(p.id)}
             aria-pressed={on}
-            className={[
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-              on
-                ? 'bg-[#25D366] text-white'
-                : 'bg-white text-gray-600 border border-gray-200 hover:border-[#25D366]',
-            ].join(' ')}
+            className={`btn btn-sm ${on
+              ? 'bg-ink text-ink-text border-transparent hover:border-transparent'
+              : 'text-muted hover:text-fg'}`}
           >
-            {on && <Check size={12} strokeWidth={3} />}
+            {on && <Check size={13} strokeWidth={2.2} aria-hidden />}
             {p.nome}
           </button>
         )
@@ -110,6 +105,15 @@ export default function ServicosPage() {
 
   const [novo, setNovo] = useState<Rascunho>({ nome: '', duracao: '30 min', preco: '', profissionaisIds: [] })
   const [criando, setCriando] = useState(false)
+
+  // ── Estado só de tela (não toca em dados) ──
+  // Qual linha está aberta para edição. Os rascunhos continuam guardados
+  // mesmo com a linha fechada, como antes.
+  const [aberto, setAberto] = useState<string | null>(null)
+  // A janela "Novo serviço" guarda quantos serviços havia quando abriu. Quando
+  // o serviço novo entra na lista (criar() recarrega), a conta muda e a janela
+  // fecha sozinha — sem mexer na lógica de criar().
+  const [novoAbertoCom, setNovoAbertoCom] = useState<number | null>(null)
 
   // Memoizado: sem isso o cliente é recriado a cada render e vira dependência
   // instável de carregar/useEffect.
@@ -228,6 +232,9 @@ export default function ServicosPage() {
   }
 
   async function remover(s: Servico) {
+    // A janela "Novo serviço" fecha quando a lista cresce (ver janelaNova).
+    // Esquece o tamanho guardado, senão apagar um item a faria reabrir sozinha.
+    setNovoAbertoCom(null)
     // A junção tem ON DELETE CASCADE — os vínculos somem junto.
     await supabase.from('servicos').delete().eq('id', s.id)
     setServicos(prev => prev.filter(x => x.id !== s.id))
@@ -238,198 +245,293 @@ export default function ServicosPage() {
     [servicos],
   )
 
+  const janelaNova = novoAbertoCom !== null && servicos.length === novoAbertoCom
+
+  // Janela por cima fecha no Esc.
+  useEffect(() => {
+    if (!janelaNova) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setNovoAbertoCom(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [janelaNova])
+
+  function abrirNovo() {
+    setErro('')
+    setNovoAbertoCom(servicos.length)
+  }
+
+  /** Nomes de quem faz, para a linha de detalhe da lista. */
+  function nomesDe(ids: string[]): string {
+    return profissionais.filter(p => ids.includes(p.id)).map(p => p.nome).join(', ')
+  }
+
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="flex items-center justify-center h-64"><GooLoader /></div>
+        <Carregando />
       </SidebarLayout>
     )
   }
 
   return (
     <SidebarLayout>
-      <div className="py-12 px-5 sm:px-6">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <main className="page page-narrow">
 
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Serviços</h1>
-            <p className="text-gray-500 mt-1 text-sm">
+        <div className="page-head">
+          <div className="min-w-0">
+            <h1 className="t-title">Serviços</h1>
+            <p className="t-sub">
               Seu catálogo. Cada serviço pode ser feito por mais de um profissional.
             </p>
           </div>
+          <span className="flex-1" />
+          <button type="button" onClick={abrirNovo} className="btn btn-primary">
+            <Plus size={16} strokeWidth={2} aria-hidden />
+            Novo serviço
+          </button>
+        </div>
 
-          {erro && <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl">{erro}</div>}
+        <div className="space-y-[14px]">
+          {erro && !janelaNova && <div className="note note-bad" role="alert">{erro}</div>}
 
           {semProfissional.length > 0 && profissionais.length > 0 && (
-            <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-4 text-sm text-amber-700">
-              {semProfissional.length === 1
-                ? `"${semProfissional[0].nome}" não tem ninguém que o faça — `
-                : `${semProfissional.length} serviços não têm ninguém que os faça — `}
-              não aparecem para o cliente agendar.
+            <div className="note">
+              <span>
+                {semProfissional.length === 1
+                  ? `"${semProfissional[0].nome}" não tem ninguém que o faça — `
+                  : `${semProfissional.length} serviços não têm ninguém que os faça — `}
+                não aparecem para o cliente agendar.
+              </span>
             </div>
           )}
 
-          {servicos.length === 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-              <p className="text-sm text-gray-400">Nenhum serviço cadastrado ainda.</p>
-            </div>
+          {servicos.length === 0 ? (
+            <section className="card empty">
+              <div className="tile-ico mb-2"><Scissors size={18} strokeWidth={1.8} /></div>
+              <p className="t-cap mb-3">Nenhum serviço cadastrado ainda.</p>
+              <button type="button" onClick={abrirNovo} className="btn">
+                <Plus size={16} strokeWidth={1.8} aria-hidden />
+                Adicionar serviço
+              </button>
+            </section>
+          ) : (
+            <section className="card !py-2">
+              <ul className="list">
+                {servicos.map(s => {
+                  const r = rascunho(s)
+                  const alterado = mudou(r, s)
+                  const estaAberto = aberto === s.id
+                  const quem = nomesDe(s.profissionaisIds)
+                  return (
+                    <li key={s.id} className="border-t border-hairline first:border-t-0">
+                      <div className="list-row">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[15px] font-medium text-fg truncate">{s.nome}</p>
+                          <p className="t-cap truncate">
+                            {s.duracao}{quem ? ` · ${quem}` : ''}
+                          </p>
+                        </div>
+                        {s.preco !== null && (
+                          <span className="text-[14px] font-medium text-fg tabular whitespace-nowrap">
+                            {formatarPreco(s.preco)}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setAberto(estaAberto ? null : s.id)}
+                            aria-expanded={estaAberto}
+                            aria-label={`Editar ${s.nome}`}
+                            className={`btn btn-ghost btn-icon btn-sm ${estaAberto ? 'bg-fill text-fg' : ''}`}
+                          >
+                            <Pencil size={15} strokeWidth={1.8} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => remover(s)}
+                            aria-label={`Remover ${s.nome}`}
+                            className="btn btn-ghost btn-icon btn-sm hover:text-bad-ink hover:bg-bad-bg"
+                          >
+                            <Trash2 size={15} strokeWidth={1.8} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Edição na própria linha: mesmos rascunhos de antes. */}
+                      {estaAberto && (
+                        <div className="pb-4 pt-1 space-y-4">
+                          <div>
+                            <label htmlFor={`nome-${s.id}`} className="field-label">Nome</label>
+                            <input
+                              id={`nome-${s.id}`}
+                              type="text"
+                              value={r.nome}
+                              onChange={e => editar(s, { nome: e.target.value })}
+                              className="field"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label htmlFor={`duracao-${s.id}`} className="field-label">Duração</label>
+                              <select
+                                id={`duracao-${s.id}`}
+                                value={r.duracao}
+                                onChange={e => editar(s, { duracao: e.target.value })}
+                                className="field"
+                              >
+                                {DURACOES.map(d => <option key={d} value={d}>{d}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label htmlFor={`preco-${s.id}`} className="field-label">Preço</label>
+                              <input
+                                id={`preco-${s.id}`}
+                                type="text"
+                                inputMode="decimal"
+                                value={r.preco}
+                                onChange={e => editar(s, { preco: e.target.value })}
+                                placeholder="R$ —"
+                                className="field tabular"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="field-label">Quem faz este serviço</p>
+                            <QuemFaz
+                              profissionais={profissionais}
+                              marcados={r.profissionaisIds}
+                              onToggle={id => toggleProf(s, id)}
+                            />
+                          </div>
+
+                          {(alterado || salvo === s.id) && (
+                            <div className="flex items-center gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => salvar(s)}
+                                disabled={salvando === s.id || !r.nome.trim()}
+                                className="btn btn-primary btn-sm"
+                              >
+                                {salvando === s.id ? 'Salvando...' : 'Salvar'}
+                              </button>
+                              {alterado && (
+                                <button
+                                  type="button"
+                                  onClick={() => setRascunhos(prev => { const p = { ...prev }; delete p[s.id]; return p })}
+                                  className="btn btn-ghost btn-sm"
+                                >
+                                  Descartar
+                                </button>
+                              )}
+                              {salvo === s.id && !alterado && (
+                                <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ok-ink" role="status">
+                                  <Check size={14} strokeWidth={2} aria-hidden />
+                                  Salvo
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
           )}
+        </div>
+      </main>
 
-          {servicos.map(s => {
-            const r = rascunho(s)
-            const alterado = mudou(r, s)
-            return (
-              <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <label className={labelClass}>Nome</label>
-                    <input
-                      type="text"
-                      value={r.nome}
-                      onChange={e => editar(s, { nome: e.target.value })}
-                      className={inputClass}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => remover(s)}
-                    aria-label={`Remover ${s.nome}`}
-                    className="text-gray-300 hover:text-red-500 transition-colors mt-6 shrink-0 p-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className={labelClass}>Duração</label>
-                    <select
-                      value={r.duracao}
-                      onChange={e => editar(s, { duracao: e.target.value })}
-                      className={`${inputClass} bg-white`}
-                    >
-                      {DURACOES.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className={labelClass}>Preço</label>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={r.preco}
-                      onChange={e => editar(s, { preco: e.target.value })}
-                      placeholder="R$ —"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Quem faz este serviço</label>
-                  <QuemFaz
-                    profissionais={profissionais}
-                    marcados={r.profissionaisIds}
-                    onToggle={id => toggleProf(s, id)}
-                  />
-                </div>
-
-                {(alterado || salvo === s.id) && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => salvar(s)}
-                      disabled={salvando === s.id || !r.nome.trim()}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] transition-colors disabled:opacity-50"
-                    >
-                      {salvando === s.id ? 'Salvando...' : 'Salvar'}
-                    </button>
-                    {alterado && (
-                      <button
-                        type="button"
-                        onClick={() => setRascunhos(prev => { const p = { ...prev }; delete p[s.id]; return p })}
-                        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        Descartar
-                      </button>
-                    )}
-                    {salvo === s.id && !alterado && (
-                      <span className="text-xs text-[#128C7E] font-medium">Salvo</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-
-          {/* Novo serviço */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-            <h2 className="text-xs uppercase tracking-widest font-semibold text-gray-500">
-              Adicionar serviço
-            </h2>
-
-            <div>
-              <label className={labelClass}>Nome</label>
-              <input
-                type="text"
-                value={novo.nome}
-                onChange={e => setNovo({ ...novo, nome: e.target.value })}
-                placeholder="Ex: Corte masculino"
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); criar() } }}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className={labelClass}>Duração</label>
-                <select
-                  value={novo.duracao}
-                  onChange={e => setNovo({ ...novo, duracao: e.target.value })}
-                  className={`${inputClass} bg-white`}
-                >
-                  {DURACOES.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className={labelClass}>Preço <span className="normal-case tracking-normal text-gray-300">(opcional)</span></label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={novo.preco}
-                  onChange={e => setNovo({ ...novo, preco: e.target.value })}
-                  placeholder="R$ —"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className={labelClass}>Quem faz este serviço</label>
-              <QuemFaz
-                profissionais={profissionais}
-                marcados={novo.profissionaisIds}
-                onToggle={id => setNovo(n => ({
-                  ...n,
-                  profissionaisIds: n.profissionaisIds.includes(id)
-                    ? n.profissionaisIds.filter(x => x !== id)
-                    : [...n.profissionaisIds, id],
-                }))}
-              />
-            </div>
-
+      {/* ── Janela "Novo serviço" ── */}
+      {janelaNova && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 text-fg">
+          <div className="scrim" onClick={() => setNovoAbertoCom(null)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="novo-servico-titulo" className="sheet relative w-full max-w-md p-6 sm:p-7 max-h-[90dvh] overflow-y-auto">
             <button
               type="button"
-              onClick={criar}
-              disabled={criando || !novo.nome.trim()}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-[#25D366] border-2 border-[#25D366] transition-all duration-200 hover:bg-[#dcfce7] disabled:opacity-50 flex items-center justify-center gap-2"
+              onClick={() => setNovoAbertoCom(null)}
+              aria-label="Fechar"
+              className="btn btn-ghost btn-icon btn-sm absolute top-4 right-4"
             >
-              <Plus size={16} />
-              {criando ? 'Adicionando...' : 'Adicionar serviço'}
+              <X size={18} />
             </button>
-          </div>
 
+            <h2 id="novo-servico-titulo" className="t-section mb-5 pr-8">Adicionar serviço</h2>
+
+            <div className="space-y-4">
+              {erro && <div className="note note-bad" role="alert">{erro}</div>}
+
+              <div>
+                <label htmlFor="novo-nome" className="field-label">Nome</label>
+                <input
+                  id="novo-nome"
+                  type="text"
+                  value={novo.nome}
+                  onChange={e => setNovo({ ...novo, nome: e.target.value })}
+                  placeholder="Ex: Corte masculino"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); criar() } }}
+                  autoFocus
+                  className="field"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="novo-duracao" className="field-label">Duração</label>
+                  <select
+                    id="novo-duracao"
+                    value={novo.duracao}
+                    onChange={e => setNovo({ ...novo, duracao: e.target.value })}
+                    className="field"
+                  >
+                    {DURACOES.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="novo-preco" className="field-label">
+                    Preço <span className="text-faint font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    id="novo-preco"
+                    type="text"
+                    inputMode="decimal"
+                    value={novo.preco}
+                    onChange={e => setNovo({ ...novo, preco: e.target.value })}
+                    placeholder="R$ —"
+                    className="field tabular"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="field-label">Quem faz este serviço</p>
+                <QuemFaz
+                  profissionais={profissionais}
+                  marcados={novo.profissionaisIds}
+                  onToggle={id => setNovo(n => ({
+                    ...n,
+                    profissionaisIds: n.profissionaisIds.includes(id)
+                      ? n.profissionaisIds.filter(x => x !== id)
+                      : [...n.profissionaisIds, id],
+                  }))}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={criar}
+                disabled={criando || !novo.nome.trim()}
+                className="btn btn-primary btn-lg btn-block !mt-6"
+              >
+                <Plus size={16} strokeWidth={2} aria-hidden />
+                {criando ? 'Adicionando...' : 'Adicionar serviço'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </SidebarLayout>
   )
 }

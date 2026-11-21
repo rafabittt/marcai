@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import SidebarLayout from '@/app/components/SidebarLayout'
-import GooLoader from '@/app/components/GooLoader'
+import Carregando from '@/app/components/Carregando'
 import Link from 'next/link'
 import { Zap, Sparkles, Check } from 'lucide-react'
 
@@ -95,9 +95,7 @@ export default function PlanoPage() {
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="flex items-center justify-center h-64">
-          <GooLoader />
-        </div>
+        <Carregando />
       </SidebarLayout>
     )
   }
@@ -106,131 +104,101 @@ export default function PlanoPage() {
 
   return (
     <SidebarLayout>
-      <div className="py-14 px-6">
-        <div className="max-w-4xl mx-auto">
+      <main className="page">
 
-          {/* Header */}
-          <div className="mb-10">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Plano</h1>
-            <p className="text-gray-500 mt-1 text-sm">Gerencie sua assinatura e compare os planos disponíveis.</p>
+        <div className="page-head">
+          <div>
+            <h1 className="t-title">Plano</h1>
+            <p className="t-sub">Gerencie sua assinatura e compare os planos disponíveis.</p>
           </div>
+        </div>
 
-          {/* Card plano atual */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-10 flex items-center gap-5">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-              planoAtual === 'gratuito' ? 'bg-gray-100' : 'bg-[#dcfce7]'
-            }`}>
-              {planoAtual === 'gratuito'
-                ? <Zap size={20} className="text-gray-500" />
-                : <Sparkles size={20} className="text-[#128C7E]" />
-              }
-            </div>
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-widest text-gray-400 font-medium mb-0.5">Plano atual</p>
-              <p className="text-xl font-bold text-gray-900">{PLANO_LABEL[planoAtual!]}</p>
-              {planoAtual === 'gratuito' && (
-                <p className="text-sm text-gray-500 mt-0.5">Até 5 agendamentos por mês. Faça upgrade para crescer sem limites.</p>
-              )}
-              {planoAtual !== 'gratuito' && planoInfo && (
-                <p className="text-sm text-gray-500 mt-0.5">{planoInfo.preco}/mês · Renova mensalmente</p>
-              )}
+        {/* Plano atual: o cartão principal da tela (o único com a mancha verde). */}
+        <section className="card card-hero mb-[28px]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className="tile-ico !w-11 !h-11" aria-hidden>
+                {planoAtual === 'gratuito'
+                  ? <Zap size={20} strokeWidth={1.8} />
+                  : <Sparkles size={20} strokeWidth={1.8} />
+                }
+              </div>
+              <div className="min-w-0">
+                <p className="t-label">Plano atual</p>
+                <p className="text-[22px] font-semibold tracking-[-0.02em] leading-tight text-fg mt-0.5">
+                  {PLANO_LABEL[planoAtual!]}
+                </p>
+                {planoAtual === 'gratuito' && (
+                  <p className="t-cap mt-1">Até 5 agendamentos por mês. Faça upgrade para crescer sem limites.</p>
+                )}
+                {planoAtual !== 'gratuito' && planoInfo && (
+                  <p className="t-cap mt-1 tabular">{planoInfo.preco}/mês · Renova mensalmente</p>
+                )}
+              </div>
             </div>
             {planoAtual === 'gratuito' && (
-              <Link
-                href="/assinar?plano=pro"
-                className="flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] transition-colors"
-              >
+              <Link href="/assinar?plano=pro" className="btn btn-primary self-start sm:self-auto">
                 Fazer upgrade
               </Link>
             )}
           </div>
+        </section>
 
-          {/* Comparativo de planos */}
-          <div className="mb-4">
-            <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">Todos os planos</p>
-          </div>
+        {/* Comparativo de planos */}
+        <h2 className="t-section mb-3">Todos os planos</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PLANOS.map(p => {
-              const isAtual    = p.key === planoAtual
-              const isUpgrade  = PLANOS.findIndex(x => x.key === p.key) > PLANOS.findIndex(x => x.key === planoAtual)
-              const isDowngrade = !isAtual && !isUpgrade
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-[14px]">
+          {PLANOS.map(p => {
+            const isAtual    = p.key === planoAtual
+            const isUpgrade  = PLANOS.findIndex(x => x.key === p.key) > PLANOS.findIndex(x => x.key === planoAtual)
+            const isDowngrade = !isAtual && !isUpgrade
 
-              return (
-                <div
-                  key={p.key}
-                  className={`rounded-2xl p-6 border text-left relative flex flex-col ${
-                    isAtual
-                      ? 'border-[#25D366] bg-[#f0fdf4]'
-                      : p.destaque
-                      ? 'border-gray-800 bg-gray-900'
-                      : 'border-gray-100 bg-white'
-                  }`}
-                >
-                  {isAtual && (
-                    <span className="absolute -top-3 left-5 bg-[#25D366] text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                      Plano atual
-                    </span>
-                  )}
-                  {p.destaque && !isAtual && (
-                    <span className="absolute -top-3 left-5 bg-[#25D366] text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                      Mais escolhido
-                    </span>
-                  )}
-
-                  <p className={`text-xs font-semibold mb-1 ${p.destaque && !isAtual ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {p.nome}
-                  </p>
-                  <div className="flex items-end gap-1 mb-1">
-                    <span className={`text-3xl font-bold ${p.destaque && !isAtual ? 'text-white' : 'text-gray-900'}`}>
-                      {p.preco}
-                    </span>
-                    <span className={`text-sm mb-1 ${p.destaque && !isAtual ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {p.periodo}
-                    </span>
-                  </div>
-                  <p className={`text-xs font-medium mb-4 ${p.destaque && !isAtual ? 'text-[#25D366]' : 'text-[#128C7E]'}`}>
-                    {p.idealPara}
-                  </p>
-
-                  <ul className="space-y-2 mb-5 flex-1">
-                    {p.itens.map(item => (
-                      <li key={item} className={`flex items-start gap-2 text-xs ${p.destaque && !isAtual ? 'text-gray-300' : 'text-gray-600'}`}>
-                        <Check size={12} className="text-[#25D366] flex-shrink-0 mt-0.5" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {isAtual ? (
-                    <div className="py-2.5 rounded-xl text-xs font-semibold text-center text-[#25D366] border border-[#25D366] bg-white">
-                      Plano atual
-                    </div>
-                  ) : p.key === 'gratuito' || isDowngrade ? (
-                    <div className="py-2.5 rounded-xl text-xs font-semibold text-center text-gray-400 border border-gray-100 bg-gray-50 cursor-not-allowed">
-                      {p.key === 'gratuito' ? 'Grátis' : 'Downgrade'}
-                    </div>
-                  ) : (
-                    <Link
-                      href={`/assinar?plano=${p.key}`}
-                      className={`py-2.5 rounded-xl text-xs font-semibold text-center transition-colors block ${
-                        p.destaque
-                          ? 'bg-[#25D366] text-white hover:bg-[#128C7E]'
-                          : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      Fazer upgrade
-                    </Link>
-                  )}
+            return (
+              <div
+                key={p.key}
+                className="card card-sm flex flex-col"
+              >
+                <div className="flex items-center justify-between gap-2 mb-2 min-h-[22px]">
+                  <p className="t-label">{p.nome}</p>
+                  {isAtual && <span className="badge badge-accent">Seu plano</span>}
+                  {p.destaque && !isAtual && <span className="badge">Mais escolhido</span>}
                 </div>
-              )
-            })}
-          </div>
 
-          <p className="text-xs text-gray-400 text-center mt-6">Sem contrato. Cancele quando quiser.</p>
+                <p className="t-num">
+                  {p.preco}<small>{p.periodo}</small>
+                </p>
+                <p className="t-cap mt-1.5 mb-4">{p.idealPara}</p>
 
+                <ul className="space-y-2 mb-5 flex-1 border-t border-hairline pt-4">
+                  {p.itens.map(item => (
+                    <li key={item} className="flex items-start gap-2 text-[13px] text-fg">
+                      <Check size={14} strokeWidth={1.8} className="text-muted flex-none mt-0.5" aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                {isAtual ? (
+                  <span className="btn btn-sm btn-block" aria-disabled="true">
+                    Plano atual
+                  </span>
+                ) : p.key === 'gratuito' || isDowngrade ? (
+                  <span className="btn btn-sm btn-block" aria-disabled="true">
+                    {p.key === 'gratuito' ? 'Grátis' : 'Downgrade'}
+                  </span>
+                ) : (
+                  <Link href={`/assinar?plano=${p.key}`} className="btn btn-sm btn-block">
+                    Fazer upgrade
+                  </Link>
+                )}
+              </div>
+            )
+          })}
         </div>
-      </div>
+
+        <p className="t-cap text-center mt-6">Sem contrato. Cancele quando quiser.</p>
+
+      </main>
     </SidebarLayout>
   )
 }

@@ -1,12 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, CircleAlert } from 'lucide-react'
 import { maskName, maskPhone } from '@/lib/masks'
 import CalendarioInline from '@/app/components/CalendarioInline'
 import { type HorariosMap } from '@/lib/agenda'
 import { useDisponibilidade } from './useDisponibilidade'
-import SeletorHorario from './SeletorHorario'
+import SeletorHorario, { Aviso } from './SeletorHorario'
 import CardsServico, { type Servico } from './CardsServico'
 import ResumoAgendamento from './ResumoAgendamento'
 
@@ -48,20 +48,26 @@ type Props = {
   onSubmit: (dados: DadosAgendamento) => void
 }
 
-const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
+// Campo de digitar do Grafite (16px no celular, anel verde no foco).
+const inputClass = 'field'
 
+// Cada passo é uma seção solta no fundo da página: o número num círculo
+// discreto e o título. As escolhas dentro dela é que são os cartões
+// (uma caixa por nível). Passo ainda bloqueado fica esmaecido.
 function Passo({
   numero, titulo, ativo, children,
 }: {
   numero: number; titulo: string; ativo: boolean; children: React.ReactNode
 }) {
   return (
-    <section className={ativo ? '' : 'opacity-45 pointer-events-none select-none'}>
-      <div className="flex items-center gap-2.5 mb-4">
-        <span className="w-6 h-6 rounded-full bg-[#dcfce7] text-[#128C7E] text-xs font-bold flex items-center justify-center flex-shrink-0">
+    <section
+      className={`transition-opacity duration-200 ease-grafite ${ativo ? '' : 'opacity-40 pointer-events-none select-none'}`}
+    >
+      <div className="flex items-center gap-2.5 mb-3">
+        <span className="w-6 h-6 rounded-full bg-fill text-muted text-[12px] font-semibold tabular flex items-center justify-center flex-none">
           {numero}
         </span>
-        <h3 className="text-sm font-semibold text-[#0a0a0a]">{titulo}</h3>
+        <h3 className="t-section">{titulo}</h3>
       </div>
       {children}
     </section>
@@ -162,160 +168,156 @@ export default function FluxoAgendamento({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="lg:grid lg:grid-cols-[1fr_20rem] lg:gap-10 lg:items-start">
+    // Uma coluna só, nas duas telas: a pública já é estreita (celular
+    // primeiro) e a interna usa .page-narrow. O resumo e o botão ficam no fim.
+    <form onSubmit={handleSubmit} className="space-y-8">
 
-      <div className="space-y-10">
-        {/* Progresso — leve, só para dar noção de avanço */}
-        <div>
-          <div className="flex items-baseline justify-between mb-2">
-            <span className="text-xs font-medium text-gray-500">
-              {feitos} de {totalPassos} escolhas feitas
-            </span>
-            <span className="text-xs text-gray-400">{progresso}%</span>
-          </div>
-          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#25D366] rounded-full transition-all duration-500"
-              style={{ width: `${progresso}%` }}
-            />
-          </div>
+      {/* Progresso — leve, só para dar noção de avanço */}
+      <div>
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="t-cap">
+            {feitos} de {totalPassos} escolhas feitas
+          </span>
+          <span className="t-cap tabular text-faint">{progresso}%</span>
         </div>
-
-        {erro && (
-          <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl">{erro}</div>
-        )}
-
-        <Passo numero={nServico} titulo="Escolha o serviço" ativo>
-          {servicos.length > 0 && servicosAgendaveis.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-10 text-center">
-              <p className="text-sm text-gray-500">
-                Nenhum serviço disponível para agendamento no momento.
-              </p>
-            </div>
-          ) : (
-            <CardsServico
-              servicos={servicosAgendaveis}
-              valor={servicoId}
-              onChange={trocarServico}
-              inputClass={inputClass}
-            />
-          )}
-        </Passo>
-
-        {temEquipe && (
-          <Passo numero={nProf} titulo="Escolha o profissional" ativo={passoServicoOk}>
-            {profissionaisDoServico.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-10 text-center">
-                <p className="text-sm text-gray-500">
-                  {passoServicoOk
-                    ? 'Nenhum profissional faz este serviço.'
-                    : 'Escolha um serviço para ver quem atende.'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                {profissionaisDoServico.map(p => {
-                  const selecionado = profissionalId === String(p.id)
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => { setProfissionalId(String(p.id)); setHorario('') }}
-                      aria-pressed={selecionado}
-                      className={[
-                        'w-full text-left rounded-2xl px-4 py-3.5 flex items-center gap-3 transition-all duration-150',
-                        selecionado
-                          ? 'bg-[#dcfce7] border-2 border-[#25D366]'
-                          : 'bg-white border-2 border-gray-100 hover:border-gray-200',
-                      ].join(' ')}
-                    >
-                      <div className="w-9 h-9 rounded-full bg-[#dcfce7] flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-[#128C7E]">
-                          {p.nome.trim().charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-[#0a0a0a] truncate">{p.nome}</p>
-                        {p.cargo && <p className="text-xs text-gray-500 truncate">{p.cargo}</p>}
-                      </div>
-                      {selecionado && (
-                        <Check size={16} className="text-[#25D366] flex-shrink-0" strokeWidth={3} />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </Passo>
-        )}
-
-        <Passo numero={nData} titulo="Escolha a data" ativo={passoServicoOk && passoProfOk}>
-          <CalendarioInline
-            value={data}
-            onChange={v => { setData(v); setHorario('') }}
-            horarios={horarios}
+        <div className="h-1.5 w-full bg-fill rounded-full overflow-hidden">
+          <div
+            className="h-full w-full bg-accent rounded-full origin-left transition-transform duration-[280ms] ease-grafite"
+            style={{ transform: `scaleX(${progresso / 100})` }}
           />
-        </Passo>
-
-        <Passo numero={nHora} titulo="Escolha o horário" ativo={passoDataOk}>
-          <SeletorHorario
-            horarios={livres}
-            valor={horario}
-            onChange={setHorario}
-            diaFechado={diaFechado}
-            lotado={lotado}
-            carregando={carregando}
-          />
-        </Passo>
-
-        <Passo numero={nDados} titulo="Seus dados" ativo={passoHoraOk}>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block">
-                {rotuloNome}
-              </label>
-              <input
-                type="text"
-                value={nome}
-                onChange={e => setNome(maskName(e.target.value))}
-                required
-                placeholder="João Silva"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block">
-                Telefone / WhatsApp
-              </label>
-              <input
-                type="tel"
-                value={telefone}
-                onChange={e => setTelefone(maskPhone(e.target.value))}
-                required
-                placeholder="(11) 99999-9999"
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </Passo>
+        </div>
       </div>
 
-      {/* Resumo — lateral no desktop, empilhado no mobile */}
-      <aside className="mt-10 lg:mt-0 lg:sticky lg:top-8 space-y-4">
+      <Passo numero={nServico} titulo="Escolha o serviço" ativo>
+        {servicos.length > 0 && servicosAgendaveis.length === 0 ? (
+          <Aviso>Nenhum serviço disponível para agendamento no momento.</Aviso>
+        ) : (
+          <CardsServico
+            servicos={servicosAgendaveis}
+            valor={servicoId}
+            onChange={trocarServico}
+            inputClass={inputClass}
+          />
+        )}
+      </Passo>
+
+      {temEquipe && (
+        <Passo numero={nProf} titulo="Escolha o profissional" ativo={passoServicoOk}>
+          {profissionaisDoServico.length === 0 ? (
+            <Aviso>
+              {passoServicoOk
+                ? 'Nenhum profissional faz este serviço.'
+                : 'Escolha um serviço para ver quem atende.'}
+            </Aviso>
+          ) : (
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {profissionaisDoServico.map(p => {
+                const selecionado = profissionalId === String(p.id)
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { setProfissionalId(String(p.id)); setHorario('') }}
+                    aria-pressed={selecionado}
+                    className={[
+                      'card card-sm card-link w-full text-left !px-3.5 !py-3 min-h-[60px] flex items-center gap-3',
+                      selecionado ? 'bg-ink text-ink-text border-transparent' : '',
+                    ].join(' ')}
+                  >
+                    <span
+                      aria-hidden
+                      className={`avatar ${selecionado ? '!bg-ink-text/15 !text-ink-text' : ''}`}
+                    >
+                      {p.nome.trim().charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[15px] font-semibold truncate ${selecionado ? 'text-ink-text' : 'text-fg'}`}>{p.nome}</p>
+                      {p.cargo && (
+                        <p className={`t-cap truncate ${selecionado ? 'text-ink-text/70' : ''}`}>{p.cargo}</p>
+                      )}
+                    </div>
+                    {selecionado && (
+                      <Check size={16} strokeWidth={1.8} className="flex-none" aria-hidden />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </Passo>
+      )}
+
+      <Passo numero={nData} titulo="Escolha a data" ativo={passoServicoOk && passoProfOk}>
+        <CalendarioInline
+          value={data}
+          onChange={v => { setData(v); setHorario('') }}
+          horarios={horarios}
+        />
+      </Passo>
+
+      <Passo numero={nHora} titulo="Escolha o horário" ativo={passoDataOk}>
+        <SeletorHorario
+          horarios={livres}
+          valor={horario}
+          onChange={setHorario}
+          diaFechado={diaFechado}
+          lotado={lotado}
+          carregando={carregando}
+        />
+      </Passo>
+
+      <Passo numero={nDados} titulo="Seus dados" ativo={passoHoraOk}>
+        <div className="space-y-4">
+          <label className="block">
+            <span className="field-label">{rotuloNome}</span>
+            <input
+              type="text"
+              value={nome}
+              onChange={e => setNome(maskName(e.target.value))}
+              required
+              placeholder="João Silva"
+              className={inputClass}
+            />
+          </label>
+          <label className="block">
+            <span className="field-label">Telefone / WhatsApp</span>
+            <input
+              type="tel"
+              value={telefone}
+              onChange={e => setTelefone(maskPhone(e.target.value))}
+              required
+              placeholder="(11) 99999-9999"
+              className={`${inputClass} tabular`}
+            />
+          </label>
+        </div>
+      </Passo>
+
+      {/* Resumo e confirmar no fim. O erro do envio aparece logo acima do
+          botão, onde a pessoa está olhando quando clica. */}
+      <div className="space-y-[14px]">
         <ResumoAgendamento
           servico={servicoSel ? `${servicoSel.nome} (${servicoSel.duracao})` : (servicoId || null)}
           profissional={profissionalSel?.nome ?? null}
           data={data}
           horario={horario}
         />
+
+        {erro && (
+          <div className="note note-bad" role="alert">
+            <CircleAlert size={18} strokeWidth={1.8} className="flex-none mt-px" aria-hidden />
+            <span>{erro}</span>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={submitting || !podeEnviar}
-          className="w-full py-3.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] disabled:opacity-40 disabled:hover:bg-[#25D366]"
+          className="btn btn-primary btn-lg btn-block"
         >
           {submitting ? 'Agendando...' : textoBotao}
         </button>
-      </aside>
+      </div>
     </form>
   )
 }

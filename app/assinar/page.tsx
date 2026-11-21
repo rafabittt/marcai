@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { AlertTriangle, XCircle } from 'lucide-react'
-import GooLoader from '@/app/components/GooLoader'
+import Carregando from '@/app/components/Carregando'
 
 const PLANO_LABELS: Record<string, { nome: string; preco: string }> = {
   basico: { nome: 'Básico',  preco: 'R$49/mês' },
@@ -44,21 +44,21 @@ function AssinarContent() {
 
   if (cpfFaltando) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-10 text-center">
-          <div className="flex justify-center mb-4"><AlertTriangle size={36} className="text-yellow-500" /></div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">CPF obrigatório</h2>
-          <p className="text-gray-500 text-sm mb-6">
+      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="card w-full max-w-[420px] !p-8 flex flex-col items-center text-center">
+          <div className="tile-ico mb-4" aria-hidden><AlertTriangle size={18} strokeWidth={1.8} /></div>
+          <h2 className="t-title mb-2">CPF obrigatório</h2>
+          <p className="text-sm text-muted mb-6">
             Para assinar o plano <strong>{info?.nome}</strong>, precisamos do seu CPF.
             Preencha-o na página de perfil e volte aqui.
           </p>
           <Link
             href={`/perfil?redirect=/assinar?plano=${plano}`}
-            className="block w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] transition-colors text-center"
+            className="btn btn-primary btn-lg btn-block"
           >
             Ir para Meu Perfil
           </Link>
-          <Link href="/dashboard" className="block mt-3 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+          <Link href="/dashboard" className="btn btn-ghost btn-block mt-2">
             Cancelar
           </Link>
         </div>
@@ -68,14 +68,14 @@ function AssinarContent() {
 
   if (erro) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-10 text-center">
-          <div className="flex justify-center mb-4"><XCircle size={36} className="text-red-400" /></div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Algo deu errado</h2>
-          <p className="text-gray-500 text-sm mb-6">{erro}</p>
+      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="card w-full max-w-[420px] !p-8 flex flex-col items-center text-center">
+          <div className="tile-ico mb-4 !bg-bad-bg !text-bad-ink" aria-hidden><XCircle size={18} strokeWidth={1.8} /></div>
+          <h2 className="t-title mb-2">Algo deu errado</h2>
+          <p className="text-sm text-muted mb-6">{erro}</p>
           <Link
             href="/#precos"
-            className="block w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] transition-colors text-center"
+            className="btn btn-primary btn-lg btn-block"
           >
             Ver planos
           </Link>
@@ -85,20 +85,21 @@ function AssinarContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-10 text-center">
-        <div className="flex justify-center mb-6">
-          <GooLoader />
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="card w-full max-w-[420px] !p-8 text-center">
+        {/* O Carregando já vem com respiro próprio; aqui ele fica mais junto do título. */}
+        <div className="-mt-12 -mb-6">
+          <Carregando />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">
+        <h2 className="t-title mb-1">
           Preparando seu pagamento…
         </h2>
         {info && (
-          <p className="text-gray-500 text-sm">
-            Plano <strong>{info.nome}</strong> — {info.preco}
+          <p className="text-sm text-muted">
+            Plano <strong className="font-semibold text-fg">{info.nome}</strong> — <span className="tabular">{info.preco}</span>
           </p>
         )}
-        <p className="text-gray-400 text-xs mt-4">Você será redirecionado para o Asaas em instantes.</p>
+        <p className="t-cap mt-4">Você será redirecionado para o Asaas em instantes.</p>
       </div>
     </div>
   )
@@ -107,8 +108,8 @@ function AssinarContent() {
 export default function AssinarPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <GooLoader />
+      <div className="min-h-screen flex items-center justify-center">
+        <Carregando />
       </div>
     }>
       <AssinarContent />

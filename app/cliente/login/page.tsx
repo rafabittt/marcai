@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
-const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+// Grafite: campo e rótulo vêm das peças prontas do globals.css.
+const inputClass = 'field'
+const labelClass = 'field-label'
 
 function LoginForm() {
   const [email,  setEmail]  = useState('')
@@ -36,17 +37,17 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-sm p-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="card w-full max-w-[400px] !p-6 sm:!p-8">
 
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <img src="/logo.png" alt="Marcaí" className="h-7 object-contain mx-auto mb-6" />
-          <h1 className="text-xl font-bold text-gray-900">Entrar na sua conta</h1>
-          <p className="text-sm text-gray-500 mt-1">Acesse seus agendamentos</p>
+          <h1 className="t-title">Entrar na sua conta</h1>
+          <p className="t-sub">Acesse seus agendamentos</p>
         </div>
 
         {erro && (
-          <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">{erro}</div>
+          <div className="note note-bad mb-5" role="alert">{erro}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -75,26 +76,26 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] disabled:opacity-50"
+            className="btn btn-primary btn-lg btn-block"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
 
-        <p className="text-sm text-center text-gray-500 mt-6">
+        <p className="t-cap !text-sm text-center mt-5">
           Não tem conta?{' '}
           <Link
             href={`/cliente/cadastro?redirect=${encodeURIComponent(redirect)}`}
-            className="text-[#25D366] font-semibold hover:underline"
+            className="link"
           >
             Criar conta
           </Link>
         </p>
 
-        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-          <p className="text-xs text-gray-400">
+        <div className="mt-6 pt-5 border-t border-hairline text-center">
+          <p className="t-cap">
             É dono de negócio?{' '}
-            <Link href="/login" className="text-[#25D366] font-medium hover:underline">
+            <Link href="/login" className="link">
               Acesse o painel
             </Link>
           </p>

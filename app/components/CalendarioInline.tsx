@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { horariosDoDia, localDateStr, type HorariosMap } from '@/lib/agenda'
 
 const DIAS_SEMANA_ABREV = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -86,43 +87,46 @@ export default function CalendarioInline({ value, onChange, maxDias = 60, horari
     onChange(toLocalDateString(d))
   }
 
+  // Visual Grafite: um cartão só (sem caixa dentro). Dia livre parece botão
+  // (borda fina), dia sem horário fica apagado e desligado, o escolhido fica
+  // preto como a aba ativa. O verde aparece só na bolinha de "hoje".
   return (
-    <div className="border border-gray-200 rounded-2xl p-4 bg-white select-none">
+    <div className="card p-4 sm:p-5 select-none">
       {/* Navegação do mês */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <button
           type="button"
           onClick={handlePrevMes}
           disabled={!podePrev}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="btn btn-ghost btn-icon w-11 h-11"
           aria-label="Mês anterior"
         >
-          ‹
+          <ChevronLeft size={20} strokeWidth={1.8} />
         </button>
-        <span className="text-sm font-semibold text-gray-800">
+        <span className="t-section" aria-live="polite">
           {MESES_NOMES[mesAtual.mes]} {mesAtual.ano}
         </span>
         <button
           type="button"
           onClick={handleNextMes}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+          className="btn btn-ghost btn-icon w-11 h-11"
           aria-label="Próximo mês"
         >
-          ›
+          <ChevronRight size={20} strokeWidth={1.8} />
         </button>
       </div>
 
       {/* Cabeçalho dias da semana */}
-      <div className="grid grid-cols-7 mb-1">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {DIAS_SEMANA_ABREV.map(d => (
-          <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">
+          <div key={d} className="t-cap text-center text-faint py-1">
             {d}
           </div>
         ))}
       </div>
 
       {/* Grid de dias */}
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className="grid grid-cols-7 gap-1">
         {diasDoMes.map((dia, idx) => {
           if (dia === null) {
             return <div key={`empty-${idx}`} />
@@ -133,15 +137,13 @@ export default function CalendarioInline({ value, onChange, maxDias = 60, horari
           const selected = value === dateStr
           const isHoje = toLocalDateString(hoje) === dateStr
 
-          let cellClass = 'w-full aspect-square flex items-center justify-center rounded-full text-sm transition-colors '
+          let cellClass = 'relative w-full max-w-12 mx-auto aspect-square min-h-11 flex items-center justify-center rounded-full text-[15px] tabular border transition-[background-color,border-color,transform] duration-150 ease-grafite '
           if (selected) {
-            cellClass += 'bg-[#25D366] text-white font-semibold'
+            cellClass += 'bg-ink text-ink-text border-transparent font-semibold'
           } else if (disabled) {
-            cellClass += 'text-gray-300 cursor-not-allowed'
-          } else if (isHoje) {
-            cellClass += 'text-[#25D366] font-semibold hover:bg-[#dcfce7] cursor-pointer'
+            cellClass += 'border-transparent text-faint opacity-50'
           } else {
-            cellClass += 'text-gray-700 hover:bg-gray-100 cursor-pointer'
+            cellClass += 'border-hairline text-fg font-medium hover:bg-fill active:scale-[.94]'
           }
 
           return (
@@ -150,9 +152,14 @@ export default function CalendarioInline({ value, onChange, maxDias = 60, horari
               type="button"
               onClick={() => handleDia(dia)}
               disabled={disabled}
+              aria-pressed={selected}
+              aria-current={isHoje ? 'date' : undefined}
               className={cellClass}
             >
               {dia}
+              {isHoje && (
+                <span aria-hidden className="absolute bottom-1.5 w-1 h-1 rounded-full bg-accent" />
+              )}
             </button>
           )
         })}

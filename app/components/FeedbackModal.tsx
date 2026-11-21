@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Lightbulb } from 'lucide-react'
+import { X, Lightbulb, Check } from 'lucide-react'
 
 export default function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [texto, setTexto] = useState('')
@@ -11,6 +11,12 @@ export default function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -33,59 +39,44 @@ export default function FeedbackModal({ onClose }: { onClose: () => void }) {
   if (!mounted) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md p-8 z-10">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 text-fg">
+      <div className="scrim" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-label="Enviar sugestão" className="sheet relative w-full max-w-md p-6 sm:p-7">
+        <button onClick={onClose} aria-label="Fechar" className="btn btn-ghost btn-icon btn-sm absolute top-4 right-4">
           <X size={18} />
         </button>
 
         {enviado ? (
-          <div className="text-center py-4">
-            <div className="w-14 h-14 rounded-full bg-[#dcfce7] flex items-center justify-center mx-auto mb-4">
-              <Lightbulb size={24} className="text-[#25D366]" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Obrigado pela sugestão!</h2>
-            <p className="text-sm text-gray-500 mb-6">Vamos analisar sua ideia com cuidado.</p>
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] transition-colors"
-            >
-              Fechar
-            </button>
+          <div className="empty !py-4">
+            <div className="tile-ico mb-2 !bg-accent-soft !text-accent-ink"><Check size={18} /></div>
+            <h2 className="t-section">Obrigado pela sugestão!</h2>
+            <p className="t-cap mb-4">Vamos analisar sua ideia com cuidado.</p>
+            <button onClick={onClose} className="btn btn-primary btn-block">Fechar</button>
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-[#dcfce7] flex items-center justify-center shrink-0">
-                <Lightbulb size={18} className="text-[#25D366]" />
-              </div>
+            <div className="flex items-center gap-3 mb-5 pr-8">
+              <div className="tile-ico"><Lightbulb size={18} strokeWidth={1.8} /></div>
               <div>
-                <h2 className="text-base font-bold text-gray-900 leading-tight">Enviar sugestão</h2>
-                <p className="text-xs text-gray-500">Uma ideia, melhoria ou feedback sobre o Marcaí</p>
+                <h2 className="t-section">Enviar sugestão</h2>
+                <p className="t-cap">Uma ideia, melhoria ou feedback sobre o Marcaí</p>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <textarea
                 value={texto}
                 onChange={e => setTexto(e.target.value.slice(0, 500))}
                 placeholder="Ex: Seria útil poder exportar os agendamentos como planilha..."
                 rows={5}
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300"
+                aria-label="Sua sugestão"
+                className="field resize-none"
               />
-              <p className="text-xs text-gray-400 text-right -mt-2">{texto.length}/500</p>
+              <p className="t-cap text-right tabular">{texto.length}/500</p>
 
-              <button
-                type="submit"
-                disabled={enviando || !texto.trim()}
-                className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] transition-colors disabled:opacity-50"
-              >
-                {enviando ? 'Enviando...' : 'Enviar sugestão'}
+              <button type="submit" disabled={enviando || !texto.trim()} className="btn btn-primary btn-block btn-lg">
+                {enviando ? 'Enviando…' : 'Enviar sugestão'}
               </button>
             </form>
           </>

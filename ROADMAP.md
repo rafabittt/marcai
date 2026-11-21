@@ -12,8 +12,8 @@ Fases do produto e o que já foi feito. Atualize o status conforme avança.
   - Interna passou a usar `/api/agendar` (antes fazia insert direto sem validação).
   - Validação de expediente no servidor (422).
 
-- **Base de UX (Fase A)** — Poppins de verdade (o app rodava em Arial), `lang=pt-BR`, remoção
-  do dark mode parcial, extração de `lib/agenda.ts` e dos componentes `StatusBadge`/
+- **Base de UX (Fase A)** — Poppins de verdade (o app rodava em Arial; trocada pela fonte do
+  sistema no revamp Grafite), `lang=pt-BR`, remoção do dark mode parcial, extração de `lib/agenda.ts` e dos componentes `StatusBadge`/
   `MetricCard`/`InfoRow`. Harness de teste (`npm test` / `npm run test:fusos`).
 
 - **Configurações de agenda (Fase B)** — intervalos/almoço (blocos), buffer entre
@@ -36,6 +36,11 @@ Fases do produto e o que já foi feito. Atualize o status conforme avança.
 
 - **Webhook do Asaas** — 9 eventos tratados, plano sincronizado.
 
+- **Revamp para o Grafite (20/11/2026)** — app, site, página pública, login, planos e a página
+  do Spool no design system Grafite, com o verde Marcaí só como destaque. Fonte do sistema no
+  lugar da Poppins, modo escuro automático, barra lateral escura, abas em pílula, 404 próprio.
+  Novo guia da marca para redes sociais e vídeos (`marketing/BRAND-GUIDE.md`). Ver DECISOES 13.
+
 ## Em andamento 🔧
 
 - **Fase 1.5 — serviço ↔ profissional (M2M).** Junção `servico_profissional` (SQL `04`,
@@ -57,6 +62,8 @@ Fases do produto e o que já foi feito. Atualize o status conforme avança.
   `tipo='agendamento'`).
 - **Login com Google** — Supabase Auth; dono por padrão, cliente opcional por negócio
   (`exigir_cadastro_cliente`), desligado por padrão.
+- **Reels no visual novo** — migrar o projeto Remotion (`marketing/videos/`) para o
+  `marketing/BRAND-GUIDE.md` (Inter, fundo claro/escuro, gravações do app novo).
 - **Agenda visual do dono** — colunas por profissional, blocos por status, arrastar pra
   remarcar (por último, maior risco), painel lateral de criar/editar.
 

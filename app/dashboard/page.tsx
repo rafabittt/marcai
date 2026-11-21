@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { CalendarClock, CalendarCheck, Clock3, ChevronDown } from 'lucide-react'
 import SidebarLayout from '@/app/components/SidebarLayout'
-import GooLoader from '@/app/components/GooLoader'
+import Carregando from '@/app/components/Carregando'
 import {
   localDateStr, naiveNowISO, horaDe, dataDe, montarDataHora,
   horariosDoDia, horariosLivres, type HorariosMap,
@@ -14,6 +14,7 @@ import MetricCard from '@/app/components/MetricCard'
 import InfoRow from '@/app/components/InfoRow'
 import PainelLateral from '@/app/components/PainelLateral'
 import GraficoVolume from '@/app/components/GraficoVolume'
+import Abas from '@/app/components/Abas'
 
 const POR_PAGINA = 10
 const PROXIMOS_NA_HOME = 5
@@ -221,155 +222,140 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="flex items-center justify-center h-64"><GooLoader /></div>
+        <Carregando />
       </SidebarLayout>
     )
   }
 
   const isPassado = selecionado ? selecionado.data_hora < agora : false
   const ocupadosHoje = totalGradeHoje > 0 && vagosHoje !== null ? totalGradeHoje - vagosHoje : 0
+  const proximosAtivos = proximos.filter(a => a.status !== 'cancelado').length
 
   return (
     <SidebarLayout>
-      <main className="max-w-3xl mx-auto px-5 sm:px-6 py-10 sm:py-12 space-y-10">
+      <main className="page">
 
-        {/* ── Saudação ── */}
-        <div>
-          <p className="text-xs uppercase tracking-widest text-gray-400 font-medium mb-1">
-            {dataExtenso()}
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: '#0a0a0a' }}>
-            {saudacao()}{nomeNegocio ? `, ${nomeNegocio}!` : '!'}
-          </h1>
-        </div>
-
-        {/* ── Resumo do dia ── */}
-        <section>
-          <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Resumo do dia</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <MetricCard
-              label="Próximo"
-              value={proximoCliente ? horaDe(proximoCliente.data_hora) : '—'}
-              valueColor={proximoCliente ? 'text-[#25D366]' : 'text-gray-300'}
-              iconBg="bg-[#dcfce7]"
-              icon={<CalendarClock size={18} className="text-[#25D366]" />}
-              rodape={proximoCliente ? proximoCliente.cliente_nome : 'Nada mais para hoje'}
-            />
-            <MetricCard
-              label="Hoje"
-              value={ativosHoje.length}
-              valueColor="text-gray-900"
-              iconBg="bg-gray-100"
-              icon={<CalendarCheck size={18} className="text-gray-500" />}
-              rodape={ativosHoje.length === 1 ? '1 agendamento' : `${ativosHoje.length} agendamentos`}
-            />
-            <MetricCard
-              label="Horários vagos"
-              value={vagosHoje ?? '—'}
-              valueColor="text-gray-900"
-              iconBg="bg-gray-100"
-              icon={<Clock3 size={18} className="text-gray-500" />}
-              rodape={totalGradeHoje === 0 ? 'Fechado hoje' : `de ${totalGradeHoje} na grade`}
-              progress={totalGradeHoje > 0 ? Math.round((ocupadosHoje / totalGradeHoje) * 100) : 0}
-              progressColor="bg-[#25D366]"
-            />
+        {/* ── Cabeçalho: o título diz o que a tela responde ── */}
+        <div className="page-head">
+          <div className="min-w-0">
+            <h1 className="t-title">
+              {saudacao()}{nomeNegocio ? `, ${nomeNegocio}` : ''}
+            </h1>
+            <p className="t-sub first-letter:uppercase">{dataExtenso()}</p>
           </div>
-        </section>
-
-        {/* ── Abas ── */}
-        <div className="flex gap-1 border-b border-gray-100">
-          {([['agenda', 'Agenda'], ['historico', 'Histórico']] as const).map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setAba(id)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                aba === id
-                  ? 'border-[#25D366] text-[#0a0a0a]'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          <span className="flex-1" />
+          <Abas
+            rotulo="Ver"
+            valor={aba}
+            onChange={setAba}
+            opcoes={[['agenda', 'Agenda'], ['historico', 'Histórico']] as const}
+          />
         </div>
 
         {aba === 'agenda' ? (
-          <>
-            <section>
-              <div className="flex items-baseline justify-between mb-5">
-                <h2 className="text-xs uppercase tracking-widest font-medium text-gray-500">Hoje</h2>
-                <span className="text-xs text-gray-500 capitalize">
-                  {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </span>
-              </div>
-              <ListaComCancelados
-                agendamentos={agendamentosHoje}
-                vazio="Nenhum agendamento para hoje."
-                mostrarCancelados={mostrarCanceladosHoje}
-                onToggleCancelados={() => setMostrarCanceladosHoje(p => !p)}
-                onAbrir={abrirPainel}
+          <div className="space-y-[14px]">
+            {/* ── Resumo do dia ── */}
+            <section aria-label="Resumo do dia" className="grid grid-cols-2 sm:grid-cols-3 gap-[14px]">
+              <MetricCard
+                destaque
+                className="col-span-2 sm:col-span-1"
+                label="Próximo cliente"
+                icon={<CalendarClock size={15} strokeWidth={1.8} />}
+                value={proximoCliente ? horaDe(proximoCliente.data_hora) : '—'}
+                apagado={!proximoCliente}
+                rodape={proximoCliente ? proximoCliente.cliente_nome : 'Nada mais para hoje'}
+              />
+              <MetricCard
+                label="Hoje"
+                icon={<CalendarCheck size={15} strokeWidth={1.8} />}
+                value={ativosHoje.length}
+                unidade={ativosHoje.length === 1 ? 'agendamento' : 'agendamentos'}
+                rodape={ativosHoje.length === 0 ? 'Agenda livre' : 'sem contar os cancelados'}
+              />
+              <MetricCard
+                label="Horários vagos"
+                icon={<Clock3 size={15} strokeWidth={1.8} />}
+                value={vagosHoje ?? '—'}
+                unidade={totalGradeHoje > 0 ? `de ${totalGradeHoje}` : undefined}
+                rodape={totalGradeHoje === 0 ? 'Fechado hoje' : 'na grade de hoje'}
+                progress={totalGradeHoje > 0 ? Math.round((ocupadosHoje / totalGradeHoje) * 100) : undefined}
               />
             </section>
 
-            <section>
-              <div className="flex items-baseline justify-between mb-5">
-                <h2 className="text-xs uppercase tracking-widest font-medium text-gray-500">
-                  Próximos agendamentos
-                </h2>
-                {proximos.filter(a => a.status !== 'cancelado').length > PROXIMOS_NA_HOME && (
-                  <span className="text-xs text-gray-400">os {PROXIMOS_NA_HOME} mais próximos</span>
-                )}
-              </div>
-              <ListaComCancelados
-                agendamentos={proximos}
-                vazio="Nenhum agendamento futuro."
-                mostrarCancelados={mostrarCanceladosProximos}
-                onToggleCancelados={() => setMostrarCanceladosProximos(p => !p)}
-                onAbrir={abrirPainel}
-                limite={PROXIMOS_NA_HOME}
-              />
-            </section>
-          </>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-[14px] items-start">
+              <section className="card">
+                <div className="flex items-baseline justify-between gap-3 mb-2">
+                  <h2 className="t-section">Hoje</h2>
+                  <span className="t-cap first-letter:uppercase">
+                    {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </span>
+                </div>
+                <ListaComCancelados
+                  agendamentos={agendamentosHoje}
+                  vazio="Nenhum agendamento para hoje."
+                  mostrarCancelados={mostrarCanceladosHoje}
+                  onToggleCancelados={() => setMostrarCanceladosHoje(p => !p)}
+                  onAbrir={abrirPainel}
+                />
+              </section>
+
+              <section className="card">
+                <div className="flex items-baseline justify-between gap-3 mb-2">
+                  <h2 className="t-section">Próximos</h2>
+                  {proximosAtivos > PROXIMOS_NA_HOME && (
+                    <span className="t-cap">os {PROXIMOS_NA_HOME} mais próximos</span>
+                  )}
+                </div>
+                <ListaComCancelados
+                  agendamentos={proximos}
+                  vazio="Nenhum agendamento futuro."
+                  mostrarCancelados={mostrarCanceladosProximos}
+                  onToggleCancelados={() => setMostrarCanceladosProximos(p => !p)}
+                  onAbrir={abrirPainel}
+                  limite={PROXIMOS_NA_HOME}
+                />
+              </section>
+            </div>
+          </div>
         ) : (
-          <>
+          <div className="space-y-[14px]">
             {/* Abre a aba: dá a leitura do período antes do item a item.
                 Faz a própria consulta por período — antes montava em cima da
                 lista paginada, então mostrava só o que já tinha sido carregado
                 por "Ver mais". */}
-            <section>
-              <GraficoVolume negocioId={negocioId} />
-            </section>
+            <GraficoVolume negocioId={negocioId} />
 
-            <section>
-              <h2 className="text-xs uppercase tracking-widest font-medium mb-5 text-gray-500">Histórico</h2>
+            <section className="card">
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <h2 className="t-section">Histórico</h2>
+                {passados.length > 0 && (
+                  <span className="t-cap tabular">
+                    {passados.length} {passados.length === 1 ? 'carregado' : 'carregados'}
+                  </span>
+                )}
+              </div>
               {passados.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-                  <p className="text-gray-500 text-sm">Nenhum agendamento realizado.</p>
-                </div>
+                <p className="t-cap py-6 text-center">Nenhum agendamento realizado ainda.</p>
               ) : (
                 <>
-                  <div className="space-y-3">
+                  <div className="list">
                     {passados.map(ag => (
-                      <AgendamentoCard key={ag.id} ag={ag} onAbrir={abrirPainel} passado />
+                      <LinhaAgendamento key={ag.id} ag={ag} onAbrir={abrirPainel} passado />
                     ))}
                   </div>
                   {temMaisPassados && (
                     <button
                       onClick={carregarMaisPassados}
                       disabled={carregandoMais}
-                      className="mt-4 w-full py-3 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      className="btn btn-block mt-3"
                     >
-                      {carregandoMais ? 'Carregando...' : `Ver mais ${POR_PAGINA}`}
+                      {carregandoMais ? 'Carregando…' : `Ver mais ${POR_PAGINA}`}
                     </button>
                   )}
-                  <p className="mt-3 text-center text-xs text-gray-400">
-                    {passados.length} {passados.length === 1 ? 'agendamento' : 'agendamentos'} carregados
-                  </p>
                 </>
               )}
             </section>
-
-          </>
+          </div>
         )}
       </main>
 
@@ -379,29 +365,24 @@ export default function DashboardPage() {
         onFechar={fecharPainel}
         titulo={selecionado && (
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-[#dcfce7] flex items-center justify-center flex-shrink-0">
-              <span className="text-base font-bold text-[#128C7E]">
-                {inicialAvatar(selecionado.cliente_nome)}
-              </span>
+            <div className="avatar !w-11 !h-11 !text-base">
+              {inicialAvatar(selecionado.cliente_nome)}
             </div>
             <div className="min-w-0">
-              <p className="font-bold truncate" style={{ color: '#0a0a0a' }}>{selecionado.cliente_nome}</p>
+              <p className="t-section truncate mb-1">{selecionado.cliente_nome}</p>
               <StatusBadge status={selecionado.status} passado={isPassado} />
             </div>
           </div>
         )}
         rodape={selecionado && selecionado.status !== 'cancelado' && !isPassado ? (
           <div className="flex gap-3">
-            <button
-              onClick={cancelar}
-              disabled={salvando}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold text-red-500 border-2 border-red-100 transition-all duration-200 hover:bg-red-50 hover:border-red-200 disabled:opacity-50"
-            >
-              Cancelar
+            <button onClick={cancelar} disabled={salvando} className="btn btn-danger btn-lg flex-1">
+              Cancelar horário
             </button>
             <button
               onClick={() => setReagendando(p => !p)}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E]"
+              aria-expanded={reagendando}
+              className="btn btn-primary btn-lg flex-1"
             >
               Reagendar
             </button>
@@ -410,7 +391,7 @@ export default function DashboardPage() {
       >
         {selecionado && (
           <>
-            <div className="space-y-1">
+            <div>
               <InfoRow label="Telefone"       value={selecionado.cliente_telefone} />
               <InfoRow label="Serviço"        value={selecionado.servico} />
               {selecionado.profissional && <InfoRow label="Profissional" value={selecionado.profissional} />}
@@ -418,30 +399,26 @@ export default function DashboardPage() {
             </div>
 
             {reagendando && !isPassado && (
-              <div className="bg-gray-50 rounded-xl p-4 mt-5 space-y-3">
-                <p className="text-xs uppercase tracking-widest font-medium text-gray-500">
-                  Nova data e horário
-                </p>
+              <div className="rounded-[16px] bg-fill p-4 mt-5 space-y-3">
+                <p className="t-label">Nova data e horário</p>
                 <div className="flex gap-3">
                   <input
                     type="date"
                     value={novaData}
                     onChange={e => setNovaData(e.target.value)}
-                    className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                    aria-label="Nova data"
+                    className="field flex-1 min-w-0"
                   />
                   <input
                     type="time"
                     value={novoHorario}
                     onChange={e => setNovoHorario(e.target.value)}
-                    className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                    aria-label="Novo horário"
+                    className="field flex-1 min-w-0"
                   />
                 </div>
-                <button
-                  onClick={reagendar}
-                  disabled={salvando}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] disabled:opacity-50"
-                >
-                  {salvando ? 'Salvando...' : 'Confirmar reagendamento'}
+                <button onClick={reagendar} disabled={salvando} className="btn btn-primary btn-block">
+                  {salvando ? 'Salvando…' : 'Confirmar reagendamento'}
                 </button>
               </div>
             )}
@@ -452,9 +429,11 @@ export default function DashboardPage() {
   )
 }
 
-// ── AgendamentoCard ──────────────────────────────────────────────────────────
+// ── LinhaAgendamento ─────────────────────────────────────────────────────────
+// Lista do Grafite: linha com separador fino, sem caixa por linha. A linha
+// inteira abre o painel.
 
-function AgendamentoCard({
+function LinhaAgendamento({
   ag, onAbrir, passado = false,
 }: {
   ag: Agendamento
@@ -466,26 +445,25 @@ function AgendamentoCard({
   return (
     <button
       onClick={() => onAbrir(ag)}
-      className={`w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm px-5 sm:px-6 py-4 sm:py-5 flex items-center gap-4 sm:gap-5 transition-all duration-150 hover:shadow-md hover:border-gray-200 ${cancelado ? 'opacity-60' : ''}`}
+      className="list-row w-full text-left -mx-2 px-2 rounded-[10px] hover:bg-fill transition-colors duration-150"
+      style={{ width: 'calc(100% + 16px)' }}
     >
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cancelado ? 'bg-gray-100' : 'bg-[#dcfce7]'}`}>
-        <span className={`text-sm font-bold ${cancelado ? 'text-gray-500' : 'text-[#128C7E]'}`}>
-          {inicialAvatar(ag.cliente_nome)}
-        </span>
+      <div className={`avatar ${cancelado ? 'opacity-50' : ''}`}>
+        {inicialAvatar(ag.cliente_nome)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`font-semibold text-sm truncate ${cancelado ? 'line-through text-gray-500' : ''}`} style={cancelado ? {} : { color: '#0a0a0a' }}>
+        <p className={`text-[15px] font-medium truncate ${cancelado ? 'line-through text-muted' : 'text-fg'}`}>
           {ag.cliente_nome}
         </p>
-        <p className={`text-sm truncate ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
+        <p className="t-cap truncate">
           {ag.servico}{ag.profissional ? ` · ${ag.profissional}` : ''}
         </p>
       </div>
-      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <StatusBadge status={ag.status} passado={efetivamentePassado} />
-        <span className={`text-xs font-medium whitespace-nowrap ${cancelado ? 'text-gray-500' : 'text-gray-600'}`}>
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <span className={`text-[13px] font-semibold tabular whitespace-nowrap ${cancelado ? 'text-muted' : 'text-fg'}`}>
           {formatarDataHora(ag.data_hora)}
         </span>
+        <StatusBadge status={ag.status} passado={efetivamentePassado} />
       </div>
     </button>
   )
@@ -509,29 +487,26 @@ function ListaComCancelados({
   const visiveis   = limite ? ativos.slice(0, limite) : ativos
 
   if (agendamentos.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-        <p className="text-gray-500 text-sm">{vazio}</p>
-      </div>
-    )
+    return <p className="t-cap py-6 text-center">{vazio}</p>
   }
 
   return (
-    <div className="space-y-3">
+    <div>
       {ativos.length === 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-          <p className="text-gray-500 text-sm">Nenhum agendamento ativo.</p>
-        </div>
+        <p className="t-cap py-4 text-center">Nenhum agendamento ativo.</p>
       )}
-      {visiveis.map(ag => (
-        <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrir} />
-      ))}
+      <div className="list">
+        {visiveis.map(ag => (
+          <LinhaAgendamento key={ag.id} ag={ag} onAbrir={onAbrir} />
+        ))}
+      </div>
 
       {cancelados.length > 0 && (
         <>
           <button
             onClick={onToggleCancelados}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors pt-1 pl-1"
+            aria-expanded={mostrarCancelados}
+            className="btn btn-ghost btn-sm -ml-3 mt-1"
           >
             <ChevronDown
               size={14}
@@ -543,9 +518,9 @@ function ListaComCancelados({
               : `Ver ${cancelados.length} cancelado${cancelados.length > 1 ? 's' : ''}`}
           </button>
           {mostrarCancelados && (
-            <div className="space-y-3">
+            <div className="list border-t border-hairline">
               {cancelados.map(ag => (
-                <AgendamentoCard key={ag.id} ag={ag} onAbrir={onAbrir} />
+                <LinhaAgendamento key={ag.id} ag={ag} onAbrir={onAbrir} />
               ))}
             </div>
           )}

@@ -8,6 +8,7 @@ import { maskName, maskPhone } from '@/lib/masks'
 import { decidirCadastro, emailJaCadastrado, ehLinkDuplicado } from '@/lib/cadastro'
 import LandingHeader from '../components/LandingHeader'
 import MetaPixel from '../components/MetaPixel'
+import Abas from '../components/Abas'
 import { rastrearCadastroConcluido } from '@/lib/pixel'
 
 const TIPOS = [
@@ -32,8 +33,12 @@ function toSlug(value: string) {
     .replace(/^-|-$/g, '')
 }
 
-const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+// Grafite: campo e rótulo vêm das peças prontas do globals.css.
+const inputClass = 'field'
+const labelClass = 'field-label'
+// Campo de senha: espaço à direita para o botão de mostrar/esconder.
+const senhaClass = 'field pr-11'
+const olhoClass = 'btn btn-ghost btn-icon btn-sm absolute right-1.5 top-1/2 -translate-y-1/2'
 
 function LoginContent() {
   const searchParams = useSearchParams()
@@ -243,45 +248,40 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <LandingHeader />
       {/* Pixel só no cadastro de NEGÓCIO. Esta página também tem a aba de login
           do cliente final, que não pode ser rastreado. */}
       {tipo === 'negocio' && modo === 'cadastro' && <MetaPixel />}
-      <div className="flex items-center justify-center px-4 py-12">
-      <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
+      <div className="flex justify-center px-4 py-10 sm:py-14">
+      <div className="card w-full max-w-[440px] !p-6 sm:!p-8">
 
         {/* Toggle Negócio / Cliente */}
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-8">
-          <button
-            type="button"
-            onClick={() => setTipo('negocio')}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${tipo === 'negocio' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Negócio
-          </button>
-          <button
-            type="button"
-            onClick={() => setTipo('cliente')}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${tipo === 'cliente' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Cliente
-          </button>
+        <div className="flex justify-center mb-6">
+          <Abas
+            rotulo="Tipo de conta"
+            valor={tipo}
+            onChange={setTipo}
+            opcoes={[['negocio', 'Negócio'], ['cliente', 'Cliente']] as const}
+          />
         </div>
 
-        {tipo === 'negocio' && (
-        <div className="mb-8">
-          <p className="text-sm text-gray-500">
-            {modo === 'login' ? 'Gerencie seus agendamentos com facilidade' : 'Crie sua conta e configure seu negócio'}
-          </p>
+        <div className="mb-6">
+          <h1 className="t-title">
+            {tipo === 'cliente' ? 'Entrar' : modo === 'login' ? 'Entrar' : 'Criar conta'}
+          </h1>
+          {tipo === 'negocio' && (
+            <p className="t-sub">
+              {modo === 'login' ? 'Gerencie seus agendamentos com facilidade' : 'Crie sua conta e configure seu negócio'}
+            </p>
+          )}
         </div>
-        )}
 
         {/* ── CLIENTE ── */}
         {tipo === 'cliente' && (
           <>
             {clienteErro && (
-              <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">{clienteErro}</div>
+              <div className="note note-bad mb-5" role="alert">{clienteErro}</div>
             )}
             <form onSubmit={handleClienteLogin} className="space-y-4">
               <div>
@@ -292,13 +292,15 @@ function LoginContent() {
                 <label className={labelClass}>Senha</label>
                 <input type="password" value={clienteSenha} onChange={e => setClienteSenha(e.target.value)} required placeholder="••••••••" className={inputClass} />
               </div>
-              <button type="submit" disabled={clienteLoading} className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] disabled:opacity-50">
-                {clienteLoading ? 'Entrando...' : 'Entrar'}
-              </button>
+              <div className="pt-1">
+                <button type="submit" disabled={clienteLoading} className="btn btn-primary btn-lg btn-block">
+                  {clienteLoading ? 'Entrando...' : 'Entrar'}
+                </button>
+              </div>
             </form>
-            <p className="text-sm text-center text-gray-500 mt-5">
+            <p className="t-cap !text-sm text-center mt-5">
               Não tem conta?{' '}
-              <a href="/cliente/cadastro" className="text-[#25D366] font-semibold hover:underline">Criar conta</a>
+              <a href="/cliente/cadastro" className="link">Criar conta</a>
             </p>
           </>
         )}
@@ -307,7 +309,7 @@ function LoginContent() {
         {tipo === 'negocio' && <>
 
         {error && (
-          <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">
+          <div className="note note-bad mb-5" role="alert">
             {error}
           </div>
         )}
@@ -333,24 +335,25 @@ function LoginContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className={inputClass}
+                  className={senhaClass}
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className={olhoClass}
+                  aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={16} strokeWidth={1.8} /> : <Eye size={16} strokeWidth={1.8} />}
                 </button>
               </div>
             </div>
             <div className="flex justify-end">
               <a
                 href="/forgot-password"
-                className="text-xs text-[#25D366] hover:underline"
+                className="link text-[13px]"
               >
                 Esqueci minha senha
               </a>
@@ -359,7 +362,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+                className="btn btn-primary btn-lg btn-block"
               >
                 {loading ? 'Aguarde...' : 'Entrar'}
               </button>
@@ -398,12 +401,13 @@ function LoginContent() {
                 type="email"
                 value={confirmEmail}
                 onChange={e => { setConfirmEmail(e.target.value); setConfirmEmailError('') }}
-                className={`${inputClass} ${confirmEmailError ? 'border-red-400 focus:ring-red-400' : ''}`}
+                className={inputClass}
+                aria-invalid={confirmEmailError ? true : undefined}
                 placeholder="seu@email.com"
                 required
               />
               {confirmEmailError && (
-                <p className="mt-1.5 text-xs text-red-500">{confirmEmailError}</p>
+                <p className="field-hint text-bad-ink">{confirmEmailError}</p>
               )}
             </div>
             <div>
@@ -413,17 +417,18 @@ function LoginContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => { setPassword(e.target.value); setConfirmPasswordError('') }}
-                  className={inputClass}
+                  className={senhaClass}
                   placeholder="Mínimo 6 caracteres"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className={olhoClass}
+                  aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={16} strokeWidth={1.8} /> : <Eye size={16} strokeWidth={1.8} />}
                 </button>
               </div>
             </div>
@@ -434,26 +439,28 @@ function LoginContent() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordError('') }}
-                  className={`${inputClass} ${confirmPasswordError ? 'border-red-400 focus:ring-red-400' : ''}`}
+                  className={senhaClass}
+                  aria-invalid={confirmPasswordError ? true : undefined}
                   placeholder="Repita a senha"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className={olhoClass}
+                  aria-label={showConfirmPassword ? 'Esconder senha' : 'Mostrar senha'}
                   tabIndex={-1}
                 >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.8} /> : <Eye size={16} strokeWidth={1.8} />}
                 </button>
               </div>
               {confirmPasswordError && (
-                <p className="mt-1.5 text-xs text-red-500">{confirmPasswordError}</p>
+                <p className="field-hint text-bad-ink">{confirmPasswordError}</p>
               )}
             </div>
 
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs uppercase tracking-widest text-gray-500 font-medium mb-4">Seu negócio</p>
+            <div className="border-t border-hairline pt-5 mt-2">
+              <h2 className="t-section mb-4">Seu negócio</h2>
               <div className="space-y-4">
                 <div>
                   <label className={labelClass}>Nome do negócio</label>
@@ -472,7 +479,7 @@ function LoginContent() {
                   <select
                     value={negTipo}
                     onChange={e => setNegTipo(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] bg-white"
+                    className="field"
                   >
                     {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -501,9 +508,9 @@ function LoginContent() {
                     className={inputClass}
                   />
                   {negSlug && (
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="field-hint break-all">
                       Seu link:{' '}
-                      <span className="font-medium text-[#25D366]">
+                      <span className="font-medium text-accent-ink">
                         marcai.net.br/agendar/{negSlug}
                       </span>
                     </p>
@@ -516,7 +523,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+                className="btn btn-primary btn-lg btn-block"
               >
                 {loading ? 'Criando conta...' : 'Criar minha conta'}
               </button>
@@ -528,7 +535,7 @@ function LoginContent() {
           <button
             type="button"
             onClick={() => trocarModo(modo === 'login' ? 'cadastro' : 'login')}
-            className="text-sm font-medium text-[#25D366] hover:underline transition-all duration-200"
+            className="link text-sm"
           >
             {modo === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}
           </button>

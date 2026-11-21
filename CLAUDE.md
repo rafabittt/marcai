@@ -31,7 +31,8 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
 - **`marketing/videos/`** — projeto **Remotion** separado (Reels da marca), com o próprio
   `package.json`. **Não faz parte do app:** está excluído do `tsconfig`, do eslint e do
   git (`node_modules/` e `out/` com os MP4). Não importe nada dele no app nem vice-versa.
-  Rodar: `cd marketing/videos && npm install && npm run studio`.
+  Rodar: `cd marketing/videos && npm install && npm run studio`. **Ainda está no visual
+  antigo** (Poppins, fundo verde): migrar para o `marketing/BRAND-GUIDE.md` antes do próximo Reel.
 
 ## Regras críticas (violar isso quebra em produção, às vezes em silêncio)
 
@@ -81,9 +82,21 @@ não paga e não deve ter atrito (nada de obrigar cadastro/app).
   produção.
 - **Valide layout no olho, não só nos testes.** Testes cobrem lógica e dados, não pegam UI
   torta. Telas com login o Rafa valida logando ele mesmo.
-- **Marca:** verde Marcaí `#25D366`, verde escuro `#128C7E`, preto editorial `#0a0a0a`,
-  fonte Poppins, cantos arredondados, limpo. `no_show` é sempre `#ef4444`. (Guia completo de
-  posts em `marcai-guideline-posts-instagram.md`, se estiver na pasta de assets.)
+- **Design: Grafite** (o design de todos os apps do Rafa, em `~/projects/design/grafite/`;
+  use o skill `grafite-design`). Fundo cinza `#F0F0F3`, cartões brancos, fonte do sistema
+  (**nunca Poppins/Inter no app**), botão principal preto em pílula (um por tela), e o
+  **verde Marcaí `#25D366` como única cor viva**, só onde há informação (confirmado, check,
+  barra, foco, mancha do cartão principal). Texto verde é `--accent-ink` (`#167E3D`), porque o
+  `#25D366` puro não passa no contraste. `no_show` ("Faltou") é o vermelho de erro (`--bad`).
+  Claro e escuro saem das mesmas variáveis.
+  - **Nenhuma cor escrita direto em componente:** use as classes que saem dos tokens de
+    `app/globals.css` (`bg-surface`, `text-muted`, `border-hairline`, `text-accent-ink`...) e as
+    peças prontas (`.card`, `.btn`, `.btn-primary`, `.field`, `.badge`, `.list-row`, `.t-title`...).
+    Nada de `bg-white`, `text-gray-*`, hex ou `font-bold`.
+  - Peças compartilhadas: `Abas` (abas em pílula), `MetricCard`, `StatusBadge`, `InfoRow`,
+    `PainelLateral`, `Carregando`, `SidebarLayout`/`Sidebar` (barra lateral escura flutuante).
+  - Guia da marca (site, posts, Reels, anúncios): `marketing/BRAND-GUIDE.md`; modelos de post
+    em `marketing/modelos/`.
 - **Tom das mensagens/cópia:** direto, confiante, brasileiro, sem corporativês.
 
 ## Estrutura de dados (resumo)

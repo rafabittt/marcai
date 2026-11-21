@@ -19,15 +19,18 @@ const columns = [
   },
 ]
 
+// Rodapé no Grafite: em cima do fundo da página, separado por uma borda fina.
+const linkClass = 'text-sm text-muted hover:text-fg transition-colors duration-150'
+
 export default function LandingFooter() {
   return (
-    <footer className="border-t border-gray-100" style={{ backgroundColor: '#f9f9f9' }}>
+    <footer className="border-t border-hairline">
 
       <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col md:flex-row md:justify-between gap-10">
         {/* Logo + tagline */}
         <div className="flex flex-col gap-3 max-w-xs">
           <img src="/logo.png" alt="Marcaí" style={{ height: '22px', width: 'auto', objectFit: 'contain', objectPosition: 'left' }} />
-          <p className="text-sm text-gray-500 leading-relaxed">
+          <p className="text-sm text-muted leading-relaxed">
             Agendamento simples pelo WhatsApp para pequenos negócios brasileiros.
           </p>
         </div>
@@ -36,7 +39,7 @@ export default function LandingFooter() {
         <div className="flex gap-16">
           {columns.map(col => (
             <div key={col.heading}>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+              <p className="t-caps mb-3">
                 {col.heading}
               </p>
               <ul className="space-y-2">
@@ -47,12 +50,12 @@ export default function LandingFooter() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                        className={linkClass}
                       >
                         {link.label}
                       </a>
                     ) : (
-                      <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                      <Link href={link.href} className={linkClass}>
                         {link.label}
                       </Link>
                     )}
@@ -65,13 +68,13 @@ export default function LandingFooter() {
       </div>
 
       {/* Rodapé */}
-      <div className="border-t border-gray-100 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400">
+      <div className="border-t border-hairline px-6 py-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 t-cap">
           <div className="flex items-center gap-4">
             <span>© 2026 Marcaí</span>
-            <Link href="/termos" className="hover:text-gray-600 transition-colors">Termos</Link>
-            <Link href="/privacidade" className="hover:text-gray-600 transition-colors">Privacidade</Link>
-            <Link href="/spool" className="hover:text-gray-600 transition-colors">Spool</Link>
+            <Link href="/termos" className="hover:text-fg transition-colors duration-150">Termos</Link>
+            <Link href="/privacidade" className="hover:text-fg transition-colors duration-150">Privacidade</Link>
+            <Link href="/spool" className="hover:text-fg transition-colors duration-150">Spool</Link>
           </div>
           <span className="text-center sm:text-right">MARCAI TECNOLOGIA LTDA · CNPJ 66.469.940/0001-32 · Barueri/SP</span>
         </div>

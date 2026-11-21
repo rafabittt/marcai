@@ -9,6 +9,12 @@ import {
 } from 'lucide-react'
 import FeedbackModal from './FeedbackModal'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Barra lateral do Grafite: painel escuro flutuante (nos dois temas), com um
+// brilho do verde da marca no topo. Por dentro é sempre "modo escuro", por isso
+// as cores aqui são fixas e não saem das variáveis do tema.
+// ─────────────────────────────────────────────────────────────────────────────
+
 function getIniciais(nome: string | null, email: string): string {
   if (nome) {
     const partes = nome.trim().split(/\s+/).filter(Boolean)
@@ -19,13 +25,21 @@ function getIniciais(nome: string | null, email: string): string {
 }
 
 const NAV = [
-  { href: '/agendar-interno', label: 'Agendar',        icon: CalendarPlus,     cta: true  },
-  { href: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard,  cta: false },
-  { href: '/servicos',        label: 'Serviços',       icon: Scissors,         cta: false },
-  { href: '/profissionais',   label: 'Profissionais',  icon: Users,            cta: false },
-  { href: '/configuracoes',   label: 'Configurações',  icon: Settings,         cta: false },
-  { href: '/plano',           label: 'Plano',          icon: CreditCard,       cta: false },
+  { href: '/dashboard',       label: 'Agenda',         icon: LayoutDashboard },
+  { href: '/servicos',        label: 'Serviços',       icon: Scissors },
+  { href: '/profissionais',   label: 'Profissionais',  icon: Users },
 ]
+
+const CONTA = [
+  { href: '/configuracoes',   label: 'Configurações',  icon: Settings },
+  { href: '/plano',           label: 'Plano',          icon: CreditCard },
+]
+
+const item =
+  'flex items-center gap-2.5 min-h-[38px] px-2.5 rounded-[10px] text-[14px] text-white/80 transition-colors duration-150 hover:bg-white/[.07] hover:text-white'
+const itemAtivo =
+  'bg-white/[.16] text-white font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,.12)] hover:bg-white/[.16]'
+const caps = 'px-2.5 pt-4 pb-1 text-[10.5px] font-semibold tracking-[.06em] uppercase text-white/55'
 
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
@@ -66,113 +80,106 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     router.push('/login')
   }
 
+  const ativo = (href: string) => pathname === href || pathname.startsWith(href + '/')
+
+  function itens(lista: typeof NAV) {
+    return lista.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            onClick={onNavigate}
+            aria-current={ativo(href) ? 'page' : undefined}
+            className={`${item} ${ativo(href) ? itemAtivo : ''}`}
+          >
+            <Icon size={16} strokeWidth={1.8} className="shrink-0" />
+            <span className="flex-1">{label}</span>
+            {href === '/plano' && plano && (
+              <span className={`text-[11px] font-semibold px-1.5 h-[18px] inline-flex items-center rounded-[6px] ${
+                plano === 'gratuito' ? 'bg-white/10 text-white/70' : 'bg-[#25D366]/20 text-[#5BE495]'
+              }`}>
+                {plano === 'gratuito' ? 'Grátis' : plano.charAt(0).toUpperCase() + plano.slice(1)}
+              </span>
+            )}
+          </Link>
+        ))
+  }
+
   return (
     <aside
-      className="flex flex-col h-screen sticky top-0 shrink-0 bg-white border-r border-gray-100"
-      style={{ width: 240 }}
+      className="flex flex-col h-[calc(100dvh-24px)] m-3 rounded-[20px] text-[#F5F5F7] overflow-y-auto"
+      style={{
+        width: 'var(--side-w)',
+        padding: '18px 12px 12px',
+        background:
+          'radial-gradient(320px 300px at 10% -8%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 70%), linear-gradient(180deg, rgba(255,255,255,.08), transparent 50%), linear-gradient(180deg, var(--side-top), var(--side-bottom))',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.06), var(--shadow-float)',
+      }}
     >
-      {/* Logo */}
-      <div className="px-6 pt-6 pb-5">
-        <img src="/logo.png" alt="Marcaí" style={{ height: 26 }} />
-      </div>
+      {/* Marca */}
+      <Link href="/dashboard" onClick={onNavigate} className="px-2.5 pt-1 pb-4 block" aria-label="Marcaí, ir para a agenda">
+        <img src="/logo.png" alt="Marcaí" style={{ height: 24 }} />
+      </Link>
 
-      {/* Navegação */}
-      <nav className="flex-1 px-3 py-1 space-y-1">
-        {NAV.map(({ href, label, icon: Icon, cta }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
+      {/* Ação principal: pílula clara no topo */}
+      <Link
+        href="/agendar-interno"
+        onClick={onNavigate}
+        aria-current={ativo('/agendar-interno') ? 'page' : undefined}
+        className="flex items-center justify-center gap-2 h-[42px] mb-3 rounded-full bg-[#F5F5F7] text-[#1D1D1F] text-[14px] font-semibold transition-transform duration-100 active:scale-[.97] hover:bg-white"
+      >
+        <CalendarPlus size={16} strokeWidth={2} />
+        Novo agendamento
+      </Link>
 
-          if (cta) {
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={onNavigate}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
-                style={{ backgroundColor: '#25D366' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#128C7E')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#25D366')}
-              >
-                <Icon size={16} />
-                {label}
-              </Link>
-            )
-          }
-
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onNavigate}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-[#dcfce7] text-[#128C7E]'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Icon size={16} />
-              <span className="flex-1">{label}</span>
-              {href === '/plano' && plano && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                  plano === 'gratuito'
-                    ? 'bg-gray-100 text-gray-500'
-                    : 'bg-[#dcfce7] text-[#128C7E]'
-                }`}>
-                  {plano === 'gratuito' ? 'Grátis' : plano.charAt(0).toUpperCase() + plano.slice(1)}
-                </span>
-              )}
-            </Link>
-          )
-        })}
+      <nav className="flex flex-col gap-1">
+        {itens(NAV)}
+        <p className={caps}>Conta</p>
+        {itens(CONTA)}
       </nav>
+
+      <div className="flex-1" />
 
       {/* Link público */}
       {slug && (
-        <div className="px-4 pb-3">
-          <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1.5 px-1">
-            Seu link
-          </p>
-          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-            <span className="flex-1 text-xs text-gray-500 truncate">
-              marcai.net.br/agendar/<span className="text-[#25D366] font-medium">{slug}</span>
+        <div className="mb-3">
+          <p className={caps}>Seu link</p>
+          <button
+            onClick={handleCopy}
+            className="mt-1 w-full flex items-center gap-2 rounded-[10px] px-2.5 py-2 bg-white/[.06] hover:bg-white/10 transition-colors text-left"
+            title="Copiar link"
+          >
+            <span className="flex-1 min-w-0 text-[12px] text-white/60 truncate">
+              marcai.net.br/agendar/<span className="text-white">{slug}</span>
             </span>
-            <button
-              onClick={handleCopy}
-              title="Copiar link"
-              className="shrink-0 text-gray-400 hover:text-[#25D366] transition-colors"
-            >
-              {copied ? <Check size={14} className="text-[#25D366]" /> : <Copy size={14} />}
-            </button>
-          </div>
+            {copied
+              ? <Check size={14} className="shrink-0 text-[#5BE495]" aria-label="Copiado" />
+              : <Copy size={14} className="shrink-0 text-white/60" aria-label="Copiar" />}
+          </button>
         </div>
       )}
 
-      {/* Avatar + nome do negócio + Sair */}
-      <div className="px-5 py-4 border-t border-gray-100">
-        <Link href="/perfil" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center text-white text-sm font-semibold shrink-0 group-hover:bg-[#128C7E] transition-colors">
+      {/* Quem está logado */}
+      <div className="pt-3 border-t border-white/10 flex flex-col gap-1">
+        <Link
+          href="/perfil"
+          onClick={onNavigate}
+          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-white/[.07] transition-colors ${ativo('/perfil') ? itemAtivo : ''}`}
+        >
+          <span className="w-8 h-8 rounded-full bg-white/[.12] grid place-items-center text-[13px] font-semibold shrink-0">
             {email ? getIniciais(nomeNegocio, email) : '…'}
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-sm font-semibold text-gray-800 truncate leading-tight">
-              {nomeNegocio ?? '…'}
-            </p>
-            <p className="text-xs text-gray-400 truncate">{email ?? ''}</p>
-          </div>
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[13px] font-semibold truncate leading-tight">{nomeNegocio ?? '…'}</span>
+            <span className="block text-[12px] text-white/55 truncate">{email ?? ''}</span>
+          </span>
         </Link>
 
-        <button
-          onClick={() => setFeedback(true)}
-          className="mt-3 w-full flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Lightbulb size={14} />
+        <button onClick={() => setFeedback(true)} className={item}>
+          <Lightbulb size={16} strokeWidth={1.8} />
           Enviar sugestão
         </button>
-
-        <button
-          onClick={handleLogout}
-          className="mt-1 w-full flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <LogOut size={14} />
+        <button onClick={handleLogout} className={item}>
+          <LogOut size={16} strokeWidth={1.8} />
           Sair
         </button>
       </div>

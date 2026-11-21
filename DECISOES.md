@@ -119,7 +119,7 @@ desativar o webhook), 401 só pra token inválido. Idempotente por construção
 Home reestruturada: "Resumo do dia" (tiles) + "Próximos" (só os 5) + aba "Histórico"
 **paginada** (o histórico saiu da home pra ela parar de crescer sem fim). Modal central
 virou `PainelLateral` (slide-over). Componentes reaproveitáveis: `StatusBadge` (cores por
-status, `no_show` = `#ef4444`), `MetricCard`, `InfoRow`. A aba **Desempenho** (faturamento,
+status; ver item 13), `MetricCard`, `InfoRow`. A aba **Desempenho** (faturamento,
 ticket médio, serviço que mais fatura, profissional destaque, clientes que voltam) depende
 do preço e vem depois da migração. "Clientes que voltam" agrupa por **telefone** (nome tem
 erro de digitação), funciona sem login.
@@ -130,6 +130,30 @@ Supabase Auth nativo (`signInWithOAuth('google')` + rota `/auth/callback` com
 `exchangeCodeForSession`), sem OAuth na mão. Login do DONO por padrão. Login do CLIENTE é
 **opcional por negócio** (toggle `exigir_cadastro_cliente`) e **desligado por padrão** —
 obrigar cadastro do cliente quebra o diferencial "sem app, sem cadastro". Nunca torne global.
+
+## 13. Design: Grafite (20/11/2026)
+
+O app, o site e a marca passaram a seguir o **Grafite**, o design system que o Rafa já usa
+no Spool e no Legroom (`~/projects/design/grafite/`). Motivos: um visual só para todos os
+apps dele, mais calmo e "Apple", e com modo escuro.
+
+- **O verde virou sinal, não fundo.** Antes ele pintava botão, item ativo, seção e post
+  inteiro; agora só marca informação (confirmado, check, barra, foco). Por isso chama atenção.
+- **Uma cor viva só.** Status neutros (realizado, cancelado, pendente, bloqueado) ficam
+  cinza; o amarelo de "pendente" saiu. "Faltou" é o vermelho de erro do Grafite
+  (`#FF3B30`/`#B42318`), não mais `#ef4444`. "Deu certo" usa o próprio verde da marca.
+- **Verde de texto `#167E3D`:** mesmo matiz do logo, escurecido até passar 4,5:1 no
+  branco e no cinza do fundo. O `#128C7E` antigo (azulado) dava 4,1:1 e saiu.
+- **Fonte do sistema, não Poppins.** Regra do Grafite: o app parece do próprio aparelho.
+  Nos posts e vídeos vale Inter (a San Francisco não pode ir para material de marketing).
+- **Tokens em `app/globals.css`**, expostos como classes do Tailwind (`bg-surface`,
+  `text-muted`, `text-accent-ink`...) e peças prontas (`.card`, `.btn`, `.field`...).
+  Componente não escreve cor; é isso que deixa o claro e o escuro iguais.
+- **Barra lateral escura flutuante** nos dois temas, com "Novo agendamento" no topo em
+  pílula clara. "Dashboard" virou "Agenda" (fala simples).
+- **Saíram:** o `Navbar` antigo (só aparecia por engano em `/servicos` e no 404), o
+  `GooLoader` (animação em laço; virou `Carregando`), `HeroCanvas` e `TestimonialsSection`
+  (não usados; o segundo tinha depoimentos de exemplo).
 
 ---
 

@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import SidebarLayout from '@/app/components/SidebarLayout'
-import GooLoader from '@/app/components/GooLoader'
+import Carregando from '@/app/components/Carregando'
 import FluxoAgendamento, { type DadosAgendamento, type Profissional } from '@/app/components/agendamento/FluxoAgendamento'
 import { type Servico } from '@/app/components/agendamento/CardsServico'
 import { type HorariosMap } from '@/lib/agenda'
@@ -110,7 +111,7 @@ export default function AgendarInternoPage() {
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="flex items-center justify-center h-64"><GooLoader /></div>
+        <div className="flex items-center justify-center h-64"><Carregando /></div>
       </SidebarLayout>
     )
   }
@@ -118,49 +119,48 @@ export default function AgendarInternoPage() {
   if (sucesso) {
     return (
       <SidebarLayout>
-        <div className="py-14 px-6 flex items-start justify-center">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-10 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 bg-[#dcfce7]">
-              <svg className="w-8 h-8 text-[#25D366]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Agendamento confirmado!</h2>
-            <p className="text-gray-500 text-sm mb-6">
-              <span className="font-medium text-gray-700">{nomeCliente}</span> foi agendado com sucesso.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setSucesso(false); setTentativa(t => t + 1) }}
-                className="flex-1 py-3 rounded-xl text-sm font-semibold border-2 border-[#25D366] text-[#25D366] hover:bg-[#dcfce7] transition-colors"
-              >
-                Novo agendamento
-              </button>
-              <a
-                href="/dashboard"
-                className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] hover:bg-[#128C7E] text-center transition-colors"
-              >
-                Ver agenda
-              </a>
+        <main className="page page-narrow">
+          <div className="card max-w-[480px] mx-auto">
+            <div className="empty !py-6">
+              <span className="tile-ico !w-12 !h-12 !bg-accent-soft !text-accent-ink mb-3" aria-hidden>
+                <Check size={24} strokeWidth={1.8} />
+              </span>
+              <h2 className="t-title">Agendamento confirmado!</h2>
+              <p className="text-[15px] text-muted mt-1">
+                <span className="font-medium text-fg">{nomeCliente}</span> foi agendado com sucesso.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2.5 w-full mt-6">
+                <button
+                  onClick={() => { setSucesso(false); setTentativa(t => t + 1) }}
+                  className="btn btn-lg flex-1"
+                >
+                  Novo agendamento
+                </button>
+                <a href="/dashboard" className="btn btn-primary btn-lg flex-1">
+                  Ver agenda
+                </a>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </SidebarLayout>
     )
   }
 
   return (
     <SidebarLayout>
-      <div className="py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-10">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Novo agendamento</h1>
-            <p className="text-gray-500 mt-1 text-sm">
+      <main className="page page-narrow">
+        <div className="page-head">
+          <div className="min-w-0">
+            <h1 className="t-title">Novo agendamento</h1>
+            <p className="t-sub">
               {negocio?.nome} — registre um agendamento manualmente.
             </p>
           </div>
+        </div>
 
-          {negocio && (
+        {negocio && (
+          <div className="max-w-[560px]">
             <FluxoAgendamento
               key={tentativa}
               negocioId={negocio.id}
@@ -172,9 +172,9 @@ export default function AgendarInternoPage() {
               submitting={submitting}
               onSubmit={handleSubmit}
             />
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </main>
     </SidebarLayout>
   )
 }

@@ -1,51 +1,48 @@
-// Card de métrica com barra de progresso opcional.
-// Extraído do dashboard; é a base dos tiles do "Resumo do dia".
+// Cartão de número do Grafite: rótulo com ícone em cima, número grande,
+// legenda embaixo e, se fizer sentido, uma barrinha de progresso.
+// Só o cartão principal da tela leva a mancha verde (`destaque`).
 //
 // `progress` e `rodape` são opcionais porque nem toda métrica tem denominador
-// ou contexto: "próximo cliente" tem rodapé e não tem barra; "hoje" tem os
-// dois. `tamanhoValor` existe porque um nome de cliente não cabe no text-5xl
-// que serve para um número.
+// ou contexto: "próximo cliente" tem rodapé e não tem barra; "horários vagos"
+// tem os dois.
 
 export default function MetricCard({
-  label, value, valueColor, iconBg, icon,
-  progress, progressColor, rodape, tamanhoValor = 'text-5xl',
+  label, value, icon, unidade, progress, rodape, destaque = false, apagado = false, className = '',
 }: {
   label: string
   value: React.ReactNode
-  valueColor: string
-  iconBg: string
   icon: React.ReactNode
+  /** Texto pequeno e cinza ao lado do número ("de 12"). */
+  unidade?: React.ReactNode
   progress?: number
-  progressColor?: string
   rodape?: React.ReactNode
-  tamanhoValor?: string
+  /** Cartão principal da tela: leva a mancha da cor. Um por tela. */
+  destaque?: boolean
+  /** Sem valor (ex.: "—"): número em cinza. */
+  apagado?: boolean
+  className?: string
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 pt-5 pb-4 flex flex-col relative overflow-hidden">
-      <div className="flex items-start justify-between mb-3">
-        <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{label}</span>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconBg}`}>
-          {icon}
-        </div>
-      </div>
+    <div className={`card flex flex-col min-w-0 ${destaque ? 'card-hero' : ''} ${className}`}>
+      <p className="t-label flex items-center gap-2 mb-3">
+        <span className="text-faint [&>svg]:block" aria-hidden>{icon}</span>
+        {label}
+      </p>
 
-      <span className={`${tamanhoValor} font-bold tracking-tight leading-none ${valueColor}`}>
+      <p className={`t-num tabular ${apagado ? '!text-faint' : ''}`}>
         {value}
-      </span>
+        {unidade && <small> {unidade}</small>}
+      </p>
 
-      {rodape && (
-        <p className="text-xs text-gray-500 mt-2 truncate">{rodape}</p>
-      )}
+      {rodape && <p className="t-cap mt-1.5 truncate">{rodape}</p>}
 
-      {typeof progress === 'number' ? (
-        <div className="h-1 w-full bg-gray-100 rounded-full mt-4">
+      {typeof progress === 'number' && (
+        <div className="h-1.5 w-full rounded-full bg-fill mt-4 overflow-hidden" role="presentation">
           <div
-            className={`h-1 rounded-full transition-all duration-500 ${progressColor ?? 'bg-gray-300'}`}
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full bg-accent transition-[width] duration-500 ease-grafite"
+            style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
           />
         </div>
-      ) : (
-        <div className="mt-auto" />
       )}
     </div>
   )

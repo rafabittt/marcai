@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1350" viewBox="0 0 1080 1350">
+  <!-- Marcaí · modelo de post (Grafite) · slide 3: chamada, fundo CLARO. Um botão preto só. Fecha com marcai.net.br e @usemarcai. -->
+  <rect width="1080" height="1350" fill="#F0F0F3"/>
+  <image href="../../public/logo.png" xlink:href="../../public/logo.png" x="30" y="84" width="256" height="64"/>
+  <text font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="84" font-weight="600" letter-spacing="-2.5" fill="#1D1D1F">
+    <tspan x="72" y="470">Crie seu link de</tspan>
+    <tspan x="72" y="566">agendamento <tspan fill="#167E3D">grátis</tspan>.</tspan>
+  </text>
+  <text font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="38" font-weight="400" fill="#5E5E63">
+    <tspan x="72" y="672">Pronto em minutos. Seu cliente agenda</tspan>
+    <tspan x="72" y="724">pelo celular, sem baixar nada.</tspan>
+  </text>
+  <rect x="72" y="820" width="520" height="104" rx="52" fill="#1D1D1F"/>
+  <text x="332" y="886" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="40" font-weight="600" fill="#FFFFFF" text-anchor="middle">marcai.net.br  →</text>
+  <text x="72" y="990" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#5E5E63">Grátis pra começar · sem cartão · pronto em minutos</text>
+  <rect x="72" y="1230" width="936" height="1" fill="#000" fill-opacity="0.08"/>
+  <text x="72" y="1290" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="26" font-weight="500" fill="#5E5E63">03 / 03</text>
+  <text x="1008" y="1290" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#1D1D1F" text-anchor="end">@usemarcai</text>
+</svg>

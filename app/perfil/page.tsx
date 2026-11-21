@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCPF, maskName, maskPhone } from '@/lib/masks'
 import SidebarLayout from '@/app/components/SidebarLayout'
-import GooLoader from '@/app/components/GooLoader'
+import Carregando from '@/app/components/Carregando'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true)
@@ -62,33 +63,36 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f9f9f9' }}>
-        <GooLoader />
-      </div>
+      <SidebarLayout>
+        <Carregando />
+      </SidebarLayout>
     )
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366]'
-  const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+  // Grafite: campo e rótulo vêm das peças prontas do globals.css.
+  const inputClass = 'field'
+  const labelClass = 'field-label'
 
   return (
     <SidebarLayout>
-    <div className="py-14 px-6">
-      <div className="max-w-lg mx-auto">
+      <main className="page page-narrow">
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Meu perfil</h1>
-          <p className="text-gray-500 mt-1 text-sm">Suas informações pessoais de acesso.</p>
+        <div className="page-head">
+          <div>
+            <h1 className="t-title">Meu perfil</h1>
+            <p className="t-sub">Suas informações pessoais de acesso.</p>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <section className="card !p-6 sm:!p-7">
           {sucesso && (
-            <div className="bg-[#dcfce7] text-[#128C7E] text-sm px-4 py-3 rounded-xl mb-6">
-              Alterações salvas com sucesso.
+            <div className="note note-ok mb-5" role="status">
+              <CheckCircle2 size={18} strokeWidth={1.8} className="flex-none mt-px" aria-hidden />
+              <span>Alterações salvas com sucesso.</span>
             </div>
           )}
           {erro && (
-            <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-6">
+            <div className="note note-bad mb-5" role="alert">
               {erro}
             </div>
           )}
@@ -123,7 +127,7 @@ export default function PerfilPage() {
                 value={cpf}
                 onChange={e => { setCpf(maskCPF(e.target.value)); setSucesso(false) }}
                 placeholder="000.000.000-00"
-                className={inputClass}
+                className={`${inputClass} tabular`}
               />
             </div>
 
@@ -133,25 +137,24 @@ export default function PerfilPage() {
                 type="email"
                 value={email}
                 readOnly
-                className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500 bg-gray-50 cursor-not-allowed"
+                className={`${inputClass} !bg-fill !text-muted !border-hairline cursor-not-allowed`}
               />
-              <p className="text-xs text-gray-500 mt-1.5 ml-1">O email não pode ser alterado.</p>
+              <p className="field-hint">O email não pode ser alterado.</p>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1 flex justify-end">
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+                className="btn btn-primary btn-lg w-full sm:w-auto"
               >
                 {saving ? 'Salvando...' : 'Salvar alterações'}
               </button>
             </div>
           </form>
-        </div>
+        </section>
 
-      </div>
-    </div>
+      </main>
     </SidebarLayout>
   )
 }

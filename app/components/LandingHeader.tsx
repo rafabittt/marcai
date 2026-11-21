@@ -1,40 +1,38 @@
 import Link from 'next/link'
 import LogoLink from './LogoLink'
 
+// Cabeçalho do site: flutua por cima do conteúdo, então leva vidro (.glass).
+// O botão preto principal fica no conteúdo de cada bloco; aqui os dois são
+// secundários para não disputar com ele.
+
 export default function LandingHeader() {
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className="sticky top-0 z-50 glass border-b border-hairline">
+      <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-10">
           <LogoLink />
 
           <nav className="hidden md:flex items-center gap-7">
-            <a href="/#como-funciona" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="/#como-funciona" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               Como funciona
             </a>
-            <a href="/#recursos" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="/#recursos" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               Recursos
             </a>
-            <a href="/#faq" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="/#faq" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               FAQ
             </a>
-            <a href="/#precos" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="/#precos" className="text-sm text-muted hover:text-fg transition-colors duration-150">
               Preços
             </a>
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
-          >
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Link href="/login" className="btn btn-ghost max-sm:h-11">
             Entrar
           </Link>
-          <Link
-            href="/login?modo=cadastro"
-            className="text-sm font-semibold px-5 py-2.5 rounded-xl text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02]"
-          >
+          <Link href="/login?modo=cadastro" className="btn max-sm:h-11">
             Começar grátis
           </Link>
         </div>

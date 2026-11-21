@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import LandingHeader from '../components/LandingHeader'
 
-const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+// Grafite: campo e rótulo vêm das peças prontas do globals.css.
+const inputClass = 'field'
+const labelClass = 'field-label'
 
 export default function ResetPasswordPage() {
   const [initializing, setInitializing] = useState(true)
@@ -51,38 +52,41 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <LandingHeader />
-      <div className="flex items-center justify-center px-4 py-12">
-        <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
+      <div className="flex justify-center px-4 py-10 sm:py-14">
+        <div className="card w-full max-w-[420px] !p-6 sm:!p-8">
 
-          <div className="mb-8">
-            <h1 className="text-xl font-semibold text-gray-900 mb-1">Nova senha</h1>
-            <p className="text-sm text-gray-500">
+          <div className="mb-6">
+            <h1 className="t-title">Nova senha</h1>
+            <p className="t-sub">
               Escolha uma nova senha para sua conta.
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">
+            <div className="note note-bad mb-5" role="alert">
               {error}
             </div>
           )}
 
           {success ? (
-            <div className="bg-green-50 text-green-700 text-sm px-4 py-3 rounded-xl">
-              Senha atualizada com sucesso! Redirecionando...
+            <div className="note note-ok" role="status">
+              <CheckCircle2 size={18} strokeWidth={1.8} className="flex-none mt-px" aria-hidden />
+              <span>Senha atualizada com sucesso! Redirecionando...</span>
             </div>
           ) : initializing ? (
-            <div className="text-sm text-gray-500 text-center py-4">
+            <p className="t-cap !text-sm text-center py-4" role="status">
               Verificando link...
-            </div>
+            </p>
           ) : !ready ? (
-            <div className="text-sm text-gray-500 text-center py-4">
-              Link inválido ou expirado.{' '}
-              <a href="/forgot-password" className="text-[#25D366] hover:underline font-medium">
-                Solicitar novo link
-              </a>
+            <div className="note note-bad">
+              <span>
+                Link inválido ou expirado.{' '}
+                <a href="/forgot-password" className="font-medium underline underline-offset-[3px]">
+                  Solicitar novo link
+                </a>
+              </span>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,17 +97,18 @@ export default function ResetPasswordPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className={inputClass}
+                    className={`${inputClass} pr-11`}
                     placeholder="Mínimo 6 caracteres"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(p => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="btn btn-ghost btn-icon btn-sm absolute right-1.5 top-1/2 -translate-y-1/2"
+                    aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={16} strokeWidth={1.8} /> : <Eye size={16} strokeWidth={1.8} />}
                   </button>
                 </div>
               </div>
@@ -111,7 +116,7 @@ export default function ResetPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+                  className="btn btn-primary btn-lg btn-block"
                 >
                   {loading ? 'Salvando...' : 'Salvar nova senha'}
                 </button>

@@ -7,112 +7,101 @@ import LandingHeader from './components/LandingHeader'
 import MetaPixel from './components/MetaPixel'
 import { Link2, Smartphone, MessageCircle, Check, MessageSquare } from 'lucide-react'
 
+// Página de marca no Grafite: fundo cinza do body, seções soltas em cima dele,
+// cartões brancos. Títulos maiores que no app (é vitrine), mas sempre fonte do
+// sistema em semibold, tracking apertado. Um botão preto principal por bloco.
+
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen">
 
       <LandingHeader />
 
       {/* ── HERO ── */}
-      <section className="bg-white pt-16 pb-24 px-6">
+      <section className="pt-14 pb-20 md:pt-20 md:pb-28 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-16 items-center">
 
             {/* Texto */}
             <div>
-              <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-8 bg-[#dcfce7] text-[#128C7E]">
-                <MessageSquare size={12} /> Confirmação via WhatsApp
-              </div>
+              <span className="badge mb-7">
+                <MessageSquare size={12} strokeWidth={1.8} aria-hidden /> Confirmação via WhatsApp
+              </span>
 
               {/* No celular a fonte acompanha a largura da tela: "Agendamentos" é
-                  uma palavra só, não quebra, e a 48px fixos cortava na lateral em
-                  360, 390 e 414px. A partir de ~460px volta aos 48px de antes. */}
-              <h1 className="text-[clamp(2rem,10.5vw,3rem)] md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6" style={{ color: '#0a0a0a' }}>
+                  uma palavra só, não quebra, e um tamanho fixo grande cortava na
+                  lateral em 360, 390 e 414px. A partir de ~460px chega aos 48px. */}
+              <h1 className="text-[clamp(2rem,10.5vw,3rem)] md:text-[56px] lg:text-[64px] font-semibold leading-[1.05] tracking-[-0.03em] text-fg mb-6">
                 Agendamentos<br />
                 simples.<br />
-                <span className="text-[#25D366]">Clientes felizes.</span>
+                <span className="text-accent-ink">Clientes felizes.</span>
               </h1>
 
-              <p className="text-lg text-gray-500 max-w-md mb-10 leading-relaxed">
+              <p className="text-lg text-muted max-w-md mb-9 leading-relaxed">
                 Crie seu link de agendamento em minutos. Seus clientes agendam pelo celular, você recebe confirmação no WhatsApp.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                <Link
-                  href="/login?modo=cadastro"
-                  className="text-sm font-semibold px-7 py-4 rounded-xl text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] text-center"
-                >
+              <div className="flex flex-col sm:flex-row gap-3 mb-9">
+                <Link href="/login?modo=cadastro" className="btn btn-primary btn-lg btn-block sm:w-auto">
                   Criar meu link grátis
                 </Link>
-                <a
-                  href="#como-funciona"
-                  className="text-sm font-semibold px-7 py-4 rounded-xl border border-gray-200 text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:scale-[1.02] text-center"
-                >
+                <a href="#como-funciona" className="btn btn-lg btn-block sm:w-auto">
                   Ver como funciona
                 </a>
               </div>
 
-              <div className="flex flex-wrap gap-5 text-sm text-gray-600">
-                <span className="flex items-center gap-1.5">
-                  <Check size={14} className="text-[#25D366]" /> Grátis para começar
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check size={14} className="text-[#25D366]" /> Sem cartão de crédito
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check size={14} className="text-[#25D366]" /> WhatsApp incluso
-                </span>
-              </div>
+              <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
+                {['Grátis para começar', 'Sem cartão de crédito', 'WhatsApp incluso'].map(t => (
+                  <li key={t} className="flex items-center gap-1.5">
+                    <Check size={14} strokeWidth={2} className="text-accent-ink" aria-hidden /> {t}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Mock visual do produto */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
-                {/* Sombra decorativa */}
-                <div className="absolute inset-0 translate-x-4 translate-y-4 bg-[#dcfce7] rounded-3xl" />
+            {/* Mock do produto: a tela pública de agendamento, em cartão Grafite.
+                É ilustração, por isso fica escondido do leitor de tela. */}
+            <div className="flex justify-center lg:justify-end" aria-hidden="true">
+              <div className="card w-full max-w-[340px] !p-0">
 
-                {/* Card principal — formulário de agendamento */}
-                <div className="relative bg-white rounded-3xl shadow-xl border border-gray-100 w-80 overflow-hidden">
+                {/* Cabeçalho do cartão */}
+                <div className="px-5 pt-5 pb-4 border-b border-hairline">
+                  <p className="t-cap font-medium mb-1">Marcaí</p>
+                  <p className="text-[17px] font-semibold tracking-[-0.01em] text-fg">Barbearia do Zeca</p>
+                  <p className="t-cap mt-0.5">Preencha para agendar</p>
+                </div>
 
-                  {/* Cabeçalho do card */}
-                  <div className="px-6 pt-6 pb-4 border-b border-gray-50">
-                    <p className="text-xs font-bold text-[#25D366] mb-1">Marcaí</p>
-                    <p className="text-base font-bold text-gray-900">Barbearia do Zeca</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Preencha para agendar</p>
-                  </div>
-
-                  {/* Campos do formulário */}
-                  <div className="px-6 py-5 space-y-3">
-                    {[
-                      { label: 'SEU NOME', value: 'João Silva', done: true },
-                      { label: 'SERVIÇO', value: 'Corte + Barba', done: true },
-                      { label: 'DATA', value: 'Amanhã, 10:00', done: true },
-                    ].map(f => (
-                      <div key={f.label}>
-                        <p className="text-[10px] font-semibold tracking-widest text-gray-500 mb-1">{f.label}</p>
-                        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2.5">
-                          <span className="text-sm text-gray-700">{f.value}</span>
-                          {f.done && <Check size={12} className="text-[#25D366]" />}
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className="pt-1">
-                      <div className="w-full py-3 rounded-xl text-sm font-semibold text-white text-center bg-[#25D366]">
-                        Confirmar agendamento
+                {/* Campos do formulário */}
+                <div className="px-5 py-5 space-y-3">
+                  {[
+                    { label: 'Seu nome', value: 'João Silva', done: true },
+                    { label: 'Serviço', value: 'Corte + Barba', done: true },
+                    { label: 'Data', value: 'Amanhã, 10:00', done: true },
+                  ].map(f => (
+                    <div key={f.label}>
+                      <p className="field-label">{f.label}</p>
+                      <div className="field flex items-center justify-between">
+                        <span className="text-[15px] text-fg">{f.value}</span>
+                        {f.done && <Check size={14} strokeWidth={2} className="text-accent-ink" />}
                       </div>
                     </div>
-                  </div>
+                  ))}
 
-                  {/* Notificação WhatsApp flutuante */}
-                  <div className="mx-4 mb-5 bg-[#dcfce7] rounded-2xl p-3 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center flex-shrink-0">
-                      <MessageCircle size={20} color="white" />
+                  <div className="pt-1">
+                    <div className="btn btn-primary btn-block">
+                      Confirmar agendamento
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-700">WhatsApp</p>
-                      <p className="text-xs text-gray-500 leading-relaxed">Agendamento confirmado para amanhã às 10h!</p>
-                    </div>
+                  </div>
+                </div>
+
+                {/* Notificação do WhatsApp: uma linha com quadradinho de ícone */}
+                <div className="flex items-start gap-3 px-5 py-4 border-t border-hairline">
+                  <div className="tile-ico bg-accent-soft text-accent-ink">
+                    <MessageCircle size={18} strokeWidth={1.8} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-fg">WhatsApp</p>
+                    <p className="t-cap leading-relaxed">Agendamento confirmado para amanhã às 10h!</p>
                   </div>
                 </div>
               </div>
@@ -123,24 +112,22 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <div id="recursos">
+      <div id="recursos" className="scroll-mt-20">
         <FeaturesSection />
       </div>
 
       {/* ── COMO FUNCIONA ── */}
-      <section id="como-funciona" className="pt-32 pb-16 px-6 bg-white">
+      <section id="como-funciona" className="scroll-mt-20 pt-20 md:pt-28 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
 
-          <div className="mb-20">
-            <p className="text-xs uppercase tracking-widest font-semibold mb-4 text-[#25D366]">
-              Como funciona
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold leading-tight" style={{ color: '#0a0a0a' }}>
+          <div className="mb-10 md:mb-14">
+            <p className="t-caps mb-4">Como funciona</p>
+            <h2 className="text-[32px] md:text-[44px] font-semibold leading-[1.1] tracking-[-0.03em] text-fg">
               Do cadastro ao<br />primeiro agendamento<br />em minutos.
             </h2>
           </div>
 
-          <div className="space-y-0">
+          <ol className="card !px-6 !py-2 md:!px-8">
             {[
               {
                 num: '01',
@@ -160,33 +147,22 @@ export default function LandingPage() {
                 title: 'Você recebe confirmação no WhatsApp',
                 desc: 'Na hora do agendamento, você e o cliente recebem uma mensagem automática de confirmação. Simples assim.',
               },
-            ].map((step, i) => (
-              <div
+            ].map(step => (
+              <li
                 key={step.num}
-                className={`grid gap-6 md:gap-10 items-start py-10 md:py-12 ${i < 2 ? 'border-b border-gray-100' : ''}`}
-                style={{ gridTemplateColumns: 'auto 1fr' }}
+                className="flex items-start gap-4 md:gap-5 py-6 md:py-7 border-t border-hairline first:border-t-0"
               >
-                <span
-                  className="text-5xl md:text-8xl font-bold leading-none select-none"
-                  style={{ color: '#25D366', opacity: 0.2 }}
-                >
-                  {step.num}
-                </span>
-                <div className="flex-1 pt-1 md:pt-3">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: '#dcfce7' }}
-                    >
-                      <step.Icon size={18} color="#128C7E" />
-                    </div>
-                    <h3 className="text-lg md:text-xl font-bold" style={{ color: '#0a0a0a' }}>{step.title}</h3>
-                  </div>
-                  <p className="text-gray-500 leading-relaxed">{step.desc}</p>
+                <div className="tile-ico">
+                  <step.Icon size={18} strokeWidth={1.8} aria-hidden />
                 </div>
-              </div>
+                <div className="min-w-0">
+                  <p className="t-caps tabular mb-1">{step.num}</p>
+                  <h3 className="text-[17px] md:text-lg font-semibold tracking-[-0.01em] text-fg mb-1.5">{step.title}</h3>
+                  <p className="text-muted leading-relaxed">{step.desc}</p>
+                </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
@@ -195,18 +171,15 @@ export default function LandingPage() {
       <PricingSection />
 
       {/* ── CTA FINAL ── */}
-      <section className="py-32 px-6 bg-white">
+      <section className="py-24 md:py-32 px-6">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-6" style={{ color: '#0a0a0a' }}>
+          <h2 className="text-[32px] md:text-[44px] font-semibold leading-[1.1] tracking-[-0.03em] text-fg mb-5">
             Pronto para simplificar seus agendamentos?
           </h2>
-          <p className="text-gray-500 text-lg mb-10">
+          <p className="text-muted text-lg mb-9">
             Comece grátis hoje. Nenhum cartão de crédito necessário.
           </p>
-          <Link
-            href="/login?modo=cadastro"
-            className="inline-block text-sm font-semibold px-10 py-4 rounded-xl text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02]"
-          >
+          <Link href="/login?modo=cadastro" className="btn btn-primary btn-lg">
             Criar minha conta grátis
           </Link>
         </div>

@@ -1,6 +1,9 @@
-// Pílula de status do agendamento — fonte única de cores e rótulos.
-// Extraído do dashboard para ser reaproveitado pela agenda visual (FASE 1)
-// e pelo painel lateral.
+// Etiqueta de status do agendamento — fonte única de cores e rótulos.
+// Reaproveitada pelo painel, pela agenda e pelo painel lateral.
+//
+// Grafite: a cor viva (verde) só no que está de pé; erro em vermelho do
+// sistema; o resto em cinza. O estado nunca é só cor: a etiqueta sempre tem
+// o texto.
 //
 // Nota: 'concluido' NÃO é um status gravado no banco. Ele é derivado de
 // (agendamento no passado + status 'confirmado') via a prop `passado`.
@@ -11,16 +14,17 @@ export type StatusAgendamento =
 
 type Estilo = { label: string; classes: string; cor: string }
 
+// `cor` é usada em gráficos e bolinhas (CSS, aceita variável).
 export const STATUS_ESTILOS: Record<string, Estilo> = {
-  confirmado: { label: 'Confirmado', classes: 'bg-[#dcfce7] text-[#128C7E]', cor: '#25D366' },
-  pendente:   { label: 'Pendente',   classes: 'bg-yellow-50 text-yellow-600', cor: '#f59e0b' },
-  cancelado:  { label: 'Cancelado',  classes: 'bg-red-50 text-red-500',       cor: '#f87171' },
-  concluido:  { label: 'Realizado',  classes: 'bg-gray-100 text-gray-500',    cor: '#9ca3af' },
-  no_show:    { label: 'Faltou',     classes: 'bg-red-50 text-[#ef4444]',     cor: '#ef4444' },
-  bloqueado:  { label: 'Bloqueado',  classes: 'bg-gray-100 text-gray-600',    cor: '#6b7280' },
+  confirmado: { label: 'Confirmado', classes: 'badge-accent', cor: 'var(--accent)' },
+  pendente:   { label: 'Pendente',   classes: '',             cor: 'var(--faint)' },
+  cancelado:  { label: 'Cancelado',  classes: '',             cor: 'var(--faint)' },
+  concluido:  { label: 'Realizado',  classes: '',             cor: 'var(--muted)' },
+  no_show:    { label: 'Faltou',     classes: 'badge-bad',    cor: 'var(--bad)' },
+  bloqueado:  { label: 'Bloqueado',  classes: '',             cor: 'var(--muted)' },
 }
 
-const FALLBACK: Estilo = { label: '—', classes: 'bg-gray-100 text-gray-500', cor: '#9ca3af' }
+const FALLBACK: Estilo = { label: '—', classes: '', cor: 'var(--faint)' }
 
 /** Resolve o status exibido, aplicando a derivação de 'concluido'. */
 export function resolverStatus(status: string, passado = false): string {
@@ -39,7 +43,8 @@ export default function StatusBadge({
 }) {
   const s = STATUS_ESTILOS[resolverStatus(status, passado)] ?? { ...FALLBACK, label: status }
   return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${s.classes}`}>
+    <span className={`badge ${s.classes}`}>
+      <span className="badge-dot" aria-hidden />
       {s.label}
     </span>
   )

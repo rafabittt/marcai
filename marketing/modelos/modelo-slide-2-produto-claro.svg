@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+  <!-- Marcaí · modelo de post (Grafite) · slide 2: produto, fundo CLARO. O verde aparece no dado (Confirmado, WhatsApp), não no título. -->
+  <defs>
+    <filter id="sombra" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity="0.06"/></filter>
+    <filter id="mancha" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="70"/></filter>
+    <clipPath id="cartao"><rect x="72" y="560" width="936" height="560" rx="40"/></clipPath>
+  </defs>
+  <rect width="1080" height="1350" fill="#F0F0F3"/>
+  <text x="72" y="150" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" letter-spacing="1.5" fill="#5E5E63">COMO FUNCIONA</text>
+  <text font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="-2.3" fill="#1D1D1F">
+    <tspan x="72" y="262">Seu cliente agenda.</tspan>
+    <tspan x="72" y="350">Você recebe no WhatsApp.</tspan>
+  </text>
+  <text font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="36" font-weight="400" fill="#5E5E63">
+    <tspan x="72" y="448">Sem app, sem cadastro. A confirmação</tspan>
+    <tspan x="72" y="496">chega para os dois na hora.</tspan>
+  </text>
+  <!-- cartão do produto (o único com a mancha verde) -->
+  <rect x="72" y="560" width="936" height="560" rx="40" fill="#FFFFFF" stroke="#000" stroke-opacity="0.06" filter="url(#sombra)"/>
+  <g clip-path="url(#cartao)"><circle cx="930" cy="1110" r="200" fill="#25D366" opacity="0.22" filter="url(#mancha)"/></g>
+  <text x="120" y="640" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="28" font-weight="500" fill="#5E5E63">Seu agendamento</text>
+  <text x="120" y="720" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="34" font-weight="400" fill="#5E5E63">Serviço</text>
+  <text x="960" y="720" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="34" font-weight="600" fill="#1D1D1F" text-anchor="end">Corte + barba</text>
+  <rect x="120" y="752" width="840" height="1" fill="#000" fill-opacity="0.06"/>
+  <text x="120" y="806" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="34" font-weight="400" fill="#5E5E63">Quando</text>
+  <text x="960" y="806" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="34" font-weight="600" fill="#1D1D1F" text-anchor="end">Amanhã, 10:00</text>
+  <rect x="120" y="838" width="840" height="1" fill="#000" fill-opacity="0.06"/>
+  <text x="120" y="892" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="34" font-weight="400" fill="#5E5E63">Status</text>
+  <rect x="736" y="856" width="224" height="50" rx="12" fill="#25D366" fill-opacity="0.14"/>
+  <circle cx="764" cy="881" r="7" fill="#167E3D"/>
+  <text x="784" y="893" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="28" font-weight="600" fill="#167E3D">Confirmado</text>
+  <!-- linha do WhatsApp -->
+  <rect x="120" y="950" width="72" height="72" rx="20" fill="#25D366" fill-opacity="0.14"/>
+  <path d="M156 967a19 19 0 0 0-16.4 28.6L137 1005l9.6-2.5A19 19 0 1 0 156 967z" fill="none" stroke="#167E3D" stroke-width="3" stroke-linejoin="round"/>
+  <text x="216" y="978" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="28" font-weight="600" fill="#1D1D1F">WhatsApp</text>
+  <text x="216" y="1016" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="28" font-weight="400" fill="#5E5E63">Agendamento confirmado para amanhã às 10h.</text>
+  <rect x="72" y="1230" width="936" height="1" fill="#000" fill-opacity="0.08"/>
+  <text x="72" y="1290" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="26" font-weight="500" fill="#5E5E63">02 / 03</text>
+  <text x="1008" y="1290" font-family="Inter, 'SF Pro Display', -apple-system, Helvetica, Arial, sans-serif" font-size="26" font-weight="500" fill="#5E5E63" text-anchor="end">arrasta →</text>
+</svg>

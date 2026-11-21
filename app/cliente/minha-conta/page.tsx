@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import Carregando from '@/app/components/Carregando'
 
 type Agendamento = {
   id: string
@@ -34,29 +35,35 @@ function naiveNow(): string {
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}T${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:00.000Z`
 }
 
+// Etiqueta de status (Grafite): verde só no "Confirmado"; o resto em cinza.
+// O estado nunca é só cor: a etiqueta sempre leva o texto.
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    confirmado: { label: 'Confirmado', cls: 'bg-[#dcfce7] text-[#128C7E]' },
-    cancelado:  { label: 'Cancelado',  cls: 'bg-red-50 text-red-500' },
-    realizado:  { label: 'Realizado',  cls: 'bg-gray-100 text-gray-500' },
+    confirmado: { label: 'Confirmado', cls: 'badge-accent' },
+    cancelado:  { label: 'Cancelado',  cls: '' },
+    realizado:  { label: 'Realizado',  cls: '' },
   }
-  const s = map[status] ?? { label: status, cls: 'bg-gray-100 text-gray-500' }
-  return <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${s.cls}`}>{s.label}</span>
+  const s = map[status] ?? { label: status, cls: '' }
+  return (
+    <span className={`badge ${s.cls}`}>
+      <span className="badge-dot" aria-hidden />
+      {s.label}
+    </span>
+  )
 }
 
+// Uma linha da lista (sem caixa própria: o cartão é a seção inteira).
 function AgCard({ a, dim }: { a: Agendamento; dim?: boolean }) {
   return (
-    <div className={`bg-white rounded-2xl border border-gray-100 p-5 ${dim ? 'opacity-60' : ''}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{negocioNome(a.negocios)}</p>
-          <p className="text-sm text-gray-600 mt-0.5">{a.servico}</p>
-          {a.profissional && <p className="text-xs text-gray-400 mt-0.5">com {a.profissional}</p>}
-          <p className="text-xs text-gray-400 mt-2">{formatarDataHora(a.data_hora)}</p>
-        </div>
-        <StatusBadge status={a.status} />
+    <li className={`list-row !items-start ${dim ? 'opacity-60' : ''}`}>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-fg truncate">{negocioNome(a.negocios)}</p>
+        <p className="text-sm text-muted mt-0.5">{a.servico}</p>
+        {a.profissional && <p className="t-cap mt-0.5">com {a.profissional}</p>}
+        <p className="t-cap tabular mt-1.5">{formatarDataHora(a.data_hora)}</p>
       </div>
-    </div>
+      <StatusBadge status={a.status} />
+    </li>
   )
 }
 
@@ -101,56 +108,54 @@ export default function MinhaContaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <Carregando texto="Carregando..." />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
 
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b border-hairline bg-surface">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <img src="/logo.png" alt="Marcaí" className="h-6 object-contain" />
-          <button onClick={handleLogout} className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
+          <button onClick={handleLogout} className="btn btn-danger max-sm:!h-11">
             Sair
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
+      <main className="max-w-2xl mx-auto px-4 pt-8 pb-12 space-y-[14px]">
 
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="mb-[18px]">
+          <h1 className="t-title">
             Olá, {cliente?.nome?.split(' ')[0] ?? 'Cliente'}
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">Seus agendamentos estão aqui.</p>
+          <p className="t-sub">Seus agendamentos estão aqui.</p>
         </div>
 
-        <div>
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-3">Próximos</p>
+        <section className="card !py-4">
+          <h2 className="t-section mb-1">Próximos</h2>
           {proximos.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-              <p className="text-sm text-gray-400">Nenhum agendamento próximo.</p>
-            </div>
+            <p className="t-cap !text-sm py-6 text-center">Nenhum agendamento próximo.</p>
           ) : (
-            <div className="space-y-3">
+            <ul className="list">
               {proximos.map(a => <AgCard key={a.id} a={a} />)}
-            </div>
+            </ul>
           )}
-        </div>
+        </section>
 
         {historico.length > 0 && (
-          <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-3">Histórico</p>
-            <div className="space-y-3">
+          <section className="card !py-4">
+            <h2 className="t-section mb-1">Histórico</h2>
+            <ul className="list">
               {historico.map(a => <AgCard key={a.id} a={a} dim />)}
-            </div>
-          </div>
+            </ul>
+          </section>
         )}
 
-      </div>
+      </main>
     </div>
   )
 }

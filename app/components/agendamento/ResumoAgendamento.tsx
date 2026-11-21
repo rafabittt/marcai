@@ -1,10 +1,10 @@
 'use client'
 
-import { Scissors, User, Calendar, Clock } from 'lucide-react'
+import InfoRow from '@/app/components/InfoRow'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Resumo do agendamento, atualizado em tempo real conforme o usuário escolhe.
-// Referência de padrão: Alan (linhas com ícone).
+// Linhas rótulo/valor do Grafite (InfoRow), separador fino, sem caixa por linha.
 //
 // A data chega como 'YYYY-MM-DD'. Ela é formatada montando o Date a partir das
 // PARTES (ano, mês, dia), nunca via new Date(string) — parsear a string ISO
@@ -25,35 +25,23 @@ type Props = {
   horario: string
 }
 
-function Linha({ icone, label, valor }: { icone: React.ReactNode; label: string; valor: string | null }) {
-  return (
-    <div className="flex items-start gap-3 py-3">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${valor ? 'bg-[#dcfce7]' : 'bg-gray-100'}`}>
-        {icone}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400">{label}</p>
-        <p className={`text-sm mt-0.5 ${valor ? 'font-medium text-[#0a0a0a]' : 'text-gray-300'}`}>
-          {valor ?? '—'}
-        </p>
-      </div>
-    </div>
-  )
+// O que ainda não foi escolhido aparece como um traço apagado.
+function valorOuTraco(valor: string | null, extra = '') {
+  return valor
+    ? <span className={extra}>{valor}</span>
+    : <span className="text-faint font-normal">—</span>
 }
 
 export default function ResumoAgendamento({ servico, profissional, data, horario }: Props) {
-  const cor = (preenchido: boolean) => preenchido ? 'text-[#128C7E]' : 'text-gray-300'
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h3 className="text-xs uppercase tracking-widest font-semibold text-gray-500 mb-2">
-        Seu agendamento
-      </h3>
-      <div className="divide-y divide-gray-50">
-        <Linha icone={<Scissors size={15} className={cor(!!servico)} />}      label="Serviço"      valor={servico} />
-        <Linha icone={<User     size={15} className={cor(!!profissional)} />} label="Profissional" valor={profissional} />
-        <Linha icone={<Calendar size={15} className={cor(!!data)} />}         label="Data"         valor={data ? formatarDataExtenso(data) : null} />
-        <Linha icone={<Clock    size={15} className={cor(!!horario)} />}      label="Horário"      valor={horario || null} />
+    <section className="card" aria-label="Seu agendamento">
+      <h3 className="t-section mb-1">Seu agendamento</h3>
+      <div>
+        <InfoRow label="Serviço"      value={valorOuTraco(servico)} />
+        <InfoRow label="Profissional" value={valorOuTraco(profissional)} />
+        <InfoRow label="Data"         value={valorOuTraco(data ? formatarDataExtenso(data) : null, 'first-letter:uppercase inline-block')} />
+        <InfoRow label="Horário"      value={valorOuTraco(horario || null, 'tabular')} />
       </div>
-    </div>
+    </section>
   )
 }

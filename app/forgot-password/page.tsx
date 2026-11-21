@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import LandingHeader from '../components/LandingHeader'
 
-const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300'
-const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+// Grafite: campo e rótulo vêm das peças prontas do globals.css.
+const inputClass = 'field'
+const labelClass = 'field-label'
 
 function ForgotPasswordContent() {
   const searchParams = useSearchParams()
@@ -39,27 +41,28 @@ function ForgotPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <LandingHeader />
-      <div className="flex items-center justify-center px-4 py-12">
-        <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
+      <div className="flex justify-center px-4 py-10 sm:py-14">
+        <div className="card w-full max-w-[420px] !p-6 sm:!p-8">
 
-          <div className="mb-8">
-            <h1 className="text-xl font-semibold text-gray-900 mb-1">Recuperar senha</h1>
-            <p className="text-sm text-gray-500">
+          <div className="mb-6">
+            <h1 className="t-title">Recuperar senha</h1>
+            <p className="t-sub">
               Informe seu e-mail e enviaremos um link para redefinir sua senha.
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">
+            <div className="note note-bad mb-5" role="alert">
               {error}
             </div>
           )}
 
           {sent ? (
-            <div className="bg-green-50 text-green-700 text-sm px-4 py-3 rounded-xl">
-              E-mail enviado! Verifique sua caixa de entrada e siga o link para redefinir sua senha.
+            <div className="note note-ok" role="status">
+              <CheckCircle2 size={18} strokeWidth={1.8} className="flex-none mt-px" aria-hidden />
+              <span>E-mail enviado! Verifique sua caixa de entrada e siga o link para redefinir sua senha.</span>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,7 +81,7 @@ function ForgotPasswordContent() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+                  className="btn btn-primary btn-lg btn-block"
                 >
                   {loading ? 'Enviando...' : 'Enviar link de recuperação'}
                 </button>
@@ -89,7 +92,7 @@ function ForgotPasswordContent() {
           <div className="mt-5 text-center">
             <a
               href="/login"
-              className="text-sm font-medium text-[#25D366] hover:underline transition-all duration-200"
+              className="link text-sm"
             >
               Voltar para o login
             </a>

@@ -31,10 +31,12 @@ type Props = {
   carregando: boolean
 }
 
-function Aviso({ children }: { children: React.ReactNode }) {
+/** Aviso calmo no lugar da grade (sem data, dia fechado, lotado...).
+ *  Exportado para o FluxoAgendamento usar o mesmo nos outros passos. */
+export function Aviso({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-10 text-center">
-      <p className="text-sm text-gray-500">{children}</p>
+    <div className="rounded-card bg-fill px-5 py-8 text-center">
+      <p className="text-[14px] text-muted">{children}</p>
     </div>
   )
 }
@@ -69,15 +71,16 @@ export default function SeletorHorario({
     }))
     .filter(g => g.slots.length > 0)
 
+  // Visual Grafite: horário livre é um botão em pílula com borda fina; o
+  // escolhido fica preto (como a aba ativa). O verde só aparece na bolinha
+  // do "próximo disponível", sempre junto do texto que explica.
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       {grupos.map(grupo => (
         <div key={grupo.chave}>
-          <div className="flex items-baseline justify-between mb-3">
-            <h4 className="text-xs uppercase tracking-widest font-semibold text-gray-500">
-              {grupo.label}
-            </h4>
-            <span className="text-xs text-gray-400">
+          <div className="flex items-baseline justify-between mb-2.5">
+            <h4 className="t-label">{grupo.label}</h4>
+            <span className="t-cap tabular text-faint">
               {grupo.slots.length} {grupo.slots.length === 1 ? 'horário' : 'horários'}
             </span>
           </div>
@@ -93,22 +96,23 @@ export default function SeletorHorario({
                   onClick={() => onChange(h)}
                   aria-pressed={selecionado}
                   className={[
-                    'relative py-3 rounded-xl text-sm font-semibold transition-all duration-150',
-                    selecionado
-                      ? 'bg-[#25D366] text-white shadow-sm'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:border-[#25D366] hover:text-[#128C7E]',
-                    ehProximo ? 'ring-2 ring-[#25D366]/30 border-[#25D366]' : '',
+                    'btn relative h-11 tabular text-[15px]',
+                    selecionado ? 'bg-ink text-ink-text border-transparent' : '',
                   ].join(' ')}
                 >
                   {h}
+                  {ehProximo && (
+                    <span aria-hidden className="absolute top-1.5 right-2.5 w-1.5 h-1.5 rounded-full bg-accent" />
+                  )}
                 </button>
               )
             })}
           </div>
 
           {grupo.slots.includes(proximo) && valor !== proximo && (
-            <p className="mt-2.5 text-xs text-[#128C7E] font-medium">
-              {proximo} é o próximo disponível
+            <p className="mt-2.5 t-cap flex items-center gap-1.5">
+              <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-accent flex-none" />
+              <span><span className="tabular">{proximo}</span> é o próximo disponível</span>
             </p>
           )}
         </div>

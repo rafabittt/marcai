@@ -5,14 +5,14 @@ import { LegalPage, Secao, Lista } from '../_components/Legal'
 
 export const metadata: Metadata = { title: 'Política de privacidade' }
 
-const b = (t: string) => <strong className="font-semibold text-[#141414]">{t}</strong>
+const b = (t: string) => <strong className="font-semibold text-fg">{t}</strong>
 
 export default function SpoolPrivacidadePage() {
   return (
     <LegalPage titulo="Política de privacidade do Spool" atualizado="17 de novembro de 2026">
       <p>
-        Veja também os <Link href="/spool/termos" className="text-[#A34700] underline underline-offset-2">Termos de uso</Link>.{' '}
-        <a href="#en" className="text-[#A34700] underline underline-offset-2">English version below</a>.
+        Veja também os <Link href="/spool/termos" className="link">Termos de uso</Link>.{' '}
+        <a href="#en" className="link">English version below</a>.
       </p>
 
       <Secao titulo="Quem é o responsável">
@@ -76,12 +76,12 @@ export default function SpoolPrivacidadePage() {
       <Secao titulo="Seus direitos e contato">
         <p>
           Você pode pedir a qualquer momento acesso, correção ou exclusão dos seus dados. Dúvidas ou pedidos:{' '}
-          <a href={`mailto:${EMPRESA.email}`} className="text-[#A34700] underline underline-offset-2">{EMPRESA.email}</a>.
+          <a href={`mailto:${EMPRESA.email}`} className="link">{EMPRESA.email}</a>.
         </p>
       </Secao>
 
-      <div id="en" lang="en" className="scroll-mt-24 border-t border-[#EBDAC6] pt-9 space-y-3">
-        <h2 className="text-xl font-bold text-[#141414]">Privacy Policy (English)</h2>
+      <div id="en" lang="en" className="scroll-mt-24 border-t border-hairline pt-9 space-y-3">
+        <h2 className="t-section text-[17px]">Privacy Policy (English)</h2>
         <p>
           Spool is developed and maintained by {EMPRESA.razao} (Brazilian company, CNPJ {EMPRESA.cnpj}, {EMPRESA.endereco}), which is
           responsible for the data described here. It schedules posts through each network&apos;s official API and shows basic post
@@ -107,7 +107,7 @@ export default function SpoolPrivacidadePage() {
           Limited Use requirements. Access can be removed in the app (Contas › Remover), at myaccount.google.com/permissions, in
           Instagram/Facebook settings (Apps and websites / Business integrations), in the TikTok app (Settings and privacy › Security ›
           Apps and services) and at LinkedIn › Permitted services. Uninstalling the app deletes all local data. Contact:{' '}
-          <a href={`mailto:${EMPRESA.email}`} className="text-[#A34700] underline underline-offset-2">{EMPRESA.email}</a>.
+          <a href={`mailto:${EMPRESA.email}`} className="link">{EMPRESA.email}</a>.
         </p>
       </div>
     </LegalPage>

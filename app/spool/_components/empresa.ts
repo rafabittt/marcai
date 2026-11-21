@@ -5,5 +5,3 @@ export const EMPRESA = {
   endereco: 'Alameda Araguaia, 2044, Sala 1302, Torre 1, Alphaville Industrial, Barueri/SP, CEP 06455-000',
   email: 'contato@tbiglobal.com.br',
 } as const
-
-export const POPPINS = { fontFamily: 'var(--font-poppins), system-ui, sans-serif' } as const

@@ -9,14 +9,14 @@ export default function SpoolTermosPage() {
   return (
     <LegalPage titulo="Termos de uso do Spool" atualizado="17 de novembro de 2026">
       <p>
-        <a href="#en" className="text-[#A34700] underline underline-offset-2">English version below</a>.
+        <a href="#en" className="link">English version below</a>.
       </p>
 
       <Secao titulo="Quem oferece">
         <p>
-          O Spool é desenvolvido e mantido pela <strong className="font-semibold text-[#141414]">{EMPRESA.razao}</strong>, CNPJ{' '}
+          O Spool é desenvolvido e mantido pela <strong className="font-semibold text-fg">{EMPRESA.razao}</strong>, CNPJ{' '}
           {EMPRESA.cnpj} (&quot;Marcai&quot;). Ao usar o Spool, você concorda com estes termos e com a{' '}
-          <Link href="/spool/privacidade" className="text-[#A34700] underline underline-offset-2">Política de privacidade</Link>.
+          <Link href="/spool/privacidade" className="link">Política de privacidade</Link>.
         </p>
       </Secao>
 
@@ -59,16 +59,16 @@ export default function SpoolTermosPage() {
       <Secao titulo="Mudanças e contato">
         <p>
           Estes termos podem mudar; a data no topo mostra a versão atual. Dúvidas:{' '}
-          <a href={`mailto:${EMPRESA.email}`} className="text-[#A34700] underline underline-offset-2">{EMPRESA.email}</a>. Estes termos
+          <a href={`mailto:${EMPRESA.email}`} className="link">{EMPRESA.email}</a>. Estes termos
           seguem as leis do Brasil.
         </p>
       </Secao>
 
-      <div id="en" lang="en" className="scroll-mt-24 border-t border-[#EBDAC6] pt-9 space-y-3">
-        <h2 className="text-xl font-bold text-[#141414]">Terms of Service (English)</h2>
+      <div id="en" lang="en" className="scroll-mt-24 border-t border-hairline pt-9 space-y-3">
+        <h2 className="t-section text-[17px]">Terms of Service (English)</h2>
         <p>
           Spool is developed and maintained by {EMPRESA.razao} (Brazilian company, CNPJ {EMPRESA.cnpj}). By using it you agree to these
-          terms and to the <Link href="/spool/privacidade#en" className="text-[#A34700] underline underline-offset-2">Privacy Policy</Link>.
+          terms and to the <Link href="/spool/privacidade#en" className="link">Privacy Policy</Link>.
           Spool schedules and publishes posts to accounts you connect yourself (YouTube, Instagram, LinkedIn Pages and TikTok), only
           through each network&apos;s official API and with your authorization, and shows basic post analytics. It is currently in testing,
           runs on the user&apos;s own computer and is not offered to the public yet.
@@ -83,7 +83,7 @@ export default function SpoolTermosPage() {
           Networks may reject, delay or limit posts under their own rules; the app reports this and never blindly re-publishes. The
           service is provided as is, during testing; Marcai does not guarantee that networks will accept or keep any post. You can stop
           using it and disconnect your accounts at any time. Contact:{' '}
-          <a href={`mailto:${EMPRESA.email}`} className="text-[#A34700] underline underline-offset-2">{EMPRESA.email}</a>. These terms are
+          <a href={`mailto:${EMPRESA.email}`} className="link">{EMPRESA.email}</a>. These terms are
           governed by Brazilian law.
         </p>
       </div>

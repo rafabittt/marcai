@@ -104,20 +104,21 @@ fbq('track','PageView');`}
   if (estado !== 'perguntar') return null
 
   // Banner: os dois botões têm exatamente o mesmo estilo e tamanho — recusar
-  // não pode ser mais difícil nem menos visível que aceitar.
-  const botao = 'w-full py-3 rounded-xl text-sm font-semibold text-[#0a0a0a] bg-white border border-gray-300 hover:bg-gray-50 transition-colors'
+  // não pode ser mais difícil nem menos visível que aceitar. Os dois são o
+  // botão secundário do Grafite (.btn), nenhum é o preto principal.
+  const botao = 'btn btn-block max-sm:h-11'
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6 pointer-events-none">
       <div
         role="dialog"
         aria-label="Aviso sobre cookies"
-        className="pointer-events-auto mx-auto max-w-xl bg-white rounded-2xl border border-gray-100 shadow-xl p-5 sm:p-6"
+        className="pointer-events-auto mx-auto max-w-xl sheet p-5 sm:p-6"
       >
-        <p className="text-sm text-gray-700 leading-relaxed">
+        <p className="text-sm text-fg leading-relaxed">
           Usamos cookies da Meta (Facebook e Instagram) para saber se os nossos anúncios
           funcionam. Eles só são ativados se você aceitar.{' '}
-          <a href="/privacidade#cookies" className="text-[#128C7E] underline hover:text-[#25D366]">
+          <a href="/privacidade#cookies" className="link">
             Saiba mais
           </a>
         </p>

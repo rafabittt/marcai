@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { maskCEP, maskNumber, maskPhone } from '@/lib/masks'
 import { getBuffer, getFolgas, localDateStr, type Intervalo, type HorariosMap as ConfigAgenda } from '@/lib/agenda'
-import { X, Plus } from 'lucide-react'
+import { X, Plus, Copy, Check } from 'lucide-react'
 import EditorMensagem from '@/app/components/EditorMensagem'
 import {
   getTemplateCliente, getTemplateDono, exemploVariaveis,
   CHAVE_MSG_CLIENTE, CHAVE_MSG_DONO, MSG_CLIENTE_PADRAO, MSG_DONO_PADRAO,
 } from '@/lib/mensagens'
 import SidebarLayout from '@/app/components/SidebarLayout'
-import GooLoader from '@/app/components/GooLoader'
+import Carregando from '@/app/components/Carregando'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -93,8 +93,10 @@ function HorarioOptions() {
   return <>{HORARIO_OPTIONS.map(h => <option key={h} value={h}>{h}</option>)}</>
 }
 
-const inputClass = 'w-full border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent'
-const labelClass = 'text-xs uppercase tracking-widest text-gray-500 font-medium mb-1.5 block'
+// Campo preenchido pelo CEP: só leitura, com cara de "não é para digitar aqui".
+const campoTravado = 'field bg-fill text-muted cursor-not-allowed'
+// Select de horário compacto (grade dos dias e pausas)
+const campoHora = 'field tabular md:min-h-10'
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
@@ -333,438 +335,483 @@ export default function ConfiguracoesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f9f9f9' }}>
-        <GooLoader />
-      </div>
+      <SidebarLayout>
+        <Carregando />
+      </SidebarLayout>
     )
   }
 
   return (
     <SidebarLayout>
-    <div className="py-14 px-6">
-      <div className="max-w-2xl mx-auto space-y-8">
+    <main className="page page-narrow">
 
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Configurações</h1>
-          <p className="text-gray-500 mt-1 text-sm">Gerencie as informações e preferências do seu negócio.</p>
+      <div className="page-head">
+        <div className="min-w-0">
+          <h1 className="t-title">Configurações</h1>
+          <p className="t-sub">Gerencie as informações e preferências do seu negócio.</p>
         </div>
+      </div>
 
-        {!negocio ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-            <p className="text-gray-500 text-sm">Nenhum negócio encontrado. Faça o cadastro primeiro.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSalvar} className="space-y-8">
+      {!negocio ? (
+        <section className="card empty">
+          <p className="t-cap">Nenhum negócio encontrado. Faça o cadastro primeiro.</p>
+        </section>
+      ) : (
+        <form onSubmit={handleSalvar} className="space-y-[14px]">
 
-            {/* 1. DADOS BÁSICOS */}
-            <Section title="Dados básicos">
-              <div className="space-y-5">
+          {/* 1. DADOS BÁSICOS */}
+          <Section title="Dados básicos">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="cfg-nome" className="field-label">Nome do negócio</label>
+                <input
+                  id="cfg-nome"
+                  type="text"
+                  value={negNome}
+                  onChange={e => handleNegNomeChange(e.target.value)}
+                  required
+                  placeholder="Barbearia do João"
+                  className="field"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
                 <div>
-                  <label className={labelClass}>Nome do negócio</label>
-                  <input
-                    type="text"
-                    value={negNome}
-                    onChange={e => handleNegNomeChange(e.target.value)}
-                    required
-                    placeholder="Barbearia do João"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Tipo do negócio</label>
+                  <label htmlFor="cfg-tipo" className="field-label">Tipo do negócio</label>
                   <select
+                    id="cfg-tipo"
                     value={negTipo}
                     onChange={e => setNegTipo(e.target.value)}
-                    className={inputClass}
+                    className="field"
                   >
                     {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className={labelClass}>Telefone / WhatsApp</label>
+                  <label htmlFor="cfg-telefone" className="field-label">Telefone / WhatsApp</label>
                   <input
+                    id="cfg-telefone"
                     type="tel"
                     value={negTelefone}
                     onChange={e => setNegTelefone(maskPhone(e.target.value))}
                     required
                     placeholder="(11) 99999-9999"
-                    className={inputClass}
+                    className="field tabular"
                   />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Link público</label>
-                  <input
-                    type="text"
-                    value={negSlug}
-                    onChange={e => handleNegSlugChange(e.target.value)}
-                    required
-                    placeholder="barbearia-do-joao"
-                    className={inputClass}
-                  />
-                  {negSlug && (
-                    <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
-                      <span className="flex-1 text-xs text-gray-500 truncate">
-                        marcai.net.br/agendar/<span className="text-[#25D366] font-medium">{negSlug}</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCopyLink}
-                        title="Copiar link"
-                        className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors"
-                        style={copied
-                          ? { borderColor: '#25D366', color: '#25D366', backgroundColor: '#dcfce7' }
-                          : { borderColor: '#e5e7eb', color: '#6b7280', backgroundColor: 'white' }
-                        }
-                      >
-                        {copied ? 'Copiado' : 'Copiar'}
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Agendar sem cadastro é o diferencial do Marcaí: cada passo a mais
-                  antes de agendar derruba conversão. O selo desencoraja sem
-                  bloquear — quem tem motivo para exigir continua podendo. */}
-              <div className="flex items-center justify-between gap-4 pt-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-gray-900">Exigir cadastro do cliente</p>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 whitespace-nowrap">
-                      Não indicado
+              <div>
+                <label htmlFor="cfg-slug" className="field-label">Link público</label>
+                <input
+                  id="cfg-slug"
+                  type="text"
+                  value={negSlug}
+                  onChange={e => handleNegSlugChange(e.target.value)}
+                  required
+                  placeholder="barbearia-do-joao"
+                  className="field"
+                />
+                {negSlug && (
+                  <div className="mt-2 flex items-center gap-2 rounded-inner bg-fill pl-3 pr-1.5 py-1.5">
+                    <span className="flex-1 min-w-0 text-[13px] text-muted truncate">
+                      marcai.net.br/agendar/<span className="text-accent-ink font-medium">{negSlug}</span>
                     </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      title="Copiar link"
+                      className="btn btn-sm shrink-0"
+                    >
+                      {copied
+                        ? <Check size={14} strokeWidth={2} className="text-accent-ink" aria-hidden />
+                        : <Copy size={14} strokeWidth={1.8} aria-hidden />}
+                      <span aria-live="polite">{copied ? 'Copiado' : 'Copiar'}</span>
+                    </button>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Clientes precisarão criar uma conta antes de agendar.{' '}
-                    {exigirCadastro
-                      ? 'Isso costuma reduzir agendamentos — agendar em poucos toques, sem conta, é o nosso diferencial.'
-                      : 'Deixe desligado: agendar em poucos toques, sem conta, é o nosso diferencial.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setExigirCadastro(p => !p)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${exigirCadastro ? 'bg-[#25D366]' : 'bg-gray-200'}`}
-                >
-                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${exigirCadastro ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
+                )}
               </div>
-            </Section>
+            </div>
 
-            {/* 2. ENDEREÇO */}
-            <Section title="Endereço">
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-36">
-                    <label className={labelClass}>CEP</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={endereco.cep || ''}
-                        onChange={e => handleCEPChange(e.target.value)}
-                        placeholder="00000-000"
-                        maxLength={9}
-                        className={inputClass}
-                      />
-                      {cepLoading && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                          ...
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <label className={labelClass}>Cidade</label>
+            {/* Agendar sem cadastro é o diferencial do Marcaí: cada passo a mais
+                antes de agendar derruba conversão. O selo desencoraja sem
+                bloquear — quem tem motivo para exigir continua podendo. */}
+            <div className="flex items-center justify-between gap-4 mt-5 pt-4 border-t border-hairline">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p id="cfg-exigir" className="text-[15px] font-medium text-fg">Exigir cadastro do cliente</p>
+                  <span className="badge">Não indicado</span>
+                </div>
+                <p className="t-cap mt-0.5">
+                  Clientes precisarão criar uma conta antes de agendar.{' '}
+                  {exigirCadastro
+                    ? 'Isso costuma reduzir agendamentos — agendar em poucos toques, sem conta, é o nosso diferencial.'
+                    : 'Deixe desligado: agendar em poucos toques, sem conta, é o nosso diferencial.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={exigirCadastro}
+                aria-labelledby="cfg-exigir"
+                onClick={() => setExigirCadastro(p => !p)}
+                className="switch"
+              />
+            </div>
+          </Section>
+
+          {/* 2. ENDEREÇO */}
+          <Section title="Endereço">
+            <div className="space-y-4">
+              <div className="grid grid-cols-[1fr_5rem] sm:grid-cols-[9rem_1fr_5rem] gap-3">
+                <div className="col-span-2 sm:col-span-1">
+                  <label htmlFor="cfg-cep" className="field-label">CEP</label>
+                  <div className="relative">
                     <input
+                      id="cfg-cep"
                       type="text"
-                      value={endereco.cidade || ''}
-                      readOnly
-                      placeholder="Preenchido pelo CEP"
-                      className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
+                      value={endereco.cep || ''}
+                      onChange={e => handleCEPChange(e.target.value)}
+                      placeholder="00000-000"
+                      maxLength={9}
+                      className="field tabular"
                     />
-                  </div>
-                  <div className="w-20">
-                    <label className={labelClass}>Estado</label>
-                    <input
-                      type="text"
-                      value={endereco.estado || ''}
-                      readOnly
-                      placeholder="UF"
-                      className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
-                    />
+                    {cepLoading && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 t-cap" aria-live="polite">
+                        ...
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className={labelClass}>Rua</label>
-                    <input
-                      type="text"
-                      value={endereco.rua || ''}
-                      readOnly
-                      placeholder="Preenchida pelo CEP"
-                      className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
-                    />
-                  </div>
-                  <div className="w-28">
-                    <label className={labelClass}>Número</label>
-                    <input
-                      type="text"
-                      value={endereco.numero || ''}
-                      onChange={e => handleEndereco('numero', maskNumber(e.target.value))}
-                      placeholder="1000"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className={labelClass}>Bairro</label>
+                <div className="min-w-0">
+                  <label htmlFor="cfg-cidade" className="field-label">Cidade</label>
                   <input
+                    id="cfg-cidade"
                     type="text"
-                    value={endereco.bairro || ''}
+                    value={endereco.cidade || ''}
                     readOnly
                     placeholder="Preenchido pelo CEP"
-                    className={`${inputClass} bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0`}
+                    className={campoTravado}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="cfg-estado" className="field-label">Estado</label>
+                  <input
+                    id="cfg-estado"
+                    type="text"
+                    value={endereco.estado || ''}
+                    readOnly
+                    placeholder="UF"
+                    className={campoTravado}
                   />
                 </div>
               </div>
-            </Section>
+              <div className="grid grid-cols-[1fr_6rem] sm:grid-cols-[1fr_7rem] gap-3">
+                <div className="min-w-0">
+                  <label htmlFor="cfg-rua" className="field-label">Rua</label>
+                  <input
+                    id="cfg-rua"
+                    type="text"
+                    value={endereco.rua || ''}
+                    readOnly
+                    placeholder="Preenchida pelo CEP"
+                    className={campoTravado}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="cfg-numero" className="field-label">Número</label>
+                  <input
+                    id="cfg-numero"
+                    type="text"
+                    value={endereco.numero || ''}
+                    onChange={e => handleEndereco('numero', maskNumber(e.target.value))}
+                    placeholder="1000"
+                    className="field tabular"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="cfg-bairro" className="field-label">Bairro</label>
+                <input
+                  id="cfg-bairro"
+                  type="text"
+                  value={endereco.bairro || ''}
+                  readOnly
+                  placeholder="Preenchido pelo CEP"
+                  className={campoTravado}
+                />
+              </div>
+            </div>
+          </Section>
 
-            {/* 3. HORÁRIOS */}
-            <Section title="Horários de funcionamento">
-              <div className="space-y-2">
-                {DIAS.map(({ key, abr }) => {
-                  const dia = horarios?.[key] ?? HORARIOS_PADRAO[key]
-                  return (
-                    <div key={key} className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-500 w-8 flex-shrink-0">{abr}</span>
-                        <select
-                          value={dia.fechado || dia.aberto24h ? '' : dia.abertura}
-                          disabled={dia.fechado || !!dia.aberto24h}
-                          onChange={e => handleHorario(key, 'abertura', e.target.value)}
-                          className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        >
-                          {dia.aberto24h && <option value="">00:00</option>}
-                          <HorarioOptions />
-                        </select>
-                        <span className="text-xs text-gray-400 flex-shrink-0">até</span>
-                        <select
-                          value={dia.fechado || dia.aberto24h ? '' : dia.fechamento}
-                          disabled={dia.fechado || !!dia.aberto24h}
-                          onChange={e => handleHorario(key, 'fechamento', e.target.value)}
-                          className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        >
-                          {dia.aberto24h && <option value="">23:59</option>}
-                          <HorarioOptions />
-                        </select>
+          {/* 3. HORÁRIOS — uma linha por dia: nome, interruptor aberto/fechado
+              e o expediente. Pausas e "24 horas" ficam embaixo do expediente. */}
+          <Section title="Horários de funcionamento">
+            <div>
+              {DIAS.map(({ key, abr }) => {
+                const dia = horarios?.[key] ?? HORARIOS_PADRAO[key]
+                return (
+                  <div key={key} className="py-3 border-t border-hairline first:border-t-0 first:pt-0">
+                    <div className="grid grid-cols-[44px_1fr] sm:grid-cols-[44px_112px_1fr] items-start gap-x-3 gap-y-2">
+                      <span className="h-11 md:h-10 flex items-center text-[15px] font-medium text-fg">{abr}</span>
+
+                      <div className="h-11 md:h-10 flex items-center gap-2.5">
                         <button
                           type="button"
+                          role="switch"
+                          aria-checked={!dia.fechado}
+                          aria-label={`${abr}: aberto`}
                           onClick={() => handleHorario(key, 'fechado', !dia.fechado)}
-                          className={`text-xs font-medium w-14 text-right flex-shrink-0 transition-colors ${dia.fechado ? 'text-gray-400 hover:text-gray-600' : 'text-[#128C7E] hover:text-[#25D366]'}`}
-                        >
+                          className="switch"
+                        />
+                        <span className={`text-[13px] ${dia.fechado ? 'text-muted' : 'text-fg font-medium'}`}>
                           {dia.fechado ? 'Fechado' : 'Aberto'}
-                        </button>
+                        </span>
                       </div>
-                      {!dia.fechado && (
-                        <div className="flex items-center gap-2 pl-10">
-                          <button
-                            type="button"
-                            onClick={() => handleAberto24h(key, !dia.aberto24h)}
-                            className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors flex-shrink-0 ${dia.aberto24h ? 'bg-[#25D366]' : 'bg-gray-200'}`}
-                          >
-                            <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform ${dia.aberto24h ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                          </button>
-                          <span className="text-xs text-gray-500">Aberto 24 horas</span>
-                        </div>
-                      )}
 
-                      {/* Pausas dentro do expediente (almoco, cafe) */}
-                      {!dia.fechado && !dia.aberto24h && (
-                        <div className="pl-10 space-y-1.5 pb-1">
-                          {(dia.intervalos ?? []).map((iv, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <span className="text-xs text-gray-400 w-12 flex-shrink-0">Pausa</span>
-                              <select
-                                value={iv.inicio}
-                                onChange={e => handleIntervalo(key, idx, 'inicio', e.target.value)}
-                                className="flex-1 border border-[#e5e7eb] rounded-xl px-3 py-2 text-xs text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
-                              >
-                                <HorarioOptions />
-                              </select>
-                              <span className="text-xs text-gray-400 flex-shrink-0">até</span>
-                              <select
-                                value={iv.fim}
-                                onChange={e => handleIntervalo(key, idx, 'fim', e.target.value)}
-                                className="flex-1 border border-[#e5e7eb] rounded-xl px-3 py-2 text-xs text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
-                              >
-                                <HorarioOptions />
-                              </select>
+                      {!dia.fechado && (
+                        <div className="col-span-2 sm:col-span-1 space-y-2 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={dia.fechado || dia.aberto24h ? '' : dia.abertura}
+                              disabled={dia.fechado || !!dia.aberto24h}
+                              onChange={e => handleHorario(key, 'abertura', e.target.value)}
+                              aria-label={`${abr}: abre às`}
+                              className={`${campoHora} flex-1 min-w-0`}
+                            >
+                              {dia.aberto24h && <option value="">00:00</option>}
+                              <HorarioOptions />
+                            </select>
+                            <span className="t-cap shrink-0">até</span>
+                            <select
+                              value={dia.fechado || dia.aberto24h ? '' : dia.fechamento}
+                              disabled={dia.fechado || !!dia.aberto24h}
+                              onChange={e => handleHorario(key, 'fechamento', e.target.value)}
+                              aria-label={`${abr}: fecha às`}
+                              className={`${campoHora} flex-1 min-w-0`}
+                            >
+                              {dia.aberto24h && <option value="">23:59</option>}
+                              <HorarioOptions />
+                            </select>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 min-h-8">
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={!!dia.aberto24h}
+                              aria-label={`${abr}: aberto 24 horas`}
+                              onClick={() => handleAberto24h(key, !dia.aberto24h)}
+                              className="switch"
+                            />
+                            <span className="t-cap">Aberto 24 horas</span>
+                          </div>
+
+                          {/* Pausas dentro do expediente (almoco, cafe) */}
+                          {!dia.aberto24h && (
+                            <div className="space-y-2">
+                              {(dia.intervalos ?? []).map((iv, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <span className="t-cap w-11 shrink-0">Pausa</span>
+                                  <select
+                                    value={iv.inicio}
+                                    onChange={e => handleIntervalo(key, idx, 'inicio', e.target.value)}
+                                    aria-label={`${abr}: pausa começa às`}
+                                    className={`${campoHora} flex-1 min-w-0`}
+                                  >
+                                    <HorarioOptions />
+                                  </select>
+                                  <span className="t-cap shrink-0">até</span>
+                                  <select
+                                    value={iv.fim}
+                                    onChange={e => handleIntervalo(key, idx, 'fim', e.target.value)}
+                                    aria-label={`${abr}: pausa termina às`}
+                                    className={`${campoHora} flex-1 min-w-0`}
+                                  >
+                                    <HorarioOptions />
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveIntervalo(key, idx)}
+                                    aria-label="Remover pausa"
+                                    className="btn btn-ghost btn-icon btn-sm shrink-0 hover:text-bad-ink hover:bg-bad-bg"
+                                  >
+                                    <X size={15} strokeWidth={1.8} />
+                                  </button>
+                                </div>
+                              ))}
                               <button
                                 type="button"
-                                onClick={() => handleRemoveIntervalo(key, idx)}
-                                aria-label="Remover pausa"
-                                className="text-gray-300 hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                                onClick={() => handleAddIntervalo(key)}
+                                className="btn btn-ghost btn-sm -ml-3"
                               >
-                                <X size={14} />
+                                <Plus size={14} strokeWidth={1.8} aria-hidden />
+                                Adicionar pausa
                               </button>
                             </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => handleAddIntervalo(key)}
-                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#128C7E] transition-colors"
-                          >
-                            <Plus size={12} />
-                            Adicionar pausa
-                          </button>
+                          )}
                         </div>
                       )}
                     </div>
-                  )
-                })}
-              </div>
+                  </div>
+                )
+              })}
+            </div>
 
-              {/* Buffer entre atendimentos */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <label className={labelClass}>Intervalo entre atendimentos</label>
-                <div className="flex items-center gap-3">
-                  <select
-                    value={bufferMin}
-                    onChange={e => setBufferMin(Number(e.target.value))}
-                    className="w-40 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
-                  >
-                    {BUFFER_OPCOES.map(m => (
-                      <option key={m} value={m}>{m === 0 ? 'Sem intervalo' : `${m} minutos`}</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 flex-1">
-                    Tempo reservado após cada atendimento para preparo ou limpeza.
-                    Vale para todos os serviços.
-                  </p>
-                </div>
-              </div>
-            </Section>
-
-            {/* 4. FOLGAS */}
-            <Section title="Folgas e feriados">
-              <p className="text-xs text-gray-500 mb-5">
-                Dias em que o negócio não atende. A agenda pública fica indisponível
-                nessas datas, mesmo que o dia da semana esteja aberto.
-              </p>
-
-              <div className="flex gap-2 mb-5">
-                <input
-                  type="date"
-                  value={novaFolga}
-                  min={localDateStr()}
-                  onChange={e => setNovaFolga(e.target.value)}
-                  className="flex-1 border border-[#e5e7eb] rounded-2xl px-4 py-3 text-sm text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#25D366]"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddFolga}
-                  disabled={!novaFolga}
-                  className="px-5 py-3 rounded-2xl text-sm font-semibold text-white bg-[#25D366] transition-colors hover:bg-[#128C7E] disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+            {/* Buffer entre atendimentos */}
+            <div className="mt-4 pt-4 border-t border-hairline">
+              <label htmlFor="cfg-buffer" className="field-label">Intervalo entre atendimentos</label>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <select
+                  id="cfg-buffer"
+                  value={bufferMin}
+                  onChange={e => setBufferMin(Number(e.target.value))}
+                  className="field sm:w-48 shrink-0"
                 >
-                  Adicionar
-                </button>
-              </div>
-
-              {folgas.length === 0 ? (
-                <p className="text-sm text-gray-400">Nenhuma folga cadastrada.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {folgas.map(d => (
-                    <span
-                      key={d}
-                      className="inline-flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-full pl-4 pr-2 py-1.5 text-sm text-gray-700"
-                    >
-                      {new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                      })}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFolga(d)}
-                        aria-label={`Remover folga ${d}`}
-                        className="text-gray-300 hover:text-red-400 transition-colors"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
+                  {BUFFER_OPCOES.map(m => (
+                    <option key={m} value={m}>{m === 0 ? 'Sem intervalo' : `${m} minutos`}</option>
                   ))}
-                </div>
-              )}
-            </Section>
-
-            {/* 5. MENSAGENS */}
-            <Section title="Mensagens de confirmação">
-              <p className="text-sm text-gray-500 -mt-2 mb-6">
-                O que é enviado no WhatsApp quando um agendamento é confirmado.
-                Clique numa variável para inseri-la no ponto do cursor. O que
-                estiver entre colchetes <span className="font-mono text-xs">[ ]</span> some
-                quando a variável dentro dele estiver vazia.
-              </p>
-
-              <div className="space-y-8">
-                <EditorMensagem
-                  titulo="Para o cliente"
-                  descricao="Chega no WhatsApp de quem agendou."
-                  valor={msgCliente}
-                  onChange={setMsgCliente}
-                  padrao={MSG_CLIENTE_PADRAO}
-                  exemplo={exemplo}
-                />
-                <div className="border-t border-gray-100" />
-                <EditorMensagem
-                  titulo="Para você"
-                  descricao="O aviso que chega no seu WhatsApp a cada novo agendamento."
-                  valor={msgDono}
-                  onChange={setMsgDono}
-                  padrao={MSG_DONO_PADRAO}
-                  exemplo={exemplo}
-                />
+                </select>
+                <p className="t-cap flex-1">
+                  Tempo reservado após cada atendimento para preparo ou limpeza.
+                  Vale para todos os serviços.
+                </p>
               </div>
-            </Section>
+            </div>
+          </Section>
 
-            {/* BOTÃO GLOBAL + FEEDBACK */}
-            <div className="space-y-3">
-              {sucesso && (
-                <div className="bg-[#dcfce7] text-[#128C7E] text-sm px-4 py-3 rounded-xl">
-                  Alterações salvas com sucesso.
-                </div>
-              )}
-              {erro && (
-                <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl">
-                  {erro}
-                </div>
-              )}
+          {/* 4. FOLGAS */}
+          <Section
+            title="Folgas e feriados"
+            descricao={<>
+              Dias em que o negócio não atende. A agenda pública fica indisponível
+              nessas datas, mesmo que o dia da semana esteja aberto.
+            </>}
+          >
+            <div className="flex gap-2 mb-4">
+              <input
+                type="date"
+                value={novaFolga}
+                min={localDateStr()}
+                onChange={e => setNovaFolga(e.target.value)}
+                aria-label="Data da folga"
+                className="field flex-1 min-w-0"
+              />
               <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white bg-[#25D366] transition-all duration-200 hover:bg-[#128C7E] hover:scale-[1.02] disabled:opacity-50"
+                type="button"
+                onClick={handleAddFolga}
+                disabled={!novaFolga}
+                className="btn h-11 shrink-0"
               >
-                {saving ? 'Salvando...' : 'Salvar todas as alterações'}
+                <Plus size={16} strokeWidth={1.8} aria-hidden />
+                Adicionar
               </button>
             </div>
 
-          </form>
-        )}
-      </div>
-    </div>
+            {folgas.length === 0 ? (
+              <p className="t-cap">Nenhuma folga cadastrada.</p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {folgas.map(d => (
+                  <li
+                    key={d}
+                    className="inline-flex items-center gap-1 h-8 pl-3 pr-1 rounded-full bg-fill text-[13px] text-fg tabular"
+                  >
+                    {new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFolga(d)}
+                      aria-label={`Remover folga ${d}`}
+                      className="w-6 h-6 grid place-items-center rounded-full text-muted transition-colors duration-150 hover:text-bad-ink hover:bg-bad-bg"
+                    >
+                      <X size={13} strokeWidth={1.8} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
+          {/* 5. MENSAGENS */}
+          <Section
+            title="Mensagens de confirmação"
+            descricao={<>
+              O que é enviado no WhatsApp quando um agendamento é confirmado.
+              Clique numa variável para inseri-la no ponto do cursor. O que
+              estiver entre colchetes <span className="font-mono">[ ]</span> some
+              quando a variável dentro dele estiver vazia.
+            </>}
+          >
+            <div>
+              <EditorMensagem
+                titulo="Para o cliente"
+                descricao="Chega no WhatsApp de quem agendou."
+                valor={msgCliente}
+                onChange={setMsgCliente}
+                padrao={MSG_CLIENTE_PADRAO}
+                exemplo={exemplo}
+              />
+              <div className="border-t border-hairline my-6" />
+              <EditorMensagem
+                titulo="Para você"
+                descricao="O aviso que chega no seu WhatsApp a cada novo agendamento."
+                valor={msgDono}
+                onChange={setMsgDono}
+                padrao={MSG_DONO_PADRAO}
+                exemplo={exemplo}
+              />
+            </div>
+          </Section>
+
+          {/* BOTÃO GLOBAL + FEEDBACK */}
+          <div className="space-y-3 pt-1">
+            {sucesso && (
+              <div className="note note-ok" role="status">
+                <Check size={16} strokeWidth={2} className="mt-0.5 shrink-0" aria-hidden />
+                Alterações salvas com sucesso.
+              </div>
+            )}
+            {erro && (
+              <div className="note note-bad" role="alert">
+                {erro}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn btn-primary btn-lg btn-block"
+            >
+              {saving ? 'Salvando...' : 'Salvar todas as alterações'}
+            </button>
+          </div>
+
+        </form>
+      )}
+    </main>
     </SidebarLayout>
   )
 }
 
 // ── Layout helper ─────────────────────────────────────────────────────────────
+// Uma seção = um cartão: título, legenda opcional e o conteúdo. Dentro, as
+// partes se separam por linha fina (border-t border-hairline), nunca por outra
+// caixa.
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title, descricao, children,
+}: {
+  title: string
+  descricao?: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-      <h2 className="text-xs uppercase tracking-widest font-semibold text-gray-500 mb-6">{title}</h2>
-      {children}
-    </div>
+    <section className="card">
+      <h2 className="t-section">{title}</h2>
+      {descricao && <p className="t-cap mt-1">{descricao}</p>}
+      <div className="mt-5">{children}</div>
+    </section>
   )
 }

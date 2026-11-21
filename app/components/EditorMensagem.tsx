@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { RotateCcw, Plus } from 'lucide-react'
 import {
   VARIAVEIS, renderizarTemplate, exemploVariaveis,
   type VariaveisMensagem,
@@ -10,6 +10,10 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Editor de um template de mensagem, com inserção de variável no cursor e
 // preview ao vivo. Usado duas vezes em /configuracoes: cliente e dono.
+//
+// Grafite: campo .field, variáveis em pílulas neutras (são controles, não
+// dados) e o preview numa bolha suave na cor da marca, no espírito do
+// WhatsApp — é a única informação colorida do editor.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function EditorMensagem({
@@ -45,33 +49,32 @@ export default function EditorMensagem({
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3 mb-1">
-        <h3 className="text-sm font-semibold text-[#0a0a0a]">{titulo}</h3>
+      <div className="flex items-center justify-between gap-3 min-h-8">
+        <h3 className="t-section">{titulo}</h3>
         {!ehPadrao && (
           <button
             type="button"
             onClick={() => onChange(padrao)}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+            className="btn btn-ghost btn-sm -mr-2 shrink-0"
           >
-            <RotateCcw size={12} />
+            <RotateCcw size={14} strokeWidth={1.8} />
             Restaurar padrão
           </button>
         )}
       </div>
-      <p className="text-xs text-gray-500 mb-3">{descricao}</p>
+      <p className="t-cap mb-3">{descricao}</p>
 
       <textarea
         ref={ref}
         value={valor}
         onChange={e => onChange(e.target.value)}
         rows={4}
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] placeholder-gray-300 resize-y"
+        aria-label={titulo}
+        className="field resize-y"
       />
 
-      <div className="mt-2.5">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400 mb-1.5">
-          Inserir variável
-        </p>
+      <div className="mt-3">
+        <p className="field-label">Inserir variável</p>
         <div className="flex flex-wrap gap-1.5">
           {VARIAVEIS.map(v => (
             <button
@@ -79,8 +82,9 @@ export default function EditorMensagem({
               type="button"
               onClick={() => inserir(v.chave)}
               title={`Exemplo: ${v.exemplo}`}
-              className="px-2.5 py-1 rounded-lg text-xs font-medium text-[#128C7E] bg-[#dcfce7] hover:bg-[#25D366] hover:text-white transition-colors"
+              className="btn btn-sm font-medium text-muted hover:text-fg"
             >
+              <Plus size={13} strokeWidth={1.8} aria-hidden />
               {v.rotulo}
             </button>
           ))}
@@ -89,20 +93,18 @@ export default function EditorMensagem({
 
       {/* Preview — bolha no espírito do WhatsApp, para o dono ver o resultado. */}
       <div className="mt-4">
-        <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400 mb-1.5">
-          Como vai chegar
-        </p>
-        <div className="bg-[#dcfce7] rounded-2xl rounded-tl-sm px-4 py-3">
+        <p className="field-label">Como vai chegar</p>
+        <div className="bg-accent-soft rounded-card rounded-tl-tag px-4 py-3">
           {preview ? (
-            <p className="text-sm text-[#0a0a0a] whitespace-pre-wrap break-words">{preview}</p>
+            <p className="text-[14px] text-fg whitespace-pre-wrap break-words">{preview}</p>
           ) : (
-            <p className="text-sm text-gray-400 italic">
+            <p className="text-[14px] text-muted italic">
               Mensagem vazia — este aviso não será enviado.
             </p>
           )}
         </div>
         {preview.includes('{') && (
-          <p className="text-xs text-amber-600 mt-1.5">
+          <p className="t-cap text-bad-ink mt-1.5">
             Há uma variável que não existe — confira o nome entre chaves.
           </p>
         )}

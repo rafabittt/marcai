@@ -1,14 +1,5 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navbar from "./components/Navbar";
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Marcaí",
@@ -20,15 +11,22 @@ export const metadata: Metadata = {
   },
 };
 
+// Cor da barra do navegador no celular: o fundo do Grafite, claro e escuro.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F0F0F3" },
+    { media: "(prefers-color-scheme: dark)", color: "#141416" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={poppins.variable}>
+    <html lang="pt-BR">
       <body className="antialiased">
-        <Navbar />
         {children}
       </body>
     </html>

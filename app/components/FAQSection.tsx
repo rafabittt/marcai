@@ -26,59 +26,51 @@ const faqs = [
   },
 ]
 
+// Perguntas num cartão só, com linhas separadas por borda fina (uma caixa por
+// nível). Abrir/fechar: a resposta aparece com fade curto; a seta gira.
 export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section id="faq" className="pt-16 pb-32 px-6 bg-white">
+    <section id="faq" className="scroll-mt-20 pt-16 pb-12 md:pb-16 px-6">
       <div className="max-w-3xl mx-auto">
 
-        <div className="mb-16">
-          <p className="text-xs uppercase tracking-widest font-semibold mb-4 text-[#25D366]">
+        <div className="mb-10 md:mb-14">
+          <p className="t-caps mb-4">
             Dúvidas frequentes
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold leading-tight" style={{ color: '#0a0a0a' }}>
+          <h2 className="text-[32px] md:text-[44px] font-semibold leading-[1.1] tracking-[-0.03em] text-fg">
             Respostas rápidas.
           </h2>
         </div>
 
-        <div className="space-y-2">
+        <div className="card !py-1 !px-5 sm:!px-6">
           {faqs.map((faq, i) => {
             const isOpen = open === i
             return (
-              <div
-                key={i}
-                className="border border-gray-100 rounded-2xl overflow-hidden"
-                style={{
-                  boxShadow: isOpen ? '0 2px 12px rgba(37,211,102,0.08)' : undefined,
-                  borderColor: isOpen ? '#25D366' : undefined,
-                  transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
-                }}
-              >
+              <div key={i} className="border-t border-hairline first:border-t-0">
                 <button
-                  className="w-full flex items-center justify-between text-left px-6 py-5 gap-4 hover:bg-gray-50 transition-colors"
+                  className="group w-full min-h-[44px] flex items-center justify-between text-left py-5 gap-4"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}
                 >
-                  <span className="text-base font-semibold text-gray-900">{faq.q}</span>
+                  <span className="text-base font-semibold text-fg">{faq.q}</span>
                   <ChevronDown
                     size={18}
-                    className="flex-shrink-0 text-gray-400"
-                    style={{
-                      transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.3s ease',
-                      color: isOpen ? '#25D366' : undefined,
-                    }}
+                    strokeWidth={1.8}
+                    aria-hidden
+                    className={`flex-shrink-0 text-faint group-hover:text-fg transition-transform duration-200 ease-grafite ${isOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
                 <div
                   style={{
                     maxHeight: isOpen ? '200px' : '0',
                     overflow: 'hidden',
-                    transition: 'max-height 0.35s ease',
+                    opacity: isOpen ? 1 : 0,
+                    transition: 'opacity 200ms var(--ease-out)',
                   }}
                 >
-                  <p className="px-6 pb-5 text-gray-500 leading-relaxed">{faq.a}</p>
+                  <p className="pb-5 pr-8 text-muted leading-relaxed">{faq.a}</p>
                 </div>
               </div>
             )

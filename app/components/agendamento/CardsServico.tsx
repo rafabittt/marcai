@@ -43,6 +43,9 @@ export default function CardsServico({ servicos, valor, onChange, inputClass }: 
     )
   }
 
+  // Visual Grafite: cada serviço é um cartão pequeno clicável. O escolhido
+  // fica preto (como a aba ativa), com o check à direita: o estado não
+  // depende só da cor.
   return (
     <div className="grid gap-2.5">
       {servicos.map(s => {
@@ -54,29 +57,28 @@ export default function CardsServico({ servicos, valor, onChange, inputClass }: 
             onClick={() => onChange(String(s.id))}
             aria-pressed={selecionado}
             className={[
-              'w-full text-left rounded-2xl px-5 py-4 flex items-center gap-4 transition-all duration-150',
-              selecionado
-                ? 'bg-[#dcfce7] border-2 border-[#25D366]'
-                : 'bg-white border-2 border-gray-100 hover:border-gray-200',
+              'card card-sm card-link w-full text-left !px-4 !py-3.5 min-h-[60px] flex items-center gap-3',
+              selecionado ? 'bg-ink text-ink-text border-transparent' : '',
             ].join(' ')}
           >
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold truncate ${selecionado ? 'text-[#0a0a0a]' : 'text-gray-800'}`}>
+              <p className={`text-[15px] font-semibold truncate ${selecionado ? 'text-ink-text' : 'text-fg'}`}>
                 {s.nome}
               </p>
-              <span className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-gray-500">
-                <Clock size={13} />
+              <span className={`t-cap mt-0.5 inline-flex items-center gap-1.5 ${selecionado ? 'text-ink-text/70' : ''}`}>
+                <Clock size={13} strokeWidth={1.8} aria-hidden />
                 {s.duracao}
               </span>
             </div>
-            <div
+            <span
+              aria-hidden
               className={[
-                'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
-                selecionado ? 'bg-[#25D366]' : 'border-2 border-gray-200',
+                'w-6 h-6 rounded-full flex items-center justify-center flex-none',
+                selecionado ? 'bg-ink-text text-ink' : 'border border-field',
               ].join(' ')}
             >
-              {selecionado && <Check size={14} className="text-white" strokeWidth={3} />}
-            </div>
+              {selecionado && <Check size={14} strokeWidth={1.8} />}
+            </span>
           </button>
         )
       })}
