@@ -9,7 +9,7 @@ const b = (t: string) => <strong className="font-semibold text-fg">{t}</strong>
 
 export default function SpoolPrivacidadePage() {
   return (
-    <LegalPage titulo="Política de privacidade do Spool" atualizado="17 de novembro de 2026">
+    <LegalPage titulo="Política de privacidade do Spool" atualizado="23 de novembro de 2026">
       <p>
         Veja também os <Link href="/spool/termos" className="link">Termos de uso</Link>.{' '}
         <a href="#en" className="link">English version below</a>.
@@ -50,6 +50,19 @@ export default function SpoolPrivacidadePage() {
           (Google/YouTube, Meta/Instagram, LinkedIn ou TikTok), para fazer o que foi pedido. Para o Instagram buscar uma foto ou um
           vídeo, o app abre um link temporário e privado para aquele arquivo, que deixa de funcionar assim que a rede termina de buscá-lo.
         </p>
+      </Secao>
+
+      <Secao titulo="Como os dados são protegidos">
+        <Lista
+          itens={[
+            <>{b('Credenciais criptografadas:')} os tokens de acesso permanentes (refresh tokens) e as chaves dos apps ficam no Chaveiro do macOS, que guarda os itens criptografados e só os libera para o usuário logado naquele computador. Eles nunca são gravados em arquivos de texto nem no banco de dados. Os tokens temporários de cada sessão ficam só na memória do app e expiram em cerca de uma hora.</>,
+            <>{b('Conexões criptografadas:')} toda comunicação com o Google/YouTube, a Meta, o LinkedIn e o TikTok é feita por HTTPS (TLS). O login usa o fluxo OAuth oficial de cada rede com PKCE; o Spool nunca vê nem guarda senhas.</>,
+            <>{b('Sem acesso pela rede:')} a tela do app só aceita conexões do próprio computador (endereço 127.0.0.1); ninguém de fora consegue abri-la.</>,
+            <>{b('Sem servidores e sem cópias:')} não existe servidor do Spool nem cópia dos dados com a Marcai ou com terceiros. Os dados das redes (como números de visualizações) ficam só no banco local e servem apenas para mostrar o status e os resultados dos posts de quem conectou a conta.</>,
+            <>{b('Acesso mínimo e guarda limitada:')} o app pede só as permissões necessárias para agendar, editar, cancelar e conferir os próprios posts. Ao remover uma conta, o Spool apaga a credencial do Chaveiro e, no Google e no TikTok, também pede à rede a revogação do acesso; nas outras redes, o acesso pode ser removido nas configurações da própria rede (lista abaixo). Remover o app apaga todos os dados locais.</>,
+            <>{b('Proteção do computador:')} recomendamos usar o app em computador com senha de usuário e criptografia de disco ativada (FileVault no macOS).</>,
+          ]}
+        />
       </Secao>
 
       <Secao titulo="Compartilhamento">
@@ -102,7 +115,22 @@ export default function SpoolPrivacidadePage() {
         </p>
         <p>
           All data stays on the computer where the app runs (local database; credentials in the macOS Keychain). There are no Spool
-          servers; data is only sent to the network itself to perform the requested action. Data is never sold, shared or used for
+          servers; data is only sent to the network itself to perform the requested action.
+        </p>
+        <p>
+          How data is protected: long-lived OAuth refresh tokens and app keys are stored encrypted in the macOS Keychain, which only
+          releases them to the logged-in user of that computer; they are never written to plain files or to the database, and short-lived
+          access tokens are kept only in memory and expire in about one hour. All communication with Google/YouTube, Meta, LinkedIn and
+          TikTok uses HTTPS (TLS), and sign-in uses each network&apos;s official OAuth flow with PKCE, so Spool never sees or stores
+          passwords. The app&apos;s interface only accepts connections from the same computer (127.0.0.1). There is no Spool server and
+          no copy of the data with Marcai or third parties; data received from the networks (such as view counts) is kept only in the
+          local database and used only to show the status and results of the connected account&apos;s own posts. Spool requests only the
+          permissions needed to schedule, edit, cancel and check the user&apos;s own posts. Removing an account deletes the credential from the Keychain and, for Google and TikTok,
+          also revokes the token with the network; for the other networks access can be removed in the network&apos;s own settings.
+          Uninstalling the app deletes all local data. We recommend a user password and full-disk encryption (FileVault).
+        </p>
+        <p>
+          Data is never sold, shared or used for
           advertising. Use of information received from Google APIs adheres to the Google API Services User Data Policy, including the
           Limited Use requirements. Access can be removed in the app (Contas › Remover), at myaccount.google.com/permissions, in
           Instagram/Facebook settings (Apps and websites / Business integrations), in the TikTok app (Settings and privacy › Security ›
