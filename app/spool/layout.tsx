@@ -25,7 +25,7 @@ const CORES_DO_SPOOL = `
 `
 
 export const metadata: Metadata = {
-  title: { default: 'Spool · agendador de posts da Marcai', template: '%s · Spool' },
+  title: { default: 'Spool by Marcai · agendador de posts', template: '%s · Spool by Marcai' },
   description:
     'Spool agenda publicações no YouTube, no Instagram, em páginas do LinkedIn e no TikTok pelas APIs oficiais. Um produto da MARCAI TECNOLOGIA LTDA.',
   icons: { icon: '/spool/favicon.svg', apple: '/spool/apple-touch-icon.png' },
