@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Spool · voltando para o app</title>
+<style>body{font:16px -apple-system,system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 16px;color:#141414}@media(prefers-color-scheme:dark){body{background:#141414;color:#eee}}</style>
+</head>
+<body>
+<p id="m">Voltando para o Spool no seu Mac…</p>
+<script>
+// Esta página não guarda nada. Ela só repassa o retorno do login do TikTok
+// para o Spool, que roda no próprio Mac (endereço local 127.0.0.1).
+(function () {
+  var p = new URLSearchParams(location.search), q = new URLSearchParams();
+  ['code', 'scopes', 'state', 'error', 'error_description'].forEach(function (k) {
+    if (p.has(k)) q.set(k, p.get(k));
+  });
+  if (!q.has('state')) { document.getElementById('m').textContent = 'Nada para fazer aqui.'; return; }
+  location.replace('http://127.0.0.1:7766/oauth/tiktok/callback?' + q.toString());
+})();
+</script>
+</body>
+</html>

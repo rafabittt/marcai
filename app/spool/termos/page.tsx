@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Termos de uso' }
 
 export default function SpoolTermosPage() {
   return (
-    <LegalPage titulo="Termos de uso do Spool" atualizado="17 de novembro de 2026">
+    <LegalPage titulo="Termos de uso do Spool" atualizado="27 de novembro de 2026">
       <p>
         <a href="#en" className="link">English version below</a>.
       </p>
@@ -23,8 +23,8 @@ export default function SpoolTermosPage() {
       <Secao titulo="O que o Spool faz">
         <p>
           O Spool agenda e publica posts nas contas que você mesmo conecta (YouTube, Instagram, páginas do LinkedIn e TikTok), sempre
-          pelas APIs oficiais de cada rede e só com a sua autorização no login de cada uma, e mostra números básicos dos posts. Hoje ele
-          está em fase de testes: roda no computador de quem usa e ainda não é oferecido ao público.
+          pelas APIs oficiais de cada rede e só com a sua autorização no login de cada uma, e mostra números básicos dos posts. Ele roda no
+          computador de quem usa (Mac). Novos usuários entram por convite da Marcai.
         </p>
       </Secao>
 
@@ -50,7 +50,7 @@ export default function SpoolTermosPage() {
 
       <Secao titulo="Limites">
         <p>
-          O Spool é oferecido como está, em fase de testes. A Marcai não garante que as redes vão aceitar ou manter cada publicação, e
+          O Spool é oferecido como está. A Marcai não garante que as redes vão aceitar ou manter cada publicação, e
           não responde por decisões das redes sobre contas ou conteúdos. Você pode parar de usar e desconectar suas contas a qualquer
           momento (veja a Política de privacidade).
         </p>
@@ -70,8 +70,8 @@ export default function SpoolTermosPage() {
           Spool is developed and maintained by {EMPRESA.razao} (Brazilian company, CNPJ {EMPRESA.cnpj}). By using it you agree to these
           terms and to the <Link href="/spool/privacidade#en" className="link">Privacy Policy</Link>.
           Spool schedules and publishes posts to accounts you connect yourself (YouTube, Instagram, LinkedIn Pages and TikTok), only
-          through each network&apos;s official API and with your authorization, and shows basic post analytics. It is currently in testing,
-          runs on the user&apos;s own computer and is not offered to the public yet.
+          through each network&apos;s official API and with your authorization, and shows basic post analytics. It runs on the
+          user&apos;s own computer (Mac); new users join by invitation from Marcai.
         </p>
         <p>
           You must only connect accounts you are allowed to manage, you are responsible for the content you schedule (including
@@ -81,7 +81,7 @@ export default function SpoolTermosPage() {
         <p>
           Spool never publishes anything you did not schedule and checks each post on the network before marking it as published.
           Networks may reject, delay or limit posts under their own rules; the app reports this and never blindly re-publishes. The
-          service is provided as is, during testing; Marcai does not guarantee that networks will accept or keep any post. You can stop
+          service is provided as is; Marcai does not guarantee that networks will accept or keep any post. You can stop
           using it and disconnect your accounts at any time. Contact:{' '}
           <a href={`mailto:${EMPRESA.email}`} className="link">{EMPRESA.email}</a>. These terms are
           governed by Brazilian law.

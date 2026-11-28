@@ -9,7 +9,7 @@ const b = (t: string) => <strong className="font-semibold text-fg">{t}</strong>
 
 export default function SpoolPrivacidadePage() {
   return (
-    <LegalPage titulo="Política de privacidade do Spool" atualizado="23 de novembro de 2026">
+    <LegalPage titulo="Política de privacidade do Spool" atualizado="27 de novembro de 2026">
       <p>
         Veja também os <Link href="/spool/termos" className="link">Termos de uso</Link>.{' '}
         <a href="#en" className="link">English version below</a>.
@@ -25,8 +25,8 @@ export default function SpoolPrivacidadePage() {
       <Secao titulo="O que é">
         <p>
           O Spool é um aplicativo que agenda publicações nas redes sociais pelas APIs oficiais de cada rede e mostra números básicos
-          dos posts. Hoje ele está em fase de testes: roda apenas no computador da Marcai e é usado só nas contas que a própria Marcai
-          administra. Ainda não é oferecido ao público.
+          dos posts. Ele roda no computador de quem usa (Mac). Hoje é usado nas contas
+          que a própria Marcai administra, e novos usuários entram por convite.
         </p>
       </Secao>
 
@@ -98,8 +98,8 @@ export default function SpoolPrivacidadePage() {
         <p>
           Spool is developed and maintained by {EMPRESA.razao} (Brazilian company, CNPJ {EMPRESA.cnpj}, {EMPRESA.endereco}), which is
           responsible for the data described here. It schedules posts through each network&apos;s official API and shows basic post
-          analytics. It is currently in testing: it runs only on Marcai&apos;s own computer and is used only for accounts Marcai manages;
-          it is not offered to the public yet.
+          analytics. It runs on the user&apos;s own computer (Mac). Today it is used for the
+          accounts Marcai manages, and new users join by invitation.
         </p>
         <p>
           With the account holder&apos;s authorization it uses: the YouTube Data API (channel name, ID and picture; video upload; title,

@@ -38,15 +38,15 @@ export default function SpoolPage() {
       <section className="max-w-5xl mx-auto px-6 pt-16 pb-14 sm:pt-24">
         <span className="badge">
           <span className="badge-dot text-accent" aria-hidden />
-          Em testes · uso interno da Marcai
+          Em produção · acesso por convite
         </span>
         <h1 className="mt-6 text-4xl sm:text-6xl font-semibold tracking-[-0.03em] leading-[1.05] max-w-3xl">
           Seus posts no ar <span className="text-muted">na hora certa.</span>
         </h1>
         <p className="mt-6 text-lg text-muted leading-relaxed max-w-2xl">
           O Spool agenda publicações no YouTube, no Instagram, em páginas do LinkedIn e no TikTok, sempre pelas APIs
-          oficiais de cada rede. Hoje ele é usado só nas contas que a própria Marcai administra e ainda não é
-          oferecido ao público.
+          oficiais de cada rede. Ele já publica todos os dias nas contas que a Marcai administra. Novos usuários
+          entram por convite: fale com a gente em {EMPRESA.email}.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           {/* o único botão principal da tela */}
@@ -135,8 +135,8 @@ export default function SpoolPage() {
           <p className="mt-3 text-[15px] text-muted leading-relaxed">
             Spool is a social media scheduler by {EMPRESA.razao} (Brazil, CNPJ {EMPRESA.cnpj}). It schedules posts to
             YouTube, Instagram, LinkedIn Pages and TikTok through each network&apos;s official API and shows basic post
-            analytics. It is currently in testing, used only for accounts Marcai manages, and not offered to the public
-            yet. See the{' '}
+            analytics. It is in production: Marcai uses it every day to publish on the accounts it manages. New users join by
+            invitation (contact {EMPRESA.email}). See the{' '}
             <Link className="link" href="/spool/privacidade#en">Privacy Policy</Link> and{' '}
             <Link className="link" href="/spool/termos#en">Terms of Service</Link>.
           </p>
